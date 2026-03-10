@@ -540,6 +540,11 @@ function UILib.Window(titleA, titleB, gameName)
         if dTitleA.TextBounds and dTitleA.TextBounds.X > 0 and dTitleA.TextBounds.X > _taCache then _taCache = dTitleA.TextBounds.X end
         local ta = _taCache > 0 and _taCache or (#titleB*8)
         dTitleG.Position  =Vector2.new(uiX+14+tw+3+ta+10,uiY+12)
+        if dOnlineTxt and dOnlineDot then
+            local tx = dTitleG.Position.X + #(dTitleG.Text)*7.5 + 15
+            dOnlineTxt.Position = Vector2.new(tx, uiY+14)
+            dOnlineDot.Position = Vector2.new(tx + #("Online:")*6.5 + 4, uiY+16)
+        end
         dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
         dDotY.Position    =Vector2.new(uiX+L.W-55,uiY+15)
         dDotR.Position    =Vector2.new(uiX+L.W-42,uiY+15)
