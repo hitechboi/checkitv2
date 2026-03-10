@@ -833,7 +833,6 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isDropdown=true,out=out,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
                  selected=valIdx,open=false,openedAt=0,cb=cb,hoverAlpha=0,targetHoverAlpha=0}
-                 selected=valIdx,open=false,openedAt=0,cb=cb}
         table.insert(btns,b); return #btns
     end
     local function addLog(tab,lines,relY,starFirst)
