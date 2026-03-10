@@ -647,4 +647,5 @@ function UiLib:CreateWindow(options)
     return Window
 end
 
+_G.UILib = UiLib
 return UiLib
