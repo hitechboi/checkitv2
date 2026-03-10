@@ -334,6 +334,15 @@ function UILib.Window(titleA, titleB, gameName)
                 setShow(o.lb, yes and b.open)
             end
         end
+        if b.isUserList then
+            for _,u in ipairs(b.users) do
+                local uvis = yes and (u.alpha > 0.05)
+                setShow(u.out, uvis)
+                setShow(u.bg, uvis)
+                setShow(u.name, uvis)
+                setShow(u.youTag, uvis and u._isYou)
+            end
+        end
     end
     local function bPos(b)
         local animY = b.currentRY ~= nil and b.currentRY or b.ry
@@ -379,6 +388,8 @@ function UILib.Window(titleA, titleB, gameName)
                 o.lb.Position=Vector2.new(ax+12,oy2+b.ch/2-6)
                 o.ry=animY-sc+b.ch+((i-1)*b.ch)
             end
+        elseif b.isUserList then
+            b.bg.Position=Vector2.new(ax,ay)
         elseif b.isColorPicker then
             b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
@@ -848,6 +859,29 @@ function UILib.Window(titleA, titleB, gameName)
                  starFirst=starFirst,starH=starH}
         table.insert(btns,b); return #btns
     end
+    local function addUserList(tab, maxUsers, relY)
+        local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
+        local cw=L.CONTENT_W-L.ROW_PAD*2; local rowH=44; local pad=0
+        local ch = (maxUsers*rowH)+pad*2
+        local bg = mkD(mkSq(uiX+rx, uiY+ry, cw, ch, C.CONTENT, true, 0, 1, nil, 0))
+        local users = {}
+        for i=1,maxUsers do
+            local yOff = (i-1)*rowH
+            local uBgOut = C.ROWBG
+            local uOutColor = Color3.new(math.min(1, uBgOut.R*1.5), math.min(1, uBgOut.G*1.5), math.min(1, uBgOut.B*1.5))
+            local uOut = mkSq(uiX+rx+18, uiY+ry+yOff+10, cw-18, 38, uOutColor, true, 0, 3, nil, 4)
+            local uBg = mkSq(uiX+rx+19, uiY+ry+yOff+11, cw-20, 36, C.ROWBG, true, 0, 4, nil, 4)
+            local uName = mkTx("", uiX+rx+52, uiY+ry+yOff+10+38/2-7, 13, C.WHITE, false, 8)
+            local uYouTag = mkTx(" <-- you", uiX+rx+52, uiY+ry+yOff+10+38/2-7, 13, C.GRAY, false, 8)
+            uOut.Visible = false; uBg.Visible = false; uName.Visible = false; uYouTag.Visible = false
+            table.insert(users, {out=uOut, bg=uBg, name=uName, youTag=uYouTag, ryOff=yOff, 
+                avatarPixels={}, activePixelsCount=0, _active=false, _isYou=false, targetAlpha=0, alpha=0, 
+                slideY=20})
+        end
+        local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
+                 rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
+        table.insert(btns,b); return #btns
+    end
     local function CONTENT_H() return uiCurrentH - L.TOPBAR - L.FOOTER end
     recalculateLayout = function(tname)
         local currentY = 10 
@@ -967,6 +1001,66 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
             return logApi
+        end
+        function api:UserList(maxUsers)
+            maxUsers = maxUsers or 10
+            local h = (maxUsers * 44) + 10
+            local y = nextY(h)
+            local idx = addUserList(tabName, maxUsers, y)
+            if currentSection and btns[idx] then btns[idx].section = currentSection end
+            local ulApi = {}
+            function ulApi:SetUsers(names, localName)
+                if not btns[idx] or not btns[idx].users then return end
+                local b = btns[idx]
+                for i, u in ipairs(b.users) do
+                    if names[i] then
+                        u._active = true
+                        u._isYou = (localName and names[i] == localName)
+                        if u.lastName ~= names[i] then
+                            u.lastName = names[i]
+                            u.name.Text = names[i]
+                            u.alpha = 0
+                            u.slideY = 20
+                        end
+                        u.targetAlpha = 1
+                    else
+                        u._active = false
+                        u.targetAlpha = 0
+                    end
+                end
+            end
+            function ulApi:LoadAvatar(userIndex, pixelsData)
+                if not btns[idx] or not btns[idx].users then return end
+                local u = btns[idx].users[userIndex]
+                if u then
+                    for pi=1, (u.activePixelsCount or 0) do if u.avatarPixels[pi] then u.avatarPixels[pi].d.Visible = false end end
+                    local pIdx = 1; local step = 3; local pxSize = 2; local mapInterval = 1
+                    local offsetX = -13; local offsetY = 4
+                    for py = 1, 64, step do
+                        for px = 1, 64, step do
+                            local dx = px - 32.5; local dy = py - 32.5
+                            if (dx*dx + dy*dy) <= (31.5 * 31.5) then
+                                local pData = pixelsData[py] and pixelsData[py][px]
+                                if pData and pData.a and pData.a > 0.1 then
+                                    local sq
+                                    if pIdx <= #u.avatarPixels then sq = u.avatarPixels[pIdx].d
+                                    else
+                                        sq = Drawing.new("Square"); sq.Size = Vector2.new(pxSize, pxSize)
+                                        sq.Filled = true; sq.ZIndex = 8
+                                        table.insert(u.avatarPixels, {d=sq, gx=offsetX + math.floor((px-1)/step)*mapInterval, gy=offsetY + math.floor((py-1)/step)*mapInterval})
+                                    end
+                                    sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
+                                    sq.Transparency = (pData.a or 1) * u.alpha
+                                    sq.Visible = u.alpha > 0.05
+                                    pIdx = pIdx + 1
+                                end
+                            end
+                        end
+                    end
+                    u.activePixelsCount = pIdx - 1
+                end
+            end
+            return ulApi
         end
         tabAPI[tabName] = api
         return api
@@ -1567,6 +1661,54 @@ function UILib.Window(titleA, titleB, gameName)
                                     o.bg.Color = Color3.fromRGB(math.min(255,C.ROWBG.R*255+15),math.min(255,C.ROWBG.G*255+15),math.min(255,C.ROWBG.B*255+25))
                                 else
                                     o.bg.Color = C.ROWBG
+                                end
+                            end
+                        end
+                    elseif bd.isUserList then
+                        local parentVis = (bd.tab == currentTab and showSet[bd.bg])
+                        for i,u in ipairs(bd.users) do
+                            local diff = u.targetAlpha - u.alpha
+                            if math.abs(diff) > 0.01 then
+                                u.alpha = u.alpha + diff * 0.15
+                            elseif u.targetAlpha == 0 and u.alpha ~= 0 then
+                                u.alpha = 0
+                            end
+                            if u.targetAlpha == 1 and u.slideY > 0 then
+                                u.slideY = u.slideY * 0.8
+                                if u.slideY < 0.2 then u.slideY = 0 end
+                            elseif u.targetAlpha == 0 and u.slideY < 20 then
+                                u.slideY = u.slideY + (20 - u.slideY) * 0.2
+                            end
+                            local curOp = (tick() - menuToggledAt) / FADE_DUR
+                            local mOp = menuOpen and clamp(curOp, 0, 1) or clamp(1 - curOp, 0, 1)
+                            local finalAlpha = u.alpha * mOp
+                            if not parentVis then finalAlpha = 0 end
+                            
+                            local vis = finalAlpha > 0.05
+                            u.out.Visible = vis; u.bg.Visible = vis; u.name.Visible = vis
+                            u.youTag.Visible = vis and u._isYou
+                            u.out.Transparency = finalAlpha; u.bg.Transparency = finalAlpha
+                            u.name.Transparency = finalAlpha; u.youTag.Transparency = finalAlpha * 0.7
+                            
+                            if vis then
+                                local ax = uiX + bd.rx
+                                local ay = uiY + (bd.currentRY or bd.ry) - (tabScroll[bd.tab] or 0) + u.ryOff + u.slideY
+                                u.out.Position = Vector2.new(ax+18, ay+10)
+                                u.bg.Position = Vector2.new(ax+19, ay+11)
+                                u.name.Position = Vector2.new(ax+52, ay+10+38/2-7)
+                                u.youTag.Position = Vector2.new(ax+52 + (#u.name.Text * 7.5), ay+10+38/2-7)
+                                
+                                for pi=1, (u.activePixelsCount or 0) do
+                                    local p = u.avatarPixels[pi]
+                                    if p and p.d then
+                                        p.d.Position = Vector2.new(ax + 5 + p.gx + 18, ay + 10 + 2 + p.gy)
+                                        p.d.Transparency = finalAlpha
+                                        p.d.Visible = true
+                                    end
+                                end
+                            else
+                                for pi=1, (u.activePixelsCount or 0) do
+                                    if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible = false end
                                 end
                             end
                         end
