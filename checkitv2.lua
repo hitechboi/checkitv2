@@ -311,6 +311,7 @@ function UILib.Window(titleA, titleB, gameName)
     local function bShow(b,yes)
         setShow(b.bg,yes)
         if b.out    then setShow(b.out,yes) end
+        if b.outGlow then setShow(b.outGlow, yes and (b.hoverAlpha or 0) > 0.02) end
         if not b.isLog then setShow(b.lbl,yes) end
         if b.ln     then setShow(b.ln,    yes) end
         if b.tog    then setShow(b.tog,   yes) end
@@ -349,6 +350,7 @@ function UILib.Window(titleA, titleB, gameName)
         local sc = tabScroll[b.tab] or 0
         local ax,ay=uiX+b.rx,uiY+animY-sc
         b.bg.Position=Vector2.new(ax,ay)
+        if b.outGlow then b.outGlow.Position=Vector2.new(ax-1, ay-1) end
         if b.isLog then
             for i,lb in ipairs(b.lbls) do
                 if b.starFirst and i==1 then
@@ -432,6 +434,7 @@ function UILib.Window(titleA, titleB, gameName)
     local function tagBtnFade(b,group)
         tabSet[b.bg]=group
         if not b.isLog then tabSet[b.lbl]=group end
+        if b.outGlow then tabSet[b.outGlow]=group end
         if b.ln     then tabSet[b.ln]=group    end
         if b.tog    then tabSet[b.tog]=group   end
         if b.dot    then tabSet[b.dot]=group   end
@@ -700,9 +703,9 @@ function UILib.Window(titleA, titleB, gameName)
             qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
             qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
-        local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
+        local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
-                 desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
+                 desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
     end
     local function addDiv(tab,lbl,relY,collapsible)
@@ -727,7 +730,8 @@ function UILib.Window(titleA, titleB, gameName)
         local out=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,outColor,true,1,3,nil,4))
         local bg=mkD(mkSq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,col or C.ROWBG,true,1,4,nil,4))
         local lb=mkD(mkTx(lbl,uiX+rx+cw/2,uiY+ry+ch/2-6,12,lblCol or C.WHITE,true,8))
-        local b={tab=tab,isAct=true,customCol=col~=nil,out=out,bg=bg,lbl=lb,ln=nil,rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,cb=cb}
+        local outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4))
+        local b={tab=tab,isAct=true,customCol=col~=nil,out=out,bg=bg,lbl=lb,outGlow=outGlow,ln=nil,rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,cb=cb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
     end
     local function addSlider(tab,lbl,relY,minV,maxV,initV,cb,isFloat,desc)
@@ -745,9 +749,9 @@ function UILib.Window(titleA, titleB, gameName)
         local fx  =uiX+rx+8+frac*trackW
         local fil =mkD(mkLn(uiX+rx+8,ty,fx,ty,C.ACCENT,6,3))
         local hdl =mkD(mkSq(fx-4,ty-4,L.HDL,L.HDL,C.WHITE,true,1,7,nil,3))
-        local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
+        local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
-                 value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb}
+                 value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
     end
     local function addColorPicker(tab,lbl,relY,initCol,cb)
@@ -776,9 +780,9 @@ function UILib.Window(titleA, titleB, gameName)
             local border=mkD(mkSq(sx-1,sy-1,swatchW+2,swatchH+2,i==1 and C.WHITE or C.BORDER,false,1,7,1,3))
             table.insert(swatchBgs,{sq=s,border=border,col=col,x=sx,y=sy})
         end
-        local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,
+        local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,swatches=swatchBgs,
-                 selected=selected,value=swatches[1],cb=cb}
+                 selected=selected,value=swatches[1],cb=cb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
     end
     local openDropdown = nil
@@ -826,8 +830,9 @@ function UILib.Window(titleA, titleB, gameName)
             obg.Visible=false; oln.Visible=false; olb.Visible=false
             table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0})
         end
-        local b={tab=tab,isDropdown=true,out=out,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,
+        local b={tab=tab,isDropdown=true,out=out,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
+                 selected=valIdx,open=false,openedAt=0,cb=cb,hoverAlpha=0,targetHoverAlpha=0}
                  selected=valIdx,open=false,openedAt=0,cb=cb}
         table.insert(btns,b); return #btns
     end
@@ -1012,8 +1017,10 @@ function UILib.Window(titleA, titleB, gameName)
             function ulApi:SetUsers(names, localName)
                 if not btns[idx] or not btns[idx].users then return end
                 local b = btns[idx]
+                local ac = 0
                 for i, u in ipairs(b.users) do
                     if names[i] then
+                        ac = ac + 1
                         u._active = true
                         u._isYou = (localName and names[i] == localName)
                         if u.lastName ~= names[i] then
@@ -1027,6 +1034,9 @@ function UILib.Window(titleA, titleB, gameName)
                         u._active = false
                         u.targetAlpha = 0
                     end
+                end
+                if dOnlineDot then
+                    dOnlineDot.Color = ac > 0 and Color3.new(0.1, 0.9, 0.1) or Color3.new(0.9, 0.1, 0.1)
                 end
             end
             function ulApi:LoadAvatar(userIndex, pixelsData)
@@ -1163,8 +1173,19 @@ function UILib.Window(titleA, titleB, gameName)
         dTitleA  = mkD(mkTx(titleB,  uiX+14+(#titleA*8)+3, uiY+12,14,C.ACCENT,false,9,true))
         local gameNameShort = gameName or ""
         dTitleG  = mkD(mkTx(gameNameShort, uiX+100, uiY+12,13,C.ORANGE,false,9,false))
+        dOnlineTxt = mkD(mkTx("Online:", uiX+200, uiY+14, 11, C.GRAY, false, 9, false))
+        dOnlineDot = mkD(mkSq(uiX+240, uiY+16, 6, 6, Color3.new(0.9, 0.1, 0.1), true, 1, 9, nil, 3))
+        
+        local function posOnline(gn)
+            local tx = uiX + 100 + #gn * 7.5 + 15
+            if dOnlineTxt then dOnlineTxt.Position = Vector2.new(tx, uiY+14) end
+            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + #("Online:")*6.5 + 4, uiY+16) end
+        end
+        posOnline(gameNameShort)
+
         if gameNameShort == "" or gameNameShort == "Game Name" then
             dTitleG.Text = ""
+            posOnline("")
             task.spawn(function()
                 pcall(function()
                     local gn
@@ -1176,6 +1197,7 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                     if gn then
                         dTitleG.Text = gn
+                        posOnline(gn)
                         if dMiniTitleG then dMiniTitleG.Text = gn end
                     end
                 end)
@@ -1205,7 +1227,7 @@ function UILib.Window(titleA, titleB, gameName)
         tipDesc = mkTx("",0,0,10,Color3.fromRGB(130,140,170),false,13,false)
         tipDesc.Visible=false
         baseUI={dShadow,dGlow2,dGlow1,dMainBg,dBorder,dTopBar,dTopFill,dTopLine,
-                dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR,dSide,dSideLn,dContent,
+                dTitleW,dTitleA,dTitleG,dOnlineTxt,dOnlineDot,dKeyLbl,dActiveCountLbl,dDotY,dDotR,dSide,dSideLn,dContent,
                 dFooter,dFotLine,dCharLbl}
         local tabNames = {}
         for name,_ in pairs(tabAPI) do table.insert(tabNames,name) end
@@ -1283,22 +1305,53 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end)
         local descriptions = {
-                "check it",
-                "hi :p",
-                "osamason is goated",
-                "you're goated",
-                "fetching assets...",
-                "preparing environment...",
-                "warming up engine...",
-                "syncing configurations...",
-                "initializing check it core...",
-                "bypassing security...",
-                "almost there..."
-            }
-            local chosenDesc = descriptions[math.random(1, #descriptions)]
-            local dBg = Drawing.new("Square")
-            dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
-            pcall(function() dBg.Corner = 6 end)
+            "youre goated",
+            "osamason is goated",
+            "Check it",
+            "star da post",
+            "back in action",
+            "haha haha"
+        }
+        local chosenDesc = descriptions[math.random(1, #descriptions)]
+        local dBg = Drawing.new("Square")
+        dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
+        pcall(function() dBg.Corner = 6 end)
+        dBg.Size = Vector2.new(0, 4)
+        dBg.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 2)
+        dBg.Visible = true
+
+        local uname = game:GetService("Players").LocalPlayer.Name
+        local dWelcomeLoad = Drawing.new("Text")
+        dWelcomeLoad.Size=14; dWelcomeLoad.Color=C.WHITE; dWelcomeLoad.Center=true; dWelcomeLoad.Outline=true; dWelcomeLoad.ZIndex=16
+        pcall(function() dWelcomeLoad.Font=Drawing.Fonts.Minecraft end)
+        dWelcomeLoad.Text = "Welcome, " .. uname
+        dWelcomeLoad.Visible = false
+
+        task.spawn(function()
+            for i = 1, 25 do
+                local f = i/25
+                f = 1 - (1-f)^3
+                dBg.Size = Vector2.new(L.W * f, 4)
+                dBg.Position = Vector2.new(uiX + L.W/2 - (L.W*f)/2, uiY + L.H/2 - 2)
+                task.wait()
+            end
+            for i = 1, 20 do
+                local f = i/20
+                f = 1 - (1-f)^3
+                dBg.Size = Vector2.new(L.W, 4 + (L.H-4)*f)
+                dBg.Position = Vector2.new(uiX, uiY + L.H/2 - 2 - ((L.H-4)*f)/2)
+                task.wait()
+            end
+            dBg.Size = Vector2.new(L.W, L.H); dBg.Position = Vector2.new(uiX, uiY)
+            dWelcomeLoad.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 10)
+            dWelcomeLoad.Visible = true
+            task.wait(0.6)
+            for i = 1, 15 do
+                dWelcomeLoad.Transparency = 1 - (i/15)
+                task.wait()
+            end
+            dWelcomeLoad.Visible = false
+            
             local dTxt = Drawing.new("Text")
             dTxt.Size=18; dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
             pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)
@@ -1317,6 +1370,7 @@ function UILib.Window(titleA, titleB, gameName)
             local dBarGlow = Drawing.new("Square")
             dBarGlow.Filled=true; dBarGlow.ZIndex=16; dBarGlow.Color=C.ACCENT
             pcall(function() dBarGlow.Corner = 8 end)
+            
             local function setLoadPos(alpha, text, fillAmt, textDesc)
                 dBg.Position = Vector2.new(uiX, uiY); dBg.Size = Vector2.new(L.W, L.H)
                 dBg.Transparency = alpha
@@ -1345,7 +1399,7 @@ function UILib.Window(titleA, titleB, gameName)
                 if textDesc == "" then
                     dDesc.Text = ""
                 else
-                    dDesc.Text = math.floor(fillAmt*100).."% - "..targetString
+                    dDesc.Text = string.format("%d%% - %s", math.floor(fillAmt*100), targetString)
                 end
                 dDesc.Transparency = alpha
                 local vis = alpha>0
@@ -1361,24 +1415,25 @@ function UILib.Window(titleA, titleB, gameName)
                     showTab(currentTab)
                 end
             end
+            
             updateLoaderFrame = function()
-                if dBg and dBg.Visible then
+                if dBg and dBg.Visible and dBarOuter then
+                    if dWelcomeLoad.Visible then dWelcomeLoad.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 10) end
                     dBg.Position = Vector2.new(uiX, uiY)
                     dTxt.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 26)
                     local bw = 240; local bh = 8
                     local bx = uiX + L.W/2 - bw/2; local by = uiY + L.H/2 + 2
-                    dBarOuter.Position = Vector2.new(bx - 3, by - 3)
-                    dBarBg.Position = Vector2.new(bx, by)
-                    local fillW = dBarFg.Size.X
-                    dBarFg.Position = Vector2.new(bx, by)
-                    if dBarGlow.Visible then dBarGlow.Position = Vector2.new(bx - 2, by - 2) end
-                    dDesc.Position = Vector2.new(uiX + L.W/2, by + 18)
+                    if dBarOuter then dBarOuter.Position = Vector2.new(bx - 3, by - 3) end
+                    if dBarBg then dBarBg.Position = Vector2.new(bx, by) end
+                    if dBarFg then dBarFg.Position = Vector2.new(bx, by) end
+                    if dBarGlow and dBarGlow.Visible then dBarGlow.Position = Vector2.new(bx - 2, by - 2) end
+                    if dDesc then dDesc.Position = Vector2.new(uiX + L.W/2, by + 18) end
                 end
             end
+            
             local fillAmt = 0.0
             setLoadPos(1, gameName.." Initializing...", fillAmt)
-            task.spawn(function()
-                local progressStages = {
+            local progressStages = {
                 {pct=0.15, text="bypassing security...",                   delay=0.6},
                 {pct=0.33, text="fetching assets...",                      delay=0.4},
                 {pct=0.46, text="syncing check.lua routines...",           delay=0.8},
@@ -1393,7 +1448,7 @@ function UILib.Window(titleA, titleB, gameName)
                 for f = 1, frames do
                     fillAmt = startFill + (stage.pct - startFill) * (f / frames)
                     setLoadPos(1, gameName.." Initializing...", fillAmt, stage.text)
-                    task.wait(1/60)
+                    task.wait()
                 end
                 task.wait(0.1)
             end
@@ -1508,6 +1563,16 @@ function UILib.Window(titleA, titleB, gameName)
                     if dWelcomeTxt then
                         dWelcomeTxt.Color = lerpC(C.WHITE, Color3.fromRGB(150, 255, 170), (math.sin(tick()*2)+1)/2)
                     end
+                    if dTitleW and dTitleA then
+                        local tf = (math.sin(t*2)+1)/2
+                        dTitleW.Color = lerpC(C.WHITE, C.ACCENT, tf)
+                        dTitleA.Color = lerpC(C.ACCENT, C.WHITE, tf)
+                    end
+                    if dMiniTitleW and dMiniTitleA then
+                        local tf = (math.sin(t*2)+1)/2
+                        dMiniTitleW.Color = lerpC(C.WHITE, C.ACCENT, tf)
+                        dMiniTitleA.Color = lerpC(C.ACCENT, C.WHITE, tf)
+                    end
                 end
                 if tipBg then
                     local prog=clamp((tick()-tipFadedAt)/TIP_FADE,0,1)
@@ -1522,14 +1587,27 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 for _,b in ipairs(btns) do
-                    if b.tab==currentTab and showSet[b.bg] and not b.isDiv and not b.isLog then
+                    if b.tab==currentTab and showSet[b.bg] and not b.isDiv and not b.isLog and not b.isUserList then
                         local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
                         if inBox(uiX+b.rx, itemY, b.cw, b.ch) then
                             b.bg.Color = lerpC(C.ROWBG, C.WHITE, 0.06)
+                            b.targetHoverAlpha = 1
                         else
+                            b.targetHoverAlpha = 0
                             if not b.isAct or not b.customCol then
                                 b.bg.Color = C.ROWBG
                             end
+                        end
+                        if b.outGlow then
+                            local diff = (b.targetHoverAlpha or 0) - (b.hoverAlpha or 0)
+                            if math.abs(diff) > 0.05 then
+                                b.hoverAlpha = (b.hoverAlpha or 0) + diff * 0.15
+                                b.outGlow.Transparency = b.hoverAlpha * dMainBg.Transparency
+                            elseif (b.targetHoverAlpha == 0 and (b.hoverAlpha or 0) ~= 0) then
+                                b.hoverAlpha = 0
+                                b.outGlow.Transparency = 0
+                            end
+                            b.outGlow.Visible = ((b.hoverAlpha or 0) > 0.02)
                         end
                     end
                 end
