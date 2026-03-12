@@ -510,7 +510,7 @@ function UILib.Window(titleA, titleB, gameName)
     end
     local dShadow,dMainBg,dGlow1,dGlow2,dBorder
     local dTopBar,dTopFill,dTopLine
-    local dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR
+    local dTitleW,dTitleA,dTitleG,dKeyLbl,dBtnMinimize,dBtnClose
     local dSide,dSideLn,dContent,dFooter,dFotLine,dCharLbl
     local dScrollBg, dScrollThumb
     local glowLines
@@ -553,11 +553,11 @@ function UILib.Window(titleA, titleB, gameName)
         if dOnlineTxt and dOnlineDot then
             local tx = dTitleG.Position.X + #(dTitleG.Text)*7.5 + 15
             dOnlineTxt.Position = Vector2.new(tx, uiY+14)
-            dOnlineDot.Position = Vector2.new(tx + #("Online:")*6.5 + 4, uiY+16)
+            dOnlineDot.Position = Vector2.new(tx + 48, uiY+17)
         end
-        dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
-        dDotY.Position    =Vector2.new(uiX+L.W-55,uiY+15)
-        dDotR.Position    =Vector2.new(uiX+L.W-42,uiY+15)
+        dKeyLbl.Position  =Vector2.new(uiX+L.W-55,uiY+14)
+        dBtnMinimize.Position =Vector2.new(uiX+L.W-38,uiY+10)
+        dBtnClose.Position    =Vector2.new(uiX+L.W-22,uiY+10)
         dSide.Position    =Vector2.new(uiX+1,uiY+L.TOPBAR)
         dSideLn.From      =Vector2.new(uiX+L.SIDEBAR,uiY+L.TOPBAR)
         dSideLn.To        =Vector2.new(uiX+L.SIDEBAR,uiY+curH-L.FOOTER)
@@ -1193,7 +1193,8 @@ function UILib.Window(titleA, titleB, gameName)
         local function posOnline(gn)
             local tx = uiX + 100 + #gn * 7.5 + 15
             if dOnlineTxt then dOnlineTxt.Position = Vector2.new(tx, uiY+14) end
-            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + #("Online:")*6.5 + 4, uiY+16) end
+            -- Red dot positioned right after "Online:" text
+            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + 48, uiY+17) end
         end
         posOnline(gameNameShort)
 
@@ -1218,8 +1219,9 @@ function UILib.Window(titleA, titleB, gameName)
             end)
         end
         dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
-        dDotY    = mkD(mkSq(uiX+L.W-55,uiY+15,8,8,C.YELLOW,true,1,9,nil,3))
-        dDotR    = mkD(mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3))
+        -- Yellow minimize button and Red close button in top right
+        dBtnMinimize = mkD(mkSq(uiX+L.W-38,uiY+10,12,12,Color3.fromRGB(230,180,50),true,1,9,nil,3))
+        dBtnClose    = mkD(mkSq(uiX+L.W-22,uiY+10,12,12,Color3.fromRGB(200,60,60),true,1,9,nil,3))
         dSide    = mkD(mkSq(uiX+1,uiY+L.TOPBAR,L.SIDEBAR-1,L.H-L.TOPBAR-L.FOOTER-1,C.SIDEBAR,true,1,2,nil,8))
         dSideLn  = mkD(mkLn(uiX+L.SIDEBAR,uiY+L.TOPBAR,uiX+L.SIDEBAR,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         dContent = mkD(mkSq(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W-1,L.H-L.TOPBAR-L.FOOTER-1,C.CONTENT,true,1,2,nil,8))
@@ -1241,7 +1243,7 @@ function UILib.Window(titleA, titleB, gameName)
         tipDesc = mkTx("",0,0,10,Color3.fromRGB(130,140,170),false,13,false)
         tipDesc.Visible=false
         baseUI={dShadow,dGlow2,dGlow1,dMainBg,dBorder,dTopBar,dTopFill,dTopLine,
-                dTitleW,dTitleA,dTitleG,dOnlineTxt,dOnlineDot,dKeyLbl,dActiveCountLbl,dDotY,dDotR,dSide,dSideLn,dContent,
+                dTitleW,dTitleA,dTitleG,dOnlineTxt,dOnlineDot,dKeyLbl,dActiveCountLbl,dBtnMinimize,dBtnClose,dSide,dSideLn,dContent,
                 dFooter,dFotLine,dCharLbl}
         local tabNames = {}
         for name,_ in pairs(tabAPI) do table.insert(tabNames,name) end
@@ -1849,7 +1851,8 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 if clicking and not wasClicking and mOp>0.5 and not isLoading then
-                    if inBox(uiX+L.W-59,uiY+11,12,12) then
+                    -- Yellow minimize button click
+                    if inBox(uiX+L.W-38,uiY+10,12,12) then
                         handleDrag = false
                         uiTargetH = L.MINI_H
                         task.spawn(function()
@@ -1862,7 +1865,8 @@ function UILib.Window(titleA, titleB, gameName)
                             refreshMiniLabels(); showMiniUI(true); updateMiniPos()
                             for _,lb in ipairs(miniActiveLbls) do if lb.Text~="" then lb.Visible=true end end
                         end)
-                    elseif inBox(uiX+L.W-46,uiY+11,12,12) then
+                    -- Red close button click
+                    elseif inBox(uiX+L.W-22,uiY+10,12,12) then
                         handleDrag=false
                         menuOpen=false; menuToggledAt=tick()
                     end
