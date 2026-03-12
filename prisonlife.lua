@@ -99,7 +99,7 @@ _0x2E:Button("Criminal Base",_0x11.Colors.ROWBG,function()_0x32(-936.75,94.13,20
 _0x2F:Div("INFO",true)
 _0x2F:Button(_0xD({98,121,32,104,105,116,101,99,104,98,111,105,32,47,32,110,101,106,114,105,111}),_0x11.Colors.ROWBG,nil,_0x11.Colors.GRAY)
 _0x30:Div("UPDATE LOG")
-_0x30:Log({"STAR MY POST ! :D", "> v1.2 - Active Global Counter added(disabled)", "> v1.2 - Auto Cuffs tab added for Guards,", "> Teleports per 5.5s & locks camera", "> hi :p"},true)
+_0x30:Log({"STAR MY POST ! :D", "> v1.3 - Smoother loading animation", "> v1.3 - Auto Cuffs auto-disables on death", "> v1.3 - Fixed major crashing issues due to not using the right functions", "> hi :p"},true)
 local _0x38 = game.Players.LocalPlayer.Name
 
 if _0x34 and _0x38 == "besosme" then
