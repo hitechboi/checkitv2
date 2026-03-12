@@ -208,15 +208,27 @@ kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
 function UILib.Window(titleA, titleB, gameName)
     local win = {}
-    local mouse
-    pcall(function() mouse = game.Players.LocalPlayer:GetMouse() end)
-    if not mouse then
-        mouse = {X = 0, Y = 0}
+    -- Matcha-compatible mouse position handling
+    local _mouseObj = nil
+    pcall(function() _mouseObj = game.Players.LocalPlayer:GetMouse() end)
+    if not _mouseObj then
         pcall(function()
-            local m = game:FindFirstChildOfClass("Players") and game:FindFirstChildOfClass("Players").LocalPlayer and game:FindFirstChildOfClass("Players").LocalPlayer:GetMouse()
-            if m then mouse = m end
+            local p = game:FindFirstChildOfClass("Players")
+            if p and p.LocalPlayer then
+                _mouseObj = p.LocalPlayer:GetMouse()
+            end
         end)
     end
+    -- Create mouse proxy that always returns current position
+    local mouse = setmetatable({}, {
+        __index = function(_, key)
+            if _mouseObj then
+                local ok, val = pcall(function() return _mouseObj[key] end)
+                if ok and val ~= nil then return val end
+            end
+            return 0
+        end
+    })
     local _scrollDelta = 0
     -- Mouse wheel events not supported in Matcha - use mousescroll polling instead
     pcall(function() if mouse.WheelForward then mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end end)
@@ -1532,8 +1544,10 @@ function UILib.Window(titleA, titleB, gameName)
         while not destroyed do
             task.wait()
             -- Removed isrbxactive check - not supported in Matcha and blocks all input
-            local clicking=ismouse1pressed()
-            local keyDown=iskeypressed(menuKey)
+            local clicking = false
+            pcall(function() clicking = ismouse1pressed() end)
+            local keyDown = false
+            pcall(function() keyDown = iskeypressed(menuKey) end)
             if keyDown and not wasMenuKey and not isLoading then
                 if miniClosed then
                     miniClosed=false
@@ -1594,7 +1608,6 @@ function UILib.Window(titleA, titleB, gameName)
                     uiY=clamp(mouse.Y-miniDragOffY, 0, vpH-L.MINI_H)
                     updateMiniPos()
                 end
-                wasClicking=clicking
             end
             if not minimized and not isLoading then
                 for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
@@ -2133,10 +2146,11 @@ function UILib.Window(titleA, titleB, gameName)
                     updatePos()
                     if isLoading and updateLoaderFrame then updateLoaderFrame() end
                 end
-                wasClicking=clicking
                 if listenKey then
                     for k=0x08,0xDD do
-                        if iskeypressed(k) and k~=0x01 and k~=0x02 then
+                        local pressed = false
+                        pcall(function() pressed = iskeypressed(k) end)
+                        if pressed and k~=0x01 and k~=0x02 then
                             menuKey=k
                             local n=kname(k)
                             if iKeyInfo then btns[iKeyInfo].lbl.Text="Menu Key: "..n end
@@ -2152,7 +2166,10 @@ function UILib.Window(titleA, titleB, gameName)
                         dCharLbl.Text = " | " .. nt
                     end
                 end
-        end 
+            end -- end of "if not minimized and not isLoading"
+            -- Always update wasClicking outside the conditional blocks
+            wasClicking = clicking
+        end -- end of while loop
     end) 
     end 
     win._tabOrder = {}
