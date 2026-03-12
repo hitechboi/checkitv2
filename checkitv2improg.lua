@@ -557,8 +557,8 @@ function UILib.Window(titleA, titleB, gameName)
             dOnlineTxt.Position = Vector2.new(tx + 12, uiY+14)
         end
         -- Yellow and red circles LEFT of F1 key label
-        dBtnMinimize.Position = Vector2.new(uiX+L.W-52, uiY+16)
-        dBtnClose.Position    = Vector2.new(uiX+L.W-38, uiY+16)
+        dBtnMinimize.Position = Vector2.new(uiX+L.W-52, uiY+19)
+        dBtnClose.Position    = Vector2.new(uiX+L.W-38, uiY+19)
         dKeyLbl.Position      = Vector2.new(uiX+L.W-22, uiY+14)
         dSide.Position    =Vector2.new(uiX+1,uiY+L.TOPBAR)
         dSideLn.From      =Vector2.new(uiX+L.SIDEBAR,uiY+L.TOPBAR)
@@ -1226,15 +1226,15 @@ function UILib.Window(titleA, titleB, gameName)
         end
         -- Yellow and Red circle buttons LEFT of F1 key label
         dBtnMinimize = Drawing.new("Circle")
-        dBtnMinimize.Radius = 5; dBtnMinimize.Color = Color3.fromRGB(230,180,50); dBtnMinimize.Filled = true
+        dBtnMinimize.Radius = 4; dBtnMinimize.Color = Color3.fromRGB(230,180,50); dBtnMinimize.Filled = true
         dBtnMinimize.Transparency = 1; dBtnMinimize.ZIndex = 10; dBtnMinimize.Visible = false
-        dBtnMinimize.Position = Vector2.new(uiX+L.W-52, uiY+16)
+        dBtnMinimize.Position = Vector2.new(uiX+L.W-52, uiY+19)
         table.insert(allDrawings, dBtnMinimize)
         
         dBtnClose = Drawing.new("Circle")
-        dBtnClose.Radius = 5; dBtnClose.Color = Color3.fromRGB(200,60,60); dBtnClose.Filled = true
+        dBtnClose.Radius = 4; dBtnClose.Color = Color3.fromRGB(200,60,60); dBtnClose.Filled = true
         dBtnClose.Transparency = 1; dBtnClose.ZIndex = 10; dBtnClose.Visible = false
-        dBtnClose.Position = Vector2.new(uiX+L.W-38, uiY+16)
+        dBtnClose.Position = Vector2.new(uiX+L.W-38, uiY+19)
         table.insert(allDrawings, dBtnClose)
         
         dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
@@ -1362,18 +1362,33 @@ function UILib.Window(titleA, titleB, gameName)
         dWelcomeLoad.Visible = false
 
         task.spawn(function()
-            for i = 1, 25 do
-                local f = i/25
-                f = 1 - (1-f)^3
-                dBg.Size = Vector2.new(L.W * f, 4)
-                dBg.Position = Vector2.new(uiX + L.W/2 - (L.W*f)/2, uiY + L.H/2 - 2)
+            -- Phase 1: Smooth horizontal expand (left to right, like opening a laptop lid)
+            local xFrames = 40
+            for i = 1, xFrames do
+                local f = i / xFrames
+                -- Smooth easeInOutCubic for very smooth feel
+                if f < 0.5 then
+                    f = 4 * f * f * f
+                else
+                    f = 1 - (-2 * f + 2)^3 / 2
+                end
+                local w = L.W * f
+                dBg.Size = Vector2.new(w, 4)
+                dBg.Position = Vector2.new(uiX + L.W/2 - w/2, uiY + L.H/2 - 2)
                 task.wait()
             end
-            for i = 1, 20 do
-                local f = i/20
-                f = 1 - (1-f)^3
-                dBg.Size = Vector2.new(L.W, 4 + (L.H-4)*f)
-                dBg.Position = Vector2.new(uiX, uiY + L.H/2 - 2 - ((L.H-4)*f)/2)
+            -- Phase 2: Smooth vertical expand (up and down from center, like opening the screen)
+            local yFrames = 35
+            for i = 1, yFrames do
+                local f = i / yFrames
+                if f < 0.5 then
+                    f = 4 * f * f * f
+                else
+                    f = 1 - (-2 * f + 2)^3 / 2
+                end
+                local h = 4 + (L.H - 4) * f
+                dBg.Size = Vector2.new(L.W, h)
+                dBg.Position = Vector2.new(uiX, uiY + L.H/2 - h/2)
                 task.wait()
             end
             dBg.Size = Vector2.new(L.W, L.H); dBg.Position = Vector2.new(uiX, uiY)
@@ -1869,9 +1884,9 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 if clicking and not wasClicking and mOp>0.5 and not isLoading then
-                    -- Yellow minimize button click (circle at L.W-52, radius 5)
-                    local ymX, ymY = uiX+L.W-52, uiY+16
-                    local rcX, rcY = uiX+L.W-38, uiY+16
+                    -- Yellow minimize button click (circle at L.W-52, radius 4)
+                    local ymX, ymY = uiX+L.W-52, uiY+19
+                    local rcX, rcY = uiX+L.W-38, uiY+19
                     local ymDist = math.sqrt((mouse.X-ymX)^2 + (mouse.Y-ymY)^2)
                     local rcDist = math.sqrt((mouse.X-rcX)^2 + (mouse.Y-rcY)^2)
                     if ymDist <= 6 then
