@@ -955,55 +955,82 @@ function UILib.Window(titleA,titleB,gameName)
             end) end)
         end
 
-        -- ── Loading screen (runs blocking in its own thread) ──
+        -- ── Loading screen ────────────────────────────────────
+        -- Create overlay SYNCHRONOUSLY (before task.spawn) so it's
+        -- immediately visible. NOT added to allD so flushAlpha never hides it.
+        local _loadTitle = (gameName~="" and gameName~="Game Name" and gameName) or (titleA.." "..titleB)
+        local oBg    = Drawing.new("Square")
+        oBg.Position=Vector2.new(uiX,uiY); oBg.Size=Vector2.new(W,FULL_H)
+        oBg.Color=Color3.fromRGB(7,9,17); oBg.Filled=true; oBg.ZIndex=50; oBg.Transparency=1; oBg.Visible=true
+
+        local oTitle = Drawing.new("Text")
+        oTitle.Text=_loadTitle.." Loading"; oTitle.Position=Vector2.new(uiX+W/2,uiY+FULL_H/2-28)
+        oTitle.Size=14; oTitle.Color=C.TXT; oTitle.Center=true; oTitle.Outline=false
+        oTitle.Font=Drawing.Fonts.SystemBold; oTitle.ZIndex=51; oTitle.Transparency=1; oTitle.Visible=true
+
+        local oDesc = Drawing.new("Text")
+        oDesc.Text="Connecting..."; oDesc.Position=Vector2.new(uiX+W/2,uiY+FULL_H/2-8)
+        oDesc.Size=10; oDesc.Color=C.GRY; oDesc.Center=true; oDesc.Outline=false
+        oDesc.Font=Drawing.Fonts.System; oDesc.ZIndex=51; oDesc.Transparency=1; oDesc.Visible=true
+
+        local oBarBg = Drawing.new("Square")
+        oBarBg.Position=Vector2.new(uiX+W/2-80,uiY+FULL_H/2+10); oBarBg.Size=Vector2.new(160,5)
+        oBarBg.Color=C.DIM; oBarBg.Filled=true; oBarBg.ZIndex=51; oBarBg.Transparency=1; oBarBg.Visible=true
+        pcall(function() oBarBg.Corner=3 end)
+
+        local oBar = Drawing.new("Square")
+        oBar.Position=Vector2.new(uiX+W/2-80,uiY+FULL_H/2+10); oBar.Size=Vector2.new(0,5)
+        oBar.Color=C.ACC; oBar.Filled=true; oBar.ZIndex=52; oBar.Transparency=1; oBar.Visible=true
+        pcall(function() oBar.Corner=3 end)
+
+        local oPct = Drawing.new("Text")
+        oPct.Text="0%"; oPct.Position=Vector2.new(uiX+W/2,uiY+FULL_H/2+22)
+        oPct.Size=9; oPct.Color=C.GRY; oPct.Center=true; oPct.Outline=false
+        oPct.Font=Drawing.Fonts.System; oPct.ZIndex=51; oPct.Transparency=1; oPct.Visible=true
+
+        local _loadDrawings={oBg,oTitle,oDesc,oBarBg,oBar,oPct}
+        -- register for cleanup on Destroy
+        for _,dr in ipairs(_loadDrawings) do d(dr) end
+
         task.spawn(function()
             local stages={"Connecting...","Building UI...","Almost ready...","Done!"}
             local stageT={0.25,0.55,0.85,1.0}
-            -- Solid backdrop that sits above the (hidden) menu chrome
-            local oBg    = sq(uiX,uiY,W,FULL_H,Color3.fromRGB(7,9,17),true,30,1)
-            local oTitle = tx((gameName~="" and gameName or (titleA.." "..titleB)).." Loading",uiX+W/2,uiY+FULL_H/2-28,14,C.TXT,true,31,true)
-            local oDesc  = tx(stages[1],uiX+W/2,uiY+FULL_H/2-8,10,C.GRY,true,31)
-            local oBarBg = sq(uiX+W/2-80,uiY+FULL_H/2+10,160,5,C.DIM,true,31,1)
-            local oBar   = sq(uiX+W/2-80,uiY+FULL_H/2+10,0,5,C.ACC,true,32,1)
-            local oPct   = tx("0%",uiX+W/2,uiY+FULL_H/2+22,9,C.GRY,true,31)
-            pcall(function() oBarBg.Corner=3; oBar.Corner=3 end)
-            d(oBg); d(oTitle); d(oDesc); d(oBarBg); d(oBar); d(oPct)
+            local barPct=0
 
-            local barPct = 0  -- 0..1, driven by RenderStepped tween
-            -- Animate bar through stages using RenderStepped
             for si,target in ipairs(stageT) do
                 oDesc.Text=stages[si]
-                local proxy={v=barPct}
-                tween(proxy,"v",barPct,target,0.38,easeInOut)
-                -- step until proxy reaches target (RenderStepped not yet connected, drive manually)
+                local startV=barPct; local dur=0.38
                 local t0=os.clock()
-                while proxy.v < target-0.005 and not destroyed do
-                    local dt2=os.clock()-t0; t0=os.clock()
-                    stepTweens(dt2)
-                    barPct=proxy.v
+                while not destroyed do
+                    local elapsed=os.clock()-t0
+                    local tf=math.min(elapsed/dur,1)
+                    -- easeInOut
+                    local et=tf<0.5 and 4*tf^3 or 1-(-2*tf+2)^3/2
+                    barPct=startV+(target-startV)*et
                     oBar.Size=Vector2.new(barPct*160,5)
                     oPct.Text=math.floor(barPct*100).."%"
+                    if tf>=1 then break end
                     task.wait()
                 end
-                barPct=target; oBar.Size=Vector2.new(target*160,5); oPct.Text=math.floor(target*100).."%"
-                task.wait(0.08)
+                barPct=target; oBar.Size=Vector2.new(target*160,5)
+                oPct.Text=math.floor(target*100).."%"
+                task.wait(0.06)
             end
             task.wait(0.2)
 
-            -- Fade out overlay smoothly
-            local proxy2={v=1}
-            tween(proxy2,"v",1,0,0.32,easeOut)
-            local t1=os.clock()
-            while proxy2.v > 0.01 and not destroyed do
-                local dt2=os.clock()-t1; t1=os.clock()
-                stepTweens(dt2)
-                local a=proxy2.v
-                for _,dr in ipairs({oBg,oTitle,oDesc,oBarBg,oBar,oPct}) do
+            -- Smooth fade out
+            local dur2=0.3; local t1=os.clock()
+            while not destroyed do
+                local elapsed=os.clock()-t1
+                local a=1-(elapsed/dur2)
+                if a<=0 then a=0 end
+                for _,dr in ipairs(_loadDrawings) do
                     dr.Transparency=a; dr.Visible=a>0.005
                 end
+                if a<=0 then break end
                 task.wait()
             end
-            for _,dr in ipairs({oBg,oTitle,oDesc,oBarBg,oBar,oPct}) do
+            for _,dr in ipairs(_loadDrawings) do
                 dr.Visible=false; pcall(function() dr:Remove() end)
             end
             isLoading=false
