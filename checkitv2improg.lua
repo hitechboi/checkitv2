@@ -787,8 +787,6 @@ function UILib.Window(titleA,titleB,gameName)
         task.spawn(function()
         while not destroyed do
             task.wait()
-            local _ok,_act=pcall(function() return isrbxactive() end)
-            if not _ok or _act then
             local clicking=ismouse1pressed()
             local keyDown=iskeypressed(menuKey)
 
@@ -1109,7 +1107,7 @@ function UILib.Window(titleA,titleB,gameName)
             end
 
             wasClick=clicking
-            end end end)
+            end end)
     end -- Init
 
     win._tabOrder=tabOrder
