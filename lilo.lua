@@ -994,18 +994,23 @@ function UILib.Window(titleA,titleB,gameName)
         for _,dr in ipairs(_loadDrawings) do d(dr) end
 
         task.spawn(function()
-            local stages={"Connecting...","Building UI...","Almost ready...","Done!"}
-            local stageT={0.25,0.55,0.85,1.0}
+            -- each stage: {label, target bar fraction, hold time after bar reaches target}
+            local stages={
+                {"Connecting...",     0.25, 0.55},
+                {"Building UI...",    0.55, 0.5},
+                {"Almost ready...",   0.85, 0.45},
+                {"Done!",             1.0,  0.3},
+            }
             local barPct=0
 
-            for si,target in ipairs(stageT) do
-                oDesc.Text=stages[si]
-                local startV=barPct; local dur=0.38
-                local t0=os.clock()
+            for _,stage in ipairs(stages) do
+                local label,target,hold = stage[1],stage[2],stage[3]
+                oDesc.Text=label
+                -- animate bar to target over 0.45s easeInOut
+                local startV=barPct; local dur=0.45; local t0=os.clock()
                 while not destroyed do
                     local elapsed=os.clock()-t0
                     local tf=math.min(elapsed/dur,1)
-                    -- easeInOut
                     local et=tf<0.5 and 4*tf^3 or 1-(-2*tf+2)^3/2
                     barPct=startV+(target-startV)*et
                     oBar.Size=Vector2.new(barPct*160,5)
@@ -1013,18 +1018,20 @@ function UILib.Window(titleA,titleB,gameName)
                     if tf>=1 then break end
                     task.wait()
                 end
-                barPct=target; oBar.Size=Vector2.new(target*160,5)
+                barPct=target
+                oBar.Size=Vector2.new(target*160,5)
                 oPct.Text=math.floor(target*100).."%"
-                task.wait(0.06)
+                -- hold at this stage so the user can read it
+                task.wait(hold)
             end
-            task.wait(0.2)
 
-            -- Smooth fade out
-            local dur2=0.3; local t1=os.clock()
+            task.wait(0.25)
+
+            -- Smooth fade out over 0.4s
+            local dur2=0.4; local t1=os.clock()
             while not destroyed do
                 local elapsed=os.clock()-t1
-                local a=1-(elapsed/dur2)
-                if a<=0 then a=0 end
+                local a=math.max(0, 1-(elapsed/dur2))
                 for _,dr in ipairs(_loadDrawings) do
                     dr.Transparency=a; dr.Visible=a>0.005
                 end
@@ -1403,29 +1410,60 @@ function UILib.Window(titleA,titleB,gameName)
         end)
         table.insert(connections,dragConn)
 
-        -- Hide everything until loading screen finishes
+        -- Hide everything until loading finishes, then force-show
         globalAlpha=0
         for _,dr in ipairs(chromeD) do dr.Visible=false end
-        for _,tb in ipairs(tabObjs) do tb.bg.Visible=false; tb.acc.Visible=false; tb.lbl.Visible=false; tb.lblG.Visible=false end
+        for _,tb in ipairs(tabObjs) do
+            tb.bg.Visible=false; tb.acc.Visible=false
+            tb.lbl.Visible=false; tb.lblG.Visible=false
+        end
         dScrBg.Visible=false; dScrThumb.Visible=false
         reposChrome()
-        -- After loading finishes, fade the menu in (manual loop, no tween engine dependency)
+
         task.spawn(function()
+            -- wait for loading to finish
             repeat task.wait() until not isLoading or destroyed
             if destroyed then return end
+
+            -- force everything visible immediately at full alpha
             isOpen=true
-            local dur=0.35; local t0=os.clock()
-            while not destroyed do
-                local elapsed=os.clock()-t0
-                local tf=math.min(elapsed/dur,1)
-                -- easeOut cubic
-                globalAlpha=1-(1-tf)^3
-                flushAlpha()
-                if tf>=1 then break end
-                task.wait()
+            globalAlpha=1
+            -- make sure tabAlpha for current tab is 1
+            if curTab then tabAlpha[curTab]=1 end
+
+            -- directly set every chrome drawing visible
+            for _,dr in ipairs(chromeD) do
+                dr.Visible=true; dr.Transparency=1
             end
-            globalAlpha=1; flushAlpha()
+            -- tab sidebar buttons
+            for _,tb in ipairs(tabObjs) do
+                tb.bg.Visible=true;  tb.bg.Transparency=1
+                tb.acc.Visible=true; tb.acc.Transparency=1
+                if tb.sel then
+                    tb.lbl.Visible=true;  tb.lbl.Transparency=1
+                    tb.lblG.Visible=false
+                else
+                    tb.lbl.Visible=false
+                    tb.lblG.Visible=true; tb.lblG.Transparency=1
+                end
+            end
+            -- content buttons for current tab
+            if curTab then
+                for _,b in ipairs(btns) do
+                    if b.tab==curTab then
+                        posBtn(b); setDrawings(b,true)
+                        -- force transparency on each drawing
+                        local function fv(dr) if dr then dr.Transparency=1 end end
+                        fv(b.bg); fv(b.outline); fv(b.sep); fv(b.lbl)
+                        fv(b.tog); fv(b.dot); fv(b.track); fv(b.fill)
+                        fv(b.handle); fv(b.valLbl); fv(b.arrow); fv(b.dlbl)
+                    end
+                end
+            end
+            reposChrome()
+            updateScrollbar()
             pcall(function() setrobloxinput(false) end)
+            print("[UILib] menu revealed")
         end)
     end -- Init
 
