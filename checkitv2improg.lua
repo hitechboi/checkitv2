@@ -2171,7 +2171,6 @@ function UILib.Window(titleA, titleB, gameName)
             wasClicking = clicking
         end -- end of while loop
     end) 
-    end 
     win._tabOrder = {}
     function win:Tab(name)
         table.insert(win._tabOrder, name)
