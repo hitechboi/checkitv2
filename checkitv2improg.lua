@@ -1542,14 +1542,14 @@ function UILib.Window(titleA, titleB, gameName)
         end)
         task.spawn(function()
             while not destroyed do
-            task.wait()
-            -- Removed isrbxactive check - not supported in Matcha and blocks all input
-            local clicking = false
-            pcall(function() clicking = ismouse1pressed() end)
-            local keyDown = false
-            pcall(function() keyDown = iskeypressed(menuKey) end)
-            if keyDown and not wasMenuKey and not isLoading then
-                if miniClosed then
+                task.wait()
+                -- Removed isrbxactive check - not supported in Matcha and blocks all input
+                local clicking = false
+                pcall(function() clicking = ismouse1pressed() end)
+                local keyDown = false
+                pcall(function() keyDown = iskeypressed(menuKey) end)
+                if keyDown and not wasMenuKey and not isLoading then
+                    if miniClosed then
                     miniClosed=false
                     refreshMiniLabels()
                     showMiniUI(true)
@@ -2166,9 +2166,8 @@ function UILib.Window(titleA, titleB, gameName)
                         dCharLbl.Text = " | " .. nt
                     end
                 end
-            end -- end of "if not minimized and not isLoading"
-            -- Always update wasClicking outside the conditional blocks
-            wasClicking = clicking
+                -- Always update wasClicking outside the conditional blocks
+                wasClicking = clicking
             end -- end of while loop
         end)
     win._tabOrder = {}
