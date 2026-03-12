@@ -72,11 +72,6 @@ UILib.Colors = THEMES["Check it"]
 _G.UILib = UILib
 print("[UILib] v1.6.0 loaded")
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
-local function lerp(a,b,t) return a + (b - a) * t end
-local function lerpV2(a,b,t) return Vector2.new(lerp(a.X,b.X,t), lerp(a.Y,b.Y,t)) end
-local function easeOutQuad(t) return 1 - (1 - t) * (1 - t) end
-local function easeOutCubic(t) return 1 - math.pow(1 - t, 3) end
-local function easeInOutQuad(t) return t < 0.5 and 2 * t * t or 1 - math.pow(-2 * t + 2, 2) / 2 end
 local function lerpC(a,b,t)
     return Color3.fromRGB(
         math.floor(a.R*255+(b.R*255-a.R*255)*t),
@@ -144,7 +139,6 @@ local function mkSq(x,y,w,h,col,filled,transp,zi,thick,corner)
     s.Color=col; s.Filled=filled; s.Transparency=transp or 1
     s.ZIndex=zi or 1; s.Visible=true
     if not filled then s.Thickness=thick or 1 end
-    -- Corner property not supported in Matcha - silently ignore
     if corner and corner>0 then pcall(function() s.Corner=corner end) end
     return s
 end
@@ -208,31 +202,10 @@ kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
 function UILib.Window(titleA, titleB, gameName)
     local win = {}
-    -- Matcha-compatible mouse position handling
-    local _mouseObj = nil
-    pcall(function() _mouseObj = game.Players.LocalPlayer:GetMouse() end)
-    if not _mouseObj then
-        pcall(function()
-            local p = game:FindFirstChildOfClass("Players")
-            if p and p.LocalPlayer then
-                _mouseObj = p.LocalPlayer:GetMouse()
-            end
-        end)
-    end
-    -- Create mouse proxy that always returns current position
-    local mouse = setmetatable({}, {
-        __index = function(_, key)
-            if _mouseObj then
-                local ok, val = pcall(function() return _mouseObj[key] end)
-                if ok and val ~= nil then return val end
-            end
-            return 0
-        end
-    })
+    local mouse = game.Players.LocalPlayer:GetMouse()
     local _scrollDelta = 0
-    -- Mouse wheel events not supported in Matcha - use mousescroll polling instead
-    pcall(function() if mouse.WheelForward then mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end end)
-    pcall(function() if mouse.WheelBackward then mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end) end end)
+    pcall(function() mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end)
+    pcall(function() mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end) end)
     local PAD = 10
     local uiX, uiY       = 300, 200
     local dragging        = false
@@ -246,12 +219,8 @@ function UILib.Window(titleA, titleB, gameName)
     local wasMenuKey      = false
     local menuOpen        = true
     local menuToggledAt   = tick() - 1
-    local FADE_DUR        = 0.5
-    local TAB_FADE_DUR    = 0.3
-    local MENU_OPEN_FADE  = 0.6
-    local menuFadeProgress = 0
-    local menuTargetScale = 1
-    local menuCurrentScale = 0.85
+    local FADE_DUR        = 0.4
+    local TAB_FADE_DUR    = 0.2
     local tabSwitchedAt   = tick() - 1
     local prevTab         = nil
     local minimized       = false
@@ -329,21 +298,15 @@ function UILib.Window(titleA, titleB, gameName)
         if not minimized then
             for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
         end
-        local rawT = clamp((tick() - menuToggledAt) / MENU_OPEN_FADE, 0, 1)
-        local easedT = easeOutCubic(rawT)
-        if menuOpen then
-            menuFadeProgress = easedT
-            menuCurrentScale = lerp(0.85, 1, easedT)
-        else
-            menuFadeProgress = 1 - easedT
-            menuCurrentScale = lerp(1, 0.85, easedT)
-        end
-        if not menuOpen and rawT >= 1 then
+        local mf=1-(menuToggledAt-(tick()-FADE_DUR))/FADE_DUR
+        if not menuOpen and mf>=1.1 then
             for _,d in ipairs(allDrawings) do d.Visible=false end
             return
         end
-        local mOp = menuFadeProgress
-        local tp = easeOutQuad(clamp((tick()-tabSwitchedAt)/TAB_FADE_DUR,0,1))
+        local mOp=mf<1.1
+            and math.abs((menuOpen and 0 or 1)-clamp(mf,0,1))
+            or  (menuOpen and 1 or 0)
+        local tp=clamp((tick()-tabSwitchedAt)/TAB_FADE_DUR,0,1)
         for _,d in ipairs(allDrawings) do
             if showSet[d] then
                 local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
@@ -1240,9 +1203,7 @@ function UILib.Window(titleA, titleB, gameName)
             task.spawn(function()
                 pcall(function()
                     local gn
-                    if type(getgetname) == "function" then
-                        gn = getgetname()
-                    elseif type(getgamename) == "function" then
+                    if type(getgamename) == "function" then
                         gn = getgamename()
                     else
                         local info = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
@@ -1322,9 +1283,7 @@ function UILib.Window(titleA, titleB, gameName)
         currentTab=defaultTab
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
         updateLoaderFrame = nil
-        local uname = "Player"
-        pcall(function() uname = game:FindFirstChildOfClass("Players").LocalPlayer.Name end)
-        pcall(function() uname = game:GetService("Players").LocalPlayer.Name end)
+        local uname = game:GetService("Players").LocalPlayer.Name
         dWelcomeTxt = mkTx("Welcome, ", 0, 0, 13, C.WHITE, false, 5, true)
         dWelcomeTxt.Visible = true
         dNameTxt = mkTx(uname, 0, 0, 13, C.WHITE, false, 5, false)
@@ -1332,11 +1291,7 @@ function UILib.Window(titleA, titleB, gameName)
         avatarDrawings = {}
         task.spawn(function()
             local url = "https://api.luard.co/v1/user?v5="..uname.."&res=64"
-            -- HttpGet not supported in Matcha - avatar loading will be skipped
-            local s, code = pcall(function() 
-                if game.HttpGet then return game:HttpGet(url) end
-                return nil
-            end)
+            local s, code = pcall(function() return game:HttpGet(url) end)
             if s and code and #code > 100 then
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
@@ -1379,11 +1334,11 @@ function UILib.Window(titleA, titleB, gameName)
         dBg.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 2)
         dBg.Visible = true
 
-        local uname2 = uname -- reuse the already-fetched username
+        local uname = game:GetService("Players").LocalPlayer.Name
         local dWelcomeLoad = Drawing.new("Text")
         dWelcomeLoad.Size=14; dWelcomeLoad.Color=C.WHITE; dWelcomeLoad.Center=true; dWelcomeLoad.Outline=true; dWelcomeLoad.ZIndex=16
         pcall(function() dWelcomeLoad.Font=Drawing.Fonts.Minecraft end)
-        dWelcomeLoad.Text = "Welcome, " .. uname2
+        dWelcomeLoad.Text = "Welcome, " .. uname
         dWelcomeLoad.Visible = false
 
         task.spawn(function()
@@ -1511,45 +1466,27 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 task.wait(0.1)
             end
-            local t2 = tick(); local durOut = 0.5
+            local t2 = tick(); local durOut = 0.3
             while tick()-t2 < durOut and not destroyed do
                 task.wait()
-                local prog = easeOutCubic((tick()-t2)/durOut)
-                setLoadPos(1 - prog, "Ready!", 1, "")
+                setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, "")
             end
             pcall(function() dBg:Remove() end)
             pcall(function() dTxt:Remove() end)
             pcall(function() dDesc:Remove() end)
             pcall(function() dBarBg:Remove() end)
-            pcall(function() dBarFg:Remove() end)
-            pcall(function() dBarOuter:Remove() end)
-            pcall(function() dBarGlow:Remove() end)
-            pcall(function() dWelcomeLoad:Remove() end)
             isLoading = false
-            -- Trigger smooth fade-in of main menu
-            menuOpen = true
-            menuToggledAt = tick()
-            menuFadeProgress = 0
-            menuCurrentScale = 0.85
-            -- Show all base UI elements
-            for _,d in ipairs(baseUI) do setShow(d,true) end
-            for _,t2 in ipairs(tabObjs) do
-                setShow(t2.bg,true); setShow(t2.acc,true)
-                setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
-            end
-            showTab(currentTab)
-            updatePos()
         end)
         task.spawn(function()
-            while not destroyed do
-                task.wait()
-                -- Removed isrbxactive check - not supported in Matcha and blocks all input
-                local clicking = false
-                pcall(function() clicking = ismouse1pressed() end)
-                local keyDown = false
-                pcall(function() keyDown = iskeypressed(menuKey) end)
-                if keyDown and not wasMenuKey and not isLoading then
-                    if miniClosed then
+        while not destroyed do
+            task.wait()
+            -- Matcha fix: wrap input functions in pcall and remove isrbxactive check
+            local clicking = false
+            pcall(function() clicking = ismouse1pressed() end)
+            local keyDown = false
+            pcall(function() keyDown = iskeypressed(menuKey) end)
+            if keyDown and not wasMenuKey and not isLoading then
+                if miniClosed then
                     miniClosed=false
                     refreshMiniLabels()
                     showMiniUI(true)
@@ -1608,21 +1545,20 @@ function UILib.Window(titleA, titleB, gameName)
                     uiY=clamp(mouse.Y-miniDragOffY, 0, vpH-L.MINI_H)
                     updateMiniPos()
                 end
+                wasClicking=clicking
             end
             if not minimized and not isLoading then
                 for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
-                    -- Smoother tab selection animation
-                    t.lt=t.lt+(tgt-t.lt)*0.08
-                    t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,easeOutQuad(t.lt))
-                    t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,easeOutQuad(t.lt))
+                    t.lt=t.lt+(tgt-t.lt)*0.15
+                    t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,t.lt)
+                    t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,t.lt)
                 end
                 for _,b in ipairs(btns) do
                     if b.isTog and b.tog and b.tab==currentTab then
                         local tgt=b.state and 1 or 0
-                        -- Smoother toggle animation
-                        b.lt=b.lt+(tgt-b.lt)*0.10
+                        b.lt=b.lt+(tgt-b.lt)*0.18
                         b.tog.Color=lerpC(C.OFF,   C.ON,   b.lt)
                         b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
                         local dox=b.rx+b.cw-L.TOG_W-8
@@ -1679,10 +1615,9 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                         if b.outGlow then
                             local diff = (b.targetHoverAlpha or 0) - (b.hoverAlpha or 0)
-                            if math.abs(diff) > 0.02 then
-                                -- Smoother hover glow animation
-                                b.hoverAlpha = (b.hoverAlpha or 0) + diff * 0.08
-                                b.outGlow.Transparency = easeOutQuad(b.hoverAlpha) * menuFadeProgress
+                            if math.abs(diff) > 0.05 then
+                                b.hoverAlpha = (b.hoverAlpha or 0) + diff * 0.15
+                                b.outGlow.Transparency = b.hoverAlpha * dMainBg.Transparency
                             elseif (b.targetHoverAlpha == 0 and (b.hoverAlpha or 0) ~= 0) then
                                 b.hoverAlpha = 0
                                 b.outGlow.Transparency = 0
@@ -1692,34 +1627,33 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
             end
-            applyFade()
-            if dWelcomeTxt and dNameTxt then
+                applyFade()
+                if dWelcomeTxt and dNameTxt then
                     local wX = uiX + 42
                     local tY = uiY + uiCurrentH - L.FOOTER + 9
                     dWelcomeTxt.Position = Vector2.new(wX, tY)
-                    dWelcomeTxt.Transparency = menuFadeProgress
-                    dWelcomeTxt.Visible = menuFadeProgress > 0.01
+                    dWelcomeTxt.Transparency = menuOpen and 1 or 0
+                    dWelcomeTxt.Visible = menuOpen
                     dNameTxt.Position = Vector2.new(wX + 64, tY) 
-                    dNameTxt.Transparency = menuFadeProgress
-                    dNameTxt.Visible = menuFadeProgress > 0.01
+                    dNameTxt.Transparency = menuOpen and 1 or 0
+                    dNameTxt.Visible = menuOpen
                 end
                 if dCharLbl then
-                    dCharLbl.Transparency = menuFadeProgress
-                    dCharLbl.Visible = menuFadeProgress > 0.01
+                    dCharLbl.Transparency = menuOpen and 1 or 0
+                    dCharLbl.Visible = menuOpen
                 end
                 local ax = uiX + 12
                 local ay = uiY + uiCurrentH - L.FOOTER + 6
                 for _,ap in ipairs(avatarDrawings or {}) do
                     ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
-                    ap.d.Transparency = menuFadeProgress
-                    ap.d.Visible = menuFadeProgress > 0.01
+                    ap.d.Visible = menuOpen
                 end
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
                         if b._collapsing and b._collapseTarget then
                             local diff = b._collapseTarget - b.currentRY
                             if math.abs(diff) > 0.5 then
-                                b.currentRY = b.currentRY + diff * 0.12
+                                b.currentRY = b.currentRY + diff * 0.18
                                 bPos(b)
                             else
                                 b.currentRY = b._collapseTarget
@@ -1729,9 +1663,7 @@ function UILib.Window(titleA, titleB, gameName)
                         else
                             local diff = b.ry - b.currentRY
                             if math.abs(diff) > 0.3 then
-                                -- Smooth eased position animation
-                                local smoothFactor = 0.08 + 0.04 * easeOutQuad(clamp(math.abs(diff) / 50, 0, 1))
-                                b.currentRY = b.currentRY + diff * smoothFactor
+                                b.currentRY = b.currentRY + diff * 0.15
                                 if showSet[b.bg] then bPos(b) end
                             elseif b.currentRY ~= b.ry then
                                 b.currentRY = b.ry
@@ -1739,21 +1671,11 @@ function UILib.Window(titleA, titleB, gameName)
                             end
                         end
                     end
-                    -- Smooth transparency fade for individual buttons
-                    if b._targetAlpha ~= nil and b._currentAlpha ~= nil then
-                        local aDiff = b._targetAlpha - b._currentAlpha
-                        if math.abs(aDiff) > 0.01 then
-                            b._currentAlpha = b._currentAlpha + aDiff * 0.12
-                        end
-                    end
                 end
                 local dt = tick() - lastTick
                 lastTick = tick()
                 if math.abs(uiCurrentH - uiTargetH) > 2.0 then
-                    -- Smooth eased height animation
-                    local heightDiff = uiTargetH - uiCurrentH
-                    local smoothH = 0.06 + 0.06 * easeOutQuad(clamp(math.abs(heightDiff) / 100, 0, 1))
-                    uiCurrentH = uiCurrentH + heightDiff * smoothH
+                    uiCurrentH = uiCurrentH + (uiTargetH - uiCurrentH) * clamp(dt * UI_RESIZE_SPD, 0, 1)
                     updatePos()
                     _wasResizing = true
                     local contentBottom = uiY + uiCurrentH - L.FOOTER
@@ -2146,6 +2068,7 @@ function UILib.Window(titleA, titleB, gameName)
                     updatePos()
                     if isLoading and updateLoaderFrame then updateLoaderFrame() end
                 end
+                wasClicking=clicking
                 if listenKey then
                     for k=0x08,0xDD do
                         local pressed = false
@@ -2166,11 +2089,10 @@ function UILib.Window(titleA, titleB, gameName)
                         dCharLbl.Text = " | " .. nt
                     end
                 end
-                -- Always update wasClicking outside the conditional blocks
-                wasClicking = clicking
-            end -- end of while loop
-        end)
-    end -- end of win:Init function
+            end 
+        end 
+    end) 
+    end 
     win._tabOrder = {}
     function win:Tab(name)
         table.insert(win._tabOrder, name)
