@@ -133,11 +133,11 @@ local function mkSq(x,y,w,h,col,filled,transp,zi,thick,corner)
     -- (was: if corner and corner>0 then pcall(function() s.Corner=corner end) end)
     return s
 end
--- FIX: Use FontSize (not Size) for Text drawing objects on Matcha
+-- Text drawing objects use Size (number) for font size on Matcha
 local function mkTx(txt,x,y,sz,col,ctr,zi,bold)
     local t = Drawing.new("Text")
     t.Text=txt; t.Position=Vector2.new(x,y)
-    t.FontSize=sz or 13  -- FIX: was t.Size which conflicts with Square's Vector2 Size property
+    t.Size=sz or 13
     t.Color=col or C.WHITE; t.Center=ctr or false; t.Outline=false
     t.Font=bold and Drawing.Fonts.SystemBold or Drawing.Fonts.System
     t.Transparency=1; t.ZIndex=zi or 3; t.Visible=true
@@ -856,14 +856,14 @@ function UILib.Window(titleA, titleB, gameName)
             local lb=mkD(Drawing.new("Text"))
             if starFirst and i==1 then
                 lb.Text=line; lb.Position=Vector2.new(uiX+rx+cw/2,uiY+ry+pad)
-                lb.FontSize=14  -- FIX: was lb.Size
+                lb.Size=14
                 lb.Color=Color3.fromRGB(255,200,40); lb.Center=true
                 lb.Outline=true
                 pcall(function() lb.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
             else
                 local off=starFirst and (starH+pad+(i-2)*lineH) or (pad+(i-1)*lineH)
                 lb.Text=line; lb.Position=Vector2.new(uiX+rx+8,uiY+ry+off)
-                lb.FontSize=11  -- FIX: was lb.Size
+                lb.Size=11
                 lb.Color=C.WHITE; lb.Center=false
                 lb.Outline=true
                 pcall(function() lb.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
@@ -1327,7 +1327,7 @@ function UILib.Window(titleA, titleB, gameName)
 
         local uname = game:GetService("Players").LocalPlayer.Name
         local dWelcomeLoad = Drawing.new("Text")
-        dWelcomeLoad.FontSize=14  -- FIX: was .Size
+        dWelcomeLoad.Size=14
         dWelcomeLoad.Color=C.WHITE; dWelcomeLoad.Center=true; dWelcomeLoad.Outline=true; dWelcomeLoad.ZIndex=16
         pcall(function() dWelcomeLoad.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
         dWelcomeLoad.Text = "Welcome, " .. uname
@@ -1359,11 +1359,11 @@ function UILib.Window(titleA, titleB, gameName)
             dWelcomeLoad.Visible = false
             
             local dTxt = Drawing.new("Text")
-            dTxt.FontSize=18  -- FIX: was .Size
+            dTxt.Size=18
             dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
             pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
             local dDesc = Drawing.new("Text")
-            dDesc.FontSize=13  -- FIX: was .Size
+            dDesc.Size=13
             dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
             pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
             local dBarOuter = Drawing.new("Square")
