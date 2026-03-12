@@ -363,12 +363,14 @@ function UILib.Window(titleA, titleB, gameName)
         b.bg.Position=Vector2.new(ax,ay)
         if b.outGlow then b.outGlow.Position=Vector2.new(ax-1, ay-1) end
         if b.isLog then
+            local nIdx=0
             for i,lb in ipairs(b.lbls) do
-                if b.starFirst and i==1 then
+                if b.wrappedLines and b.wrappedLines[i] and b.wrappedLines[i].star then
                     lb.Position=Vector2.new(ax+b.cw/2,ay+b.pad)
                 else
-                    local off=b.starFirst and (b.starH+b.pad+(i-2)*b.lineH) or (b.pad+(i-1)*b.lineH)
+                    local off=b.starH+b.pad+nIdx*b.lineH
                     lb.Position=Vector2.new(ax+8,ay+off)
+                    nIdx=nIdx+1
                 end
             end
             return
@@ -853,32 +855,73 @@ function UILib.Window(titleA, titleB, gameName)
                  selected=valIdx,open=false,openedAt=0,cb=cb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
     end
+    local function wrapLogText(text, maxChars)
+        if #text <= maxChars then return {text} end
+        local wrapped = {}
+        local remaining = text
+        while #remaining > 0 do
+            if #remaining <= maxChars then
+                table.insert(wrapped, remaining)
+                break
+            end
+            local cut = maxChars
+            local spaceAt = nil
+            for j = cut, 1, -1 do
+                if remaining:sub(j,j) == " " then spaceAt = j; break end
+            end
+            if spaceAt and spaceAt > 1 then
+                table.insert(wrapped, remaining:sub(1, spaceAt - 1))
+                remaining = remaining:sub(spaceAt + 1)
+            else
+                table.insert(wrapped, remaining:sub(1, cut))
+                remaining = remaining:sub(cut + 1)
+            end
+        end
+        return wrapped
+    end
     local function addLog(tab,lines,relY,starFirst)
         local rx=L.SIDEBAR+L.ROW_PAD
         local cw=L.CONTENT_W-L.ROW_PAD*2
         local lineH=18; local starH=starFirst and 26 or 0; local pad=10
-        local ch=starH+(#lines-(starFirst and 1 or 0))*lineH+pad*2
+        local maxChars=math.floor((cw-16)/6)
+        local wrappedLines={}
+        local wrappedMap={}
+        for i,line in ipairs(lines) do
+            if starFirst and i==1 then
+                table.insert(wrappedLines,{text=line,star=true})
+            else
+                local parts=wrapLogText(line,maxChars)
+                for _,p in ipairs(parts) do
+                    table.insert(wrappedLines,{text=p,star=false})
+                end
+            end
+        end
+        local normalCount=0
+        for _,wl in ipairs(wrappedLines) do if not wl.star then normalCount=normalCount+1 end end
+        local ch=starH+normalCount*lineH+pad*2
         local ry=L.TOPBAR+relY
         local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,6))
         local lbls={}
-        for i,line in ipairs(lines) do
+        local normalIdx=0
+        for _,wl in ipairs(wrappedLines) do
             local lb=mkD(Drawing.new("Text"))
-            if starFirst and i==1 then
-                lb.Text=line; lb.Position=Vector2.new(uiX+rx+cw/2,uiY+ry+pad)
+            if wl.star then
+                lb.Text=wl.text; lb.Position=Vector2.new(uiX+rx+cw/2,uiY+ry+pad)
                 lb.Size=14; lb.Color=Color3.fromRGB(255,200,40); lb.Center=true
                 lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
             else
-                local off=starFirst and (starH+pad+(i-2)*lineH) or (pad+(i-1)*lineH)
-                lb.Text=line; lb.Position=Vector2.new(uiX+rx+8,uiY+ry+off)
+                local off=starH+pad+normalIdx*lineH
+                lb.Text=wl.text; lb.Position=Vector2.new(uiX+rx+8,uiY+ry+off)
                 lb.Size=11; lb.Color=C.WHITE; lb.Center=false
                 lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
+                normalIdx=normalIdx+1
             end
             lb.Transparency=1; lb.ZIndex=8; lb.Visible=false
             table.insert(lbls,lb)
         end
         local b={tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
-                 starFirst=starFirst,starH=starH}
+                 starFirst=starFirst,starH=starH,wrappedLines=wrappedLines}
         table.insert(btns,b); return #btns
     end
     local function addUserList(tab, maxUsers, relY)
@@ -1015,7 +1058,17 @@ function UILib.Window(titleA, titleB, gameName)
         function api:Log(lines, starFirst)
             local lineH = 18
             local starH = starFirst and 26 or 0
-            local h = starH + (#lines - (starFirst and 1 or 0)) * lineH + 20 + 6
+            local cw=L.CONTENT_W-L.ROW_PAD*2
+            local maxChars=math.floor((cw-16)/6)
+            local normalCount=0
+            for i,line in ipairs(lines) do
+                if starFirst and i==1 then
+                else
+                    local parts=wrapLogText(line,maxChars)
+                    normalCount=normalCount+#parts
+                end
+            end
+            local h = starH + normalCount * lineH + 20 + 6
             local y = nextY(h)
             local idx = addLog(tabName, lines, y, starFirst)
             if currentSection and btns[idx] then btns[idx].section = currentSection end
@@ -1394,7 +1447,7 @@ function UILib.Window(titleA, titleB, gameName)
                 dBg.Size = Vector2.new(w, 4)
                 dBg.Position = Vector2.new(uiX + L.W/2 - w/2, uiY + L.H/2 - 2)
                 if t >= 1 then break end
-                task.wait()
+                task.wait(0.016)
             end
             
             -- Small pause between phases
@@ -1411,7 +1464,7 @@ function UILib.Window(titleA, titleB, gameName)
                 dBg.Size = Vector2.new(L.W, h)
                 dBg.Position = Vector2.new(uiX, uiY + L.H/2 - h/2)
                 if t >= 1 then break end
-                task.wait()
+                task.wait(0.016)
             end
             
             dBg.Size = Vector2.new(L.W, L.H); dBg.Position = Vector2.new(uiX, uiY)
@@ -1420,7 +1473,7 @@ function UILib.Window(titleA, titleB, gameName)
             task.wait(1.2)
             for i = 1, 30 do
                 dWelcomeLoad.Transparency = 1 - (i/30)
-                task.wait()
+                task.wait(0.016)
             end
             dWelcomeLoad.Visible = false
             
@@ -1521,13 +1574,13 @@ function UILib.Window(titleA, titleB, gameName)
                 for f = 1, frames do
                     fillAmt = startFill + (stage.pct - startFill) * (f / frames)
                     setLoadPos(1, gameName.." Initializing...", fillAmt, stage.text)
-                    task.wait()
+                    task.wait(0.016)
                 end
                 task.wait(0.15)
             end
             local t2 = tick(); local durOut = 0.8
             while tick()-t2 < durOut and not destroyed do
-                task.wait()
+                task.wait(0.016)
                 setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, "")
             end
             pcall(function() dBg:Remove() end)
@@ -1538,7 +1591,7 @@ function UILib.Window(titleA, titleB, gameName)
         end)
         task.spawn(function()
         while not destroyed do
-            task.wait()
+            task.wait(0.016)
             -- Matcha fix: wrap input functions in pcall and remove isrbxactive check
             local clicking = false
             pcall(function() clicking = ismouse1pressed() end)
@@ -1929,7 +1982,7 @@ function UILib.Window(titleA, titleB, gameName)
                         handleDrag = false
                         uiTargetH = L.MINI_H
                         task.spawn(function()
-                            while math.abs(uiCurrentH - L.MINI_H) > 2 and menuOpen do task.wait() end
+                            while math.abs(uiCurrentH - L.MINI_H) > 2 and menuOpen do task.wait(0.016) end
                             if not menuOpen then return end
                             minimized=true; miniClosed=false
                             menuOpen=false
