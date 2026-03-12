@@ -1363,7 +1363,7 @@ function UILib.Window(titleA, titleB, gameName)
 
         task.spawn(function()
             -- Phase 1: Smooth horizontal expand (left to right, like opening a laptop lid)
-            local xFrames = 120
+            local xFrames = 180
             for i = 1, xFrames do
                 local f = i / xFrames
                 -- Smooth easeInOutCubic for very smooth feel
@@ -1378,7 +1378,7 @@ function UILib.Window(titleA, titleB, gameName)
                 task.wait()
             end
             -- Phase 2: Smooth vertical expand (up and down from center, like opening the screen)
-            local yFrames = 100
+            local yFrames = 150
             for i = 1, yFrames do
                 local f = i / yFrames
                 if f < 0.5 then
@@ -1483,13 +1483,14 @@ function UILib.Window(titleA, titleB, gameName)
             local fillAmt = 0.0
             setLoadPos(1, gameName.." Initializing...", fillAmt)
             local progressStages = {
-                {pct=0.15, text="bypassing security...",                   delay=1.2},
-                {pct=0.33, text="fetching assets...",                      delay=0.9},
-                {pct=0.46, text="syncing check.lua routines...",           delay=1.4},
-                {pct=0.68, text="warming up layout engine... v1.6.0",      delay=1.0},
-                {pct=0.85, text="initializing core Check it interface...", delay=1.3},
-                {pct=0.98, text=chosenDesc,                                delay=0.6},
-                {pct=1.00, text="done.",                                   delay=0.8}
+                {pct=0.10, text="bypassing security...",                   delay=2.0},
+                {pct=0.22, text="fetching assets...",                      delay=1.8},
+                {pct=0.36, text="syncing check.lua routines...",           delay=2.2},
+                {pct=0.50, text="warming up layout engine... v1.6.0",      delay=1.8},
+                {pct=0.65, text="initializing core Check it interface...", delay=2.0},
+                {pct=0.80, text="loading modules...",                      delay=1.6},
+                {pct=0.92, text=chosenDesc,                                delay=1.2},
+                {pct=1.00, text="done.",                                   delay=1.0}
             }
             for _, stage in ipairs(progressStages) do
                 local startFill = fillAmt
@@ -1499,9 +1500,9 @@ function UILib.Window(titleA, titleB, gameName)
                     setLoadPos(1, gameName.." Initializing...", fillAmt, stage.text)
                     task.wait()
                 end
-                task.wait(0.1)
+                task.wait(0.15)
             end
-            local t2 = tick(); local durOut = 0.6
+            local t2 = tick(); local durOut = 0.8
             while tick()-t2 < durOut and not destroyed do
                 task.wait()
                 setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, "")
