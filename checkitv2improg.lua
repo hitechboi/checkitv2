@@ -156,7 +156,6 @@ local function ln(x1,y1,x2,y2,col,zi,thick)
     l.Thickness=thick or 1; l.ZIndex=zi or 2; l.Visible=true
     return l
 end
-local function corner(d,r) pcall(function() d.Corner=r end) end
 
 -- ── Layout constants ──────────────────────────────────────
 local W=440; local FH=400; local MH=86
@@ -430,14 +429,15 @@ function UILib.Window(titleA,titleB,gameName)
     local function recalcTab(tname)
         local cy=10
         for _,b in ipairs(btns) do
-            if b.tab~=tname then continue end
-            local col=b.section and sections[b.section]
-            if col then
-                b.ry=TOP+cy; b.ch=b.baseCh
-            else
-                b.ry=TOP+cy; b.ch=b.baseCh
-                cy=cy+b.baseCh+6
-                if b.isDD and b.ddOpen then cy=cy+(#b.opts*b.ch) end
+            if b.tab==tname then
+                local col=b.section and sections[b.section]
+                if col then
+                    b.ry=TOP+cy; b.ch=b.baseCh
+                else
+                    b.ry=TOP+cy; b.ch=b.baseCh
+                    cy=cy+b.baseCh+6
+                    if b.isDD and b.ddOpen then cy=cy+(#b.opts*b.ch) end
+                end
             end
         end
         local maxY=0
@@ -542,16 +542,16 @@ function UILib.Window(titleA,titleB,gameName)
 
     local function mkToggle(tname,name,ry,init,cb,desc)
         local rx=rx0(); local cw=cw0(); local ch=RH
-        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3)); corner(bg2,4)
+        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3));
         local sep2=d(ln(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4))
         local lbl2=d(tx(name,uiX+rx+10,uiY+ry+ch/2-6,12,C.TXT,false,8))
         local ox=rx+cw-TW-8
-        local tog2=d(sq(uiX+ox,uiY+ry+ch/2-TH/2,TW,TH,init and C.ON or C.OFF,true,4)); corner(tog2,TH)
-        local dot2=d(sq(uiX+ox+(init and TW-TH+2 or 2),uiY+ry+ch/2-TH/2+2,TH-4,TH-4,init and C.ONDOT or C.OFFDOT,true,5)); corner(dot2,TH)
+        local tog2=d(sq(uiX+ox,uiY+ry+ch/2-TH/2,TW,TH,init and C.ON or C.OFF,true,4));
+        local dot2=d(sq(uiX+ox+(init and TW-TH+2 or 2),uiY+ry+ch/2-TH/2+2,TH-4,TH-4,init and C.ONDOT or C.OFFDOT,true,5));
         local qbg2,qlb2
         if desc then
             local qx=uiX+ox-26; local qy=uiY+ry+ch/2-7
-            qbg2=d(sq(qx,qy,14,14,C.DIM,true,6)); corner(qbg2,3)
+            qbg2=d(sq(qx,qy,14,14,C.DIM,true,6));
             qlb2=d(tx("?",qx+7,qy+2,9,C.GRY,true,7,Drawing.Fonts.SystemBold))
         end
         local b={tab=tname,isTog=true,name=name,state=init or false,
@@ -578,14 +578,14 @@ function UILib.Window(titleA,titleB,gameName)
         local rx=rx0(); local cw=cw0(); local ch=RH+8; local trkW=cw-16
         local frac=clamp((iv-mn)/(mx-mn),0,1); local fx=uiX+rx+8+frac*trkW
         local disp=isFloat and string.format("%.1f",iv) or tostring(math.floor(iv))
-        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3)); corner(bg2,4)
+        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3));
         local sep2=d(ln(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4))
         local lbl2=d(tx(label..": "..disp,uiX+rx+8,uiY+ry+7,12,C.TXT,false,8))
         local dlbl2=desc and d(tx(desc,uiX+rx+8,uiY+ry+21,9,C.GRY,false,7)) or nil
         local ty=uiY+ry+ch-12
         local trk2=d(ln(uiX+rx+8,ty,uiX+rx+8+trkW,ty,C.DIM,5,3))
         local fil2=d(ln(uiX+rx+8,ty,fx,ty,C.ACC,6,3))
-        local hdl2=d(sq(fx-4,ty-4,HDL,HDL,C.TXT,true,7)); corner(hdl2,3)
+        local hdl2=d(sq(fx-4,ty-4,HDL,HDL,C.TXT,true,7));
         local b={tab=tname,isSlider=true,bg=bg2,sep=sep2,lbl=lbl2,dlbl=dlbl2,
             track=trk2,fill=fil2,handle=hdl2,
             rx=rx,ry=ry,baseCh=ch,ch=ch,cw=cw,trkW=trkW,
@@ -597,8 +597,8 @@ function UILib.Window(titleA,titleB,gameName)
         local rx=rx0(); local cw=cw0(); local ch=RH
         local bc=col or C.ROW
         local oc=Color3.fromRGB(math.min(255,bc.R*255*1.6),math.min(255,bc.G*255*1.6),math.min(255,bc.B*255*1.6))
-        local out2=d(sq(uiX+rx,uiY+ry,cw,ch,oc,true,3)); corner(out2,4)
-        local bg2=d(sq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,bc,true,4)); corner(bg2,4)
+        local out2=d(sq(uiX+rx,uiY+ry,cw,ch,oc,true,3));
+        local bg2=d(sq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,bc,true,4));
         local lbl2=d(tx(label,uiX+rx+cw/2,uiY+ry+ch/2-6,12,lc or C.TXT,true,8))
         local b={tab=tname,isBtn=true,customCol=col~=nil,outline=out2,bg=bg2,lbl=lbl2,
             rx=rx,ry=ry,baseCh=ch,ch=ch,cw=cw,cb=cb}
@@ -609,8 +609,8 @@ function UILib.Window(titleA,titleB,gameName)
         local rx=rx0(); local cw=cw0(); local ch=RH
         local bc=C.ROW
         local oc=Color3.fromRGB(math.min(255,bc.R*255*1.6),math.min(255,bc.G*255*1.6),math.min(255,bc.B*255*1.6))
-        local out2=d(sq(uiX+rx,uiY+ry,cw,ch,oc,true,3)); corner(out2,4)
-        local bg2=d(sq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,C.ROW,true,4)); corner(bg2,4)
+        local out2=d(sq(uiX+rx,uiY+ry,cw,ch,oc,true,3));
+        local bg2=d(sq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,C.ROW,true,4));
         local lbl2=d(tx(label,uiX+rx+10,uiY+ry+ch/2-6,12,C.TXT,false,8))
         local vi=initIdx or 1
         local val2=d(tx(opts[vi] or "",uiX+rx+cw-62,uiY+ry+ch/2-6,11,C.ACC,false,8))
@@ -631,7 +631,7 @@ function UILib.Window(titleA,titleB,gameName)
 
     local function mkColorPicker(tname,label,ry,initCol,cb)
         local rx=rx0(); local cw=cw0(); local ch=RH
-        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3)); corner(bg2,4)
+        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3));
         local sep2=d(ln(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4))
         local lbl2=d(tx(label,uiX+rx+10,uiY+ry+ch/2-6,12,C.TXT,false,8))
         local cols={
@@ -641,8 +641,8 @@ function UILib.Window(titleA,titleB,gameName)
         local tw2=(#cols*19)-5; local sx0=uiX+rx+cw-tw2-10; local sws={}
         for i,col in ipairs(cols) do
             local sx=sx0+(i-1)*19; local sy=uiY+ry+ch/2-7
-            local sw=d(sq(sx,sy,14,14,col,true,6)); corner(sw,3)
-            local sb=d(sq(sx-1,sy-1,16,16,i==1 and C.TXT or C.BOR,false,7,1)); corner(sb,3)
+            local sw=d(sq(sx,sy,14,14,col,true,6));
+            local sb=d(sq(sx-1,sy-1,16,16,i==1 and C.TXT or C.BOR,false,7,1));
             table.insert(sws,{s=sw,b=sb,col=col})
         end
         local b={tab=tname,isCP=true,bg=bg2,sep=sep2,lbl=lbl2,swatches=sws,
@@ -654,7 +654,7 @@ function UILib.Window(titleA,titleB,gameName)
         local rx=rx0(); local cw=cw0()
         local lnH=18; local starH=starFirst and 26 or 0; local pad=10
         local ch=starH+(#lines-(starFirst and 1 or 0))*lnH+pad*2
-        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3)); corner(bg2,6)
+        local bg2=d(sq(uiX+rx,uiY+ry,cw,ch,C.ROW,true,3));
         local lbls={}
         for i,line in ipairs(lines) do
             local l=Drawing.new("Text"); d(l)
@@ -758,8 +758,8 @@ function UILib.Window(titleA,titleB,gameName)
         dTitleA=d(tx(titleB,uiX+86,uiY+12,14,C.ACC,false,9,Drawing.Fonts.SystemBold))
         dTitleG=d(tx(gameName,uiX+86+#(titleB or "")*8+14,uiY+12,13,Color3.fromRGB(255,175,80),false,9))
         dKeyLbl=d(tx("F1",uiX+W-24,uiY+14,11,C.GRY,false,9))
-        dDotY  =d(sq(uiX+W-57,uiY+15,8,8,Color3.fromRGB(190,148,0),true,9)); corner(dDotY,4)
-        dDotR  =d(sq(uiX+W-44,uiY+15,8,8,Color3.fromRGB(170,44,44),true,9)); corner(dDotR,4)
+        dDotY  =d(sq(uiX+W-57,uiY+15,8,8,Color3.fromRGB(190,148,0),true,9));
+        dDotR  =d(sq(uiX+W-44,uiY+15,8,8,Color3.fromRGB(170,44,44),true,9));
         dSide  =d(sq(uiX+1,uiY+TOP,SB-1,FH-TOP-FOT-1,C.SIDE,true,2))
         dSideLn=d(ln(uiX+SB,uiY+TOP,uiX+SB,uiY+FH-FOT,C.BOR,4))
         dCont  =d(sq(uiX+SB,uiY+TOP,CW-1,FH-TOP-FOT-1,C.CONT,true,2))
@@ -776,8 +776,8 @@ function UILib.Window(titleA,titleB,gameName)
         for i,name in ipairs(tabOrder) do
             local tY=TOP+8+(i-1)*34
             local isSel=name==defaultTab
-            local tbg=d(sq(uiX+7,uiY+tY,SB-14,26,isSel and C.TSEL or C.SIDE,true,3)); corner(tbg,5)
-            local tacc=d(sq(uiX+7,uiY+tY,3,26,isSel and C.ACC or C.SIDE,true,4)); corner(tacc,2)
+            local tbg=d(sq(uiX+7,uiY+tY,SB-14,26,isSel and C.TSEL or C.SIDE,true,3));
+            local tacc=d(sq(uiX+7,uiY+tY,3,26,isSel and C.ACC or C.SIDE,true,4));
             local tlW=d(tx(name,uiX+18,uiY+tY+7,11,C.TXT,false,8)); tlW.Visible=isSel
             local tlG=d(tx(name,uiX+18,uiY+tY+7,11,C.GRY,false,8)); tlG.Visible=not isSel
             table.insert(tabObjs,{bg=tbg,acc=tacc,lbl=tlW,lblG=tlG,name=name,sel=isSel,tY=tY,selT=isSel and 1 or 0})
@@ -796,8 +796,8 @@ function UILib.Window(titleA,titleB,gameName)
         dMTA =d(tx(titleB,uiX+86,uiY+12,14,C.ACC,false,9,Drawing.Fonts.SystemBold)); dMTA.Visible=false
         dMTG =d(tx(gameName,uiX+86+#(titleB or "")*8+14,uiY+12,13,Color3.fromRGB(255,175,80),false,9)); dMTG.Visible=false
         dMKey=d(tx("F1",uiX+W-24,uiY+14,11,C.GRY,false,9)); dMKey.Visible=false
-        dMDY =d(sq(uiX+W-57,uiY+15,8,8,C.ACC,true,9)); corner(dMDY,4); dMDY.Visible=false
-        dMDR =d(sq(uiX+W-44,uiY+15,8,8,Color3.fromRGB(170,44,44),true,9)); corner(dMDR,4); dMDR.Visible=false
+        dMDY =d(sq(uiX+W-57,uiY+15,8,8,C.ACC,true,9));; dMDY.Visible=false
+        dMDR =d(sq(uiX+W-44,uiY+15,8,8,Color3.fromRGB(170,44,44),true,9));; dMDR.Visible=false
         for i=1,12 do
             local lb=d(Drawing.new("Text"))
             lb.Text=""; lb.Size=13; lb.Color=C.TXT; lb.Center=false
@@ -818,12 +818,12 @@ function UILib.Window(titleA,titleB,gameName)
         -- Create these BEFORE hiding chrome so they're on top
         local _lt=(gameName~="" and gameName~="Game Name" and gameName) or (titleA.." "..titleB)
 
-        local lBg=d(sq(uiX,uiY,W,FH,Color3.fromRGB(7,9,17),true,50)); corner(lBg,12)
+        local lBg=d(sq(uiX,uiY,W,FH,Color3.fromRGB(7,9,17),true,50));
         local lTitle=d(tx(_lt.." Loading",uiX+W/2,uiY+FH/2-30,14,C.TXT,true,51,Drawing.Fonts.Minecraft))
         lTitle.Outline=true
         local lDesc=d(tx("Connecting...",uiX+W/2,uiY+FH/2-10,10,C.GRY,true,51,Drawing.Fonts.Minecraft))
-        local lBarBg=d(sq(uiX+W/2-80,uiY+FH/2+12,160,6,C.DIM,true,51)); corner(lBarBg,3)
-        local lBar=d(sq(uiX+W/2-80,uiY+FH/2+12,1,6,C.ACC,true,52)); corner(lBar,3)
+        local lBarBg=d(sq(uiX+W/2-80,uiY+FH/2+12,160,6,C.DIM,true,51));
+        local lBar=d(sq(uiX+W/2-80,uiY+FH/2+12,1,6,C.ACC,true,52));
         local lPct=d(tx("0%",uiX+W/2,uiY+FH/2+26,9,C.GRY,true,51,Drawing.Fonts.Minecraft))
 
         -- hide all chrome (loading screen is already visible above)
@@ -927,7 +927,6 @@ function UILib.Window(titleA,titleB,gameName)
             showAll(true)
             reposChrome()
             updScr()
-            pcall(function() setrobloxinput(false) end)
             print("[UILib] menu ready")
         end)
 
@@ -960,13 +959,10 @@ function UILib.Window(titleA,titleB,gameName)
                         if isMini then
                             -- restore
                             isMini=false; showMini(false); isOpen=true; showAll(true); reposChrome(); updScr()
-                            pcall(function() setrobloxinput(false) end)
                         elseif isOpen then
                             isOpen=false; showAll(false)
-                            pcall(function() setrobloxinput(true) end)
                         else
                             isOpen=true; showAll(true); reposChrome(); updScr()
-                            pcall(function() setrobloxinput(false) end)
                         end
                     end
                 end
@@ -1043,7 +1039,7 @@ function UILib.Window(titleA,titleB,gameName)
 
                 -- ── CLICK handling ────────────────────────
                 if clicked then
-                  (function()
+                  local function _click()
 
                     -- MINI BAR clicks
                     if isMini then
@@ -1051,7 +1047,6 @@ function UILib.Window(titleA,titleB,gameName)
                             isMini=false; showMini(false)
                         elseif hit(uiX+W-60,uiY+11,13,13) then
                             isMini=false; showMini(false); isOpen=true; showAll(true); reposChrome(); updScr()
-                            pcall(function() setrobloxinput(false) end)
                         elseif hit(uiX,uiY,W,MH) then
                             miniDrag=true; miniDOX=mx-uiX; miniDOY=my-uiY
                         end
@@ -1063,14 +1058,12 @@ function UILib.Window(titleA,titleB,gameName)
                     -- CLOSE dot (red)
                     if hit(uiX+W-47,uiY+11,13,13) then
                         isOpen=false; showAll(false)
-                        pcall(function() setrobloxinput(true) end)
                         return
                     end
                     -- MINIMIZE dot (yellow)
                     if hit(uiX+W-60,uiY+11,13,13) then
                         isOpen=false; showAll(false)
                         isMini=true; showMini(true); reposMini(); refreshMiniLbls()
-                        pcall(function() setrobloxinput(true) end)
                         return
                     end
 
@@ -1124,17 +1117,11 @@ function UILib.Window(titleA,titleB,gameName)
                     -- ELEMENT clicks
                     local sc3=tabScroll[curTab] or 0
                     for _,b in ipairs(btns) do
-                        if b.tab~=curTab then continue end
-                        if b.section and sections[b.section] then continue end
+                        if b.tab==curTab and not(b.section and sections[b.section]) then
                         local bx=uiX+b.rx; local by=uiY+b.ry-sc3
-
-                        -- slider: start drag on whole row
                         if b.isSlider then
                             if hit(bx,by,b.cw,b.ch) then slDrag=b; break end
-                            continue
-                        end
-
-                        if not hit(bx,by,b.cw,b.ch) then continue end
+                        elseif hit(bx,by,b.cw,b.ch) then
 
                         -- TOGGLE
                         if b.isTog then
@@ -1237,9 +1224,12 @@ function UILib.Window(titleA,titleB,gameName)
                             b.arrow.Text=sections[b.label] and ">" or "v"
                             recalcTab(curTab); break
                         end
-                    end
+                        end -- elseif hit
+                        end -- if b.tab==curTab
+                    end -- for btns
 
-                  end)()
+                  end -- _click
+                  _click()
                 end -- clicked
 
                 -- scroll wheel via polling iskeypressed not available,
