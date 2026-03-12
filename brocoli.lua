@@ -1360,35 +1360,47 @@ function UILib.Window(titleA, titleB, gameName)
         dWelcomeLoad.Visible = false
 
         task.spawn(function()
-            -- Phase 1: Smooth horizontal expand (left to right, like opening a laptop lid)
-            local xFrames = 180
-            for i = 1, xFrames do
-                local f = i / xFrames
-                -- Smooth easeInOutCubic for very smooth feel
-                if f < 0.5 then
-                    f = 4 * f * f * f
+            -- Smooth easeInOutQuint function for ultra-smooth tweening
+            local function easeInOutQuint(t)
+                if t < 0.5 then
+                    return 16 * t * t * t * t * t
                 else
-                    f = 1 - (-2 * f + 2)^3 / 2
+                    local p = -2 * t + 2
+                    return 1 - p * p * p * p * p / 2
                 end
+            end
+            
+            -- Phase 1: Smooth horizontal expand (left to right) - time based, 3.5 seconds
+            local xDuration = 3.5
+            local xStart = tick()
+            while true do
+                local elapsed = tick() - xStart
+                local t = math.min(elapsed / xDuration, 1)
+                local f = easeInOutQuint(t)
                 local w = L.W * f
                 dBg.Size = Vector2.new(w, 4)
                 dBg.Position = Vector2.new(uiX + L.W/2 - w/2, uiY + L.H/2 - 2)
+                if t >= 1 then break end
                 task.wait()
             end
-            -- Phase 2: Smooth vertical expand (up and down from center, like opening the screen)
-            local yFrames = 150
-            for i = 1, yFrames do
-                local f = i / yFrames
-                if f < 0.5 then
-                    f = 4 * f * f * f
-                else
-                    f = 1 - (-2 * f + 2)^3 / 2
-                end
+            
+            -- Small pause between phases
+            task.wait(0.15)
+            
+            -- Phase 2: Smooth vertical expand (up and down from center) - time based, 3 seconds
+            local yDuration = 3.0
+            local yStart = tick()
+            while true do
+                local elapsed = tick() - yStart
+                local t = math.min(elapsed / yDuration, 1)
+                local f = easeInOutQuint(t)
                 local h = 4 + (L.H - 4) * f
                 dBg.Size = Vector2.new(L.W, h)
                 dBg.Position = Vector2.new(uiX, uiY + L.H/2 - h/2)
+                if t >= 1 then break end
                 task.wait()
             end
+            
             dBg.Size = Vector2.new(L.W, L.H); dBg.Position = Vector2.new(uiX, uiY)
             dWelcomeLoad.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 10)
             dWelcomeLoad.Visible = true
