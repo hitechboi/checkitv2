@@ -552,14 +552,14 @@ function UILib.Window(titleA, titleB, gameName)
         dTitleG.Position  =Vector2.new(uiX+14+tw+3+ta+10,uiY+12)
         if dOnlineTxt and dOnlineDot then
             local tx = dTitleG.Position.X + #(dTitleG.Text)*7.5 + 15
-            dOnlineTxt.Position = Vector2.new(tx, uiY+14)
-            -- Red dot after "Online:" text
-            local onlineTextWidth = 42
-            dOnlineDot.Position = Vector2.new(tx + onlineTextWidth + 6, uiY+17)
+            -- Red dot LEFT of "Online:" text
+            dOnlineDot.Position = Vector2.new(tx + 4, uiY+17)
+            dOnlineTxt.Position = Vector2.new(tx + 12, uiY+14)
         end
-        dKeyLbl.Position  =Vector2.new(uiX+L.W-55,uiY+14)
-        dBtnMinimize.Position =Vector2.new(uiX+L.W-38,uiY+10)
-        dBtnClose.Position    =Vector2.new(uiX+L.W-22,uiY+10)
+        -- Yellow and red circles LEFT of F1 key label
+        dBtnMinimize.Position = Vector2.new(uiX+L.W-52, uiY+16)
+        dBtnClose.Position    = Vector2.new(uiX+L.W-38, uiY+16)
+        dKeyLbl.Position      = Vector2.new(uiX+L.W-22, uiY+14)
         dSide.Position    =Vector2.new(uiX+1,uiY+L.TOPBAR)
         dSideLn.From      =Vector2.new(uiX+L.SIDEBAR,uiY+L.TOPBAR)
         dSideLn.To        =Vector2.new(uiX+L.SIDEBAR,uiY+curH-L.FOOTER)
@@ -1189,15 +1189,18 @@ function UILib.Window(titleA, titleB, gameName)
         dTitleA  = mkD(mkTx(titleB,  uiX+14+(#titleA*8)+3, uiY+12,14,C.ACCENT,false,9,true))
         local gameNameShort = gameName or ""
         dTitleG  = mkD(mkTx(gameNameShort, uiX+100, uiY+12,13,C.ORANGE,false,9,false))
+        -- Online dot (circle) positioned LEFT of "Online:" text
+        dOnlineDot = Drawing.new("Circle")
+        dOnlineDot.Radius = 3; dOnlineDot.Color = Color3.new(0.9, 0.1, 0.1); dOnlineDot.Filled = true
+        dOnlineDot.Transparency = 1; dOnlineDot.ZIndex = 9; dOnlineDot.Visible = false
+        table.insert(allDrawings, dOnlineDot)
         dOnlineTxt = mkD(mkTx("Online:", uiX+200, uiY+14, 11, C.GRAY, false, 9, false))
-        dOnlineDot = mkD(mkSq(uiX+240, uiY+16, 6, 6, Color3.new(0.9, 0.1, 0.1), true, 1, 9, nil, 3))
         
         local function posOnline(gn)
             local tx = uiX + 100 + #gn * 7.5 + 15
-            if dOnlineTxt then dOnlineTxt.Position = Vector2.new(tx, uiY+14) end
-            -- Red dot positioned right after "Online:" text (after the word)
-            local onlineTextWidth = 42 -- approximate width of "Online:" text
-            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + onlineTextWidth + 6, uiY+17) end
+            -- Red dot LEFT of "Online:" text
+            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + 4, uiY+17) end
+            if dOnlineTxt then dOnlineTxt.Position = Vector2.new(tx + 12, uiY+14) end
         end
         posOnline(gameNameShort)
 
@@ -1221,11 +1224,20 @@ function UILib.Window(titleA, titleB, gameName)
                 end)
             end)
         end
-        dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-55, uiY+14,11,C.GRAY,  false,9))
-        -- Yellow minimize button and Red close button in top right
-        dBtnMinimize = mkD(mkSq(uiX+L.W-38,uiY+10,12,12,Color3.fromRGB(230,180,50),true,1,10,nil,3))
-        dBtnClose    = mkD(mkSq(uiX+L.W-22,uiY+10,12,12,Color3.fromRGB(200,60,60),true,1,10,nil,3))
-        -- Set them to show immediately (they're in baseUI so will be shown when loading completes)
+        -- Yellow and Red circle buttons LEFT of F1 key label
+        dBtnMinimize = Drawing.new("Circle")
+        dBtnMinimize.Radius = 5; dBtnMinimize.Color = Color3.fromRGB(230,180,50); dBtnMinimize.Filled = true
+        dBtnMinimize.Transparency = 1; dBtnMinimize.ZIndex = 10; dBtnMinimize.Visible = false
+        dBtnMinimize.Position = Vector2.new(uiX+L.W-52, uiY+16)
+        table.insert(allDrawings, dBtnMinimize)
+        
+        dBtnClose = Drawing.new("Circle")
+        dBtnClose.Radius = 5; dBtnClose.Color = Color3.fromRGB(200,60,60); dBtnClose.Filled = true
+        dBtnClose.Transparency = 1; dBtnClose.ZIndex = 10; dBtnClose.Visible = false
+        dBtnClose.Position = Vector2.new(uiX+L.W-38, uiY+16)
+        table.insert(allDrawings, dBtnClose)
+        
+        dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
         setShow(dBtnMinimize, true)
         setShow(dBtnClose, true)
         dSide    = mkD(mkSq(uiX+1,uiY+L.TOPBAR,L.SIDEBAR-1,L.H-L.TOPBAR-L.FOOTER-1,C.SIDEBAR,true,1,2,nil,8))
@@ -1857,8 +1869,12 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 if clicking and not wasClicking and mOp>0.5 and not isLoading then
-                    -- Yellow minimize button click
-                    if inBox(uiX+L.W-38,uiY+10,12,12) then
+                    -- Yellow minimize button click (circle at L.W-52, radius 5)
+                    local ymX, ymY = uiX+L.W-52, uiY+16
+                    local rcX, rcY = uiX+L.W-38, uiY+16
+                    local ymDist = math.sqrt((mouse.X-ymX)^2 + (mouse.Y-ymY)^2)
+                    local rcDist = math.sqrt((mouse.X-rcX)^2 + (mouse.Y-rcY)^2)
+                    if ymDist <= 6 then
                         handleDrag = false
                         uiTargetH = L.MINI_H
                         task.spawn(function()
@@ -1871,8 +1887,8 @@ function UILib.Window(titleA, titleB, gameName)
                             refreshMiniLabels(); showMiniUI(true); updateMiniPos()
                             for _,lb in ipairs(miniActiveLbls) do if lb.Text~="" then lb.Visible=true end end
                         end)
-                    -- Red close button click
-                    elseif inBox(uiX+L.W-22,uiY+10,12,12) then
+                    -- Red close button click (circle at L.W-38, radius 5)
+                    elseif rcDist <= 6 then
                         handleDrag=false
                         menuOpen=false; menuToggledAt=tick()
                     end
