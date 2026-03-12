@@ -1080,12 +1080,29 @@ function UILib.Window(titleA,titleB,gameName)
             if ok and c then table.insert(connections,c) end
         end
 
-        -- Mouse wheel scroll via UIS.InputChanged
-        conn(UIS.InputChanged,function(inp)
-            if inp.UserInputType~=Enum.UserInputType.MouseWheel then return end
-            if not isOpen or isLoading then return end
-            if not hit(uiX+SB,uiY+TOP,CW,cH()) then return end
-            doScroll(inp.Position.Z < 0 and 30 or -30)
+        -- Mouse wheel scroll: use WheelForward/Backward events with pcall guards
+        -- and also try UIS.InputChanged as fallback
+        pcall(function()
+            conn(mouse.WheelForward, function()
+                if not isOpen or isLoading then return end
+                if hit(uiX+SB,uiY+TOP,CW,cH()) then doScroll(-30) end
+            end)
+        end)
+        pcall(function()
+            conn(mouse.WheelBackward, function()
+                if not isOpen or isLoading then return end
+                if hit(uiX+SB,uiY+TOP,CW,cH()) then doScroll(30) end
+            end)
+        end)
+        pcall(function()
+            conn(UIS.InputChanged,function(inp)
+                local uit=tostring(inp.UserInputType)
+                if not(uit=="MouseWheel" or uit:find("MouseWheel")) then return end
+                if not isOpen or isLoading then return end
+                if not hit(uiX+SB,uiY+TOP,CW,cH()) then return end
+                local z=inp.Position and inp.Position.Z or 0
+                doScroll(z < 0 and 30 or -30)
+            end)
         end)
 
         -- InputBegan: clicks + key presses
@@ -1093,8 +1110,8 @@ function UILib.Window(titleA,titleB,gameName)
             if destroyed then return end
 
             -- ── MENU TOGGLE KEY ───────────────────────────
-            if inp.UserInputType==Enum.UserInputType.Keyboard then
-                local kc=inp.KeyCode.Value
+            if tostring(inp.UserInputType):find("Keyboard") or inp.UserInputType=="Keyboard" then
+                local kc=type(inp.KeyCode)=="number" and inp.KeyCode or (inp.KeyCode and inp.KeyCode.Value) or 0
                 if listenKey then
                     menuKey=kc; local n=kname(kc)
                     dKeyLbl.Text=n; dMiniKey.Text=n
@@ -1117,7 +1134,7 @@ function UILib.Window(titleA,titleB,gameName)
             end
 
             -- ── MOUSE BUTTON 1 ────────────────────────────
-            if inp.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+            local uit2=tostring(inp.UserInputType); if not(uit2=="MouseButton1" or uit2:find("MouseButton1")) then return end
             if isLoading then return end
 
             local mx,my=mouse.X,mouse.Y
@@ -1306,7 +1323,7 @@ function UILib.Window(titleA,titleB,gameName)
 
         -- InputEnded: release drags
         conn(UIS.InputEnded,function(inp,gp)
-            if inp.UserInputType==Enum.UserInputType.MouseButton1 then
+            if tostring(inp.UserInputType):find("MouseButton1") or inp.UserInputType=="MouseButton1" then
                 if sliderDrag then
                     local b=sliderDrag
                     notify(b.baseLbl..": "..(b.isFloat and string.format("%.1f",b.value) or tostring(math.floor(b.value))),nil,2)
