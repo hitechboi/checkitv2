@@ -1692,8 +1692,8 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
             end
-                applyFade()
-                if dWelcomeTxt and dNameTxt then
+            applyFade()
+            if dWelcomeTxt and dNameTxt then
                     local wX = uiX + 42
                     local tY = uiY + uiCurrentH - L.FOOTER + 9
                     dWelcomeTxt.Position = Vector2.new(wX, tY)
