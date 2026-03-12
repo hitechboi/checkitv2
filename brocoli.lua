@@ -2,14 +2,15 @@ local UILib = {}
 local _collapseSections = {}
 
 -- Matcha compatibility shims
+local tick = tick or os.clock
+local warn = warn or function() end
 if not task then
     task = {
         spawn = function(fn) coroutine.wrap(fn)() end,
-        wait = function(t) local start = (tick or os.clock)(); while ((tick or os.clock)() - start) < (t or 0) do end end,
+        wait = function(t) local start = tick(); while (tick() - start) < (t or 0) do end end,
         delay = function(t, fn) task.spawn(function() task.wait(t); fn() end) end
     }
 end
-if not tick then tick = os.clock end
 local THEMES = {
     ["Check it"] = {
         ACCENT=Color3.fromRGB(70,120,255),  BG=Color3.fromRGB(9,11,20),
@@ -1702,21 +1703,21 @@ function UILib.Window(titleA, titleB, gameName)
                     local wX = uiX + 42
                     local tY = uiY + uiCurrentH - L.FOOTER + 9
                     dWelcomeTxt.Position = Vector2.new(wX, tY)
-                    dWelcomeTxt.Transparency = menuOpen and 1 or 0
-                    dWelcomeTxt.Visible = menuOpen
+                    dWelcomeTxt.Transparency = (menuOpen and not isLoading) and 1 or 0
+                    dWelcomeTxt.Visible = menuOpen and not isLoading
                     dNameTxt.Position = Vector2.new(wX + 64, tY) 
-                    dNameTxt.Transparency = menuOpen and 1 or 0
-                    dNameTxt.Visible = menuOpen
+                    dNameTxt.Transparency = (menuOpen and not isLoading) and 1 or 0
+                    dNameTxt.Visible = menuOpen and not isLoading
                 end
                 if dCharLbl then
-                    dCharLbl.Transparency = menuOpen and 1 or 0
-                    dCharLbl.Visible = menuOpen
+                    dCharLbl.Transparency = (menuOpen and not isLoading) and 1 or 0
+                    dCharLbl.Visible = menuOpen and not isLoading
                 end
                 local ax = uiX + 12
                 local ay = uiY + uiCurrentH - L.FOOTER + 6
                 for _,ap in ipairs(avatarDrawings or {}) do
                     ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
-                    ap.d.Visible = menuOpen
+                    ap.d.Visible = menuOpen and not isLoading
                 end
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
