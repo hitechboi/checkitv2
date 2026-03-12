@@ -553,7 +553,7 @@ function UILib.Window(titleA, titleB, gameName)
         if dOnlineTxt and dOnlineDot then
             local tx = dTitleG.Position.X + #(dTitleG.Text)*7.5 + 15
             -- Red dot LEFT of "Online:" text
-            dOnlineDot.Position = Vector2.new(tx + 4, uiY+17)
+            dOnlineDot.Position = Vector2.new(tx + 4, uiY+20)
             dOnlineTxt.Position = Vector2.new(tx + 12, uiY+14)
         end
         -- Yellow and red circles LEFT of F1 key label
@@ -1192,14 +1192,14 @@ function UILib.Window(titleA, titleB, gameName)
         -- Online dot (circle) positioned LEFT of "Online:" text
         dOnlineDot = Drawing.new("Circle")
         dOnlineDot.Radius = 3; dOnlineDot.Color = Color3.new(0.9, 0.1, 0.1); dOnlineDot.Filled = true
-        dOnlineDot.Transparency = 1; dOnlineDot.ZIndex = 9; dOnlineDot.Visible = false
+        dOnlineDot.Transparency = 1; dOnlineDot.ZIndex = 9; dOnlineDot.NumSides = 20; dOnlineDot.Visible = false
         table.insert(allDrawings, dOnlineDot)
         dOnlineTxt = mkD(mkTx("Online:", uiX+200, uiY+14, 11, C.GRAY, false, 9, false))
         
         local function posOnline(gn)
             local tx = uiX + 100 + #gn * 7.5 + 15
             -- Red dot LEFT of "Online:" text
-            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + 4, uiY+17) end
+            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + 4, uiY+20) end
             if dOnlineTxt then dOnlineTxt.Position = Vector2.new(tx + 12, uiY+14) end
         end
         posOnline(gameNameShort)
@@ -1363,7 +1363,7 @@ function UILib.Window(titleA, titleB, gameName)
 
         task.spawn(function()
             -- Phase 1: Smooth horizontal expand (left to right, like opening a laptop lid)
-            local xFrames = 40
+            local xFrames = 70
             for i = 1, xFrames do
                 local f = i / xFrames
                 -- Smooth easeInOutCubic for very smooth feel
@@ -1378,7 +1378,7 @@ function UILib.Window(titleA, titleB, gameName)
                 task.wait()
             end
             -- Phase 2: Smooth vertical expand (up and down from center, like opening the screen)
-            local yFrames = 35
+            local yFrames = 60
             for i = 1, yFrames do
                 local f = i / yFrames
                 if f < 0.5 then
@@ -1640,7 +1640,9 @@ function UILib.Window(titleA, titleB, gameName)
                     if b.tab==currentTab and showSet[b.bg] and not b.isDiv and not b.isLog and not b.isUserList then
                         local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
                         if inBox(uiX+b.rx, itemY, b.cw, b.ch) then
-                            b.bg.Color = lerpC(C.ROWBG, C.WHITE, 0.06)
+                            if not b.isAct or not b.customCol then
+                                b.bg.Color = lerpC(C.ROWBG, C.WHITE, 0.06)
+                            end
                             b.targetHoverAlpha = 1
                         else
                             b.targetHoverAlpha = 0
@@ -1648,16 +1650,26 @@ function UILib.Window(titleA, titleB, gameName)
                                 b.bg.Color = C.ROWBG
                             end
                         end
-                        if b.outGlow then
-                            local diff = (b.targetHoverAlpha or 0) - (b.hoverAlpha or 0)
-                            if math.abs(diff) > 0.05 then
-                                b.hoverAlpha = (b.hoverAlpha or 0) + diff * 0.15
-                                b.outGlow.Transparency = b.hoverAlpha * dMainBg.Transparency
-                            elseif (b.targetHoverAlpha == 0 and (b.hoverAlpha or 0) ~= 0) then
-                                b.hoverAlpha = 0
-                                b.outGlow.Transparency = 0
-                            end
+                    else
+                        -- Reset hover for non-visible / non-current-tab items
+                        if b.outGlow and (b.hoverAlpha or 0) > 0 then
+                            b.hoverAlpha = 0
+                            b.targetHoverAlpha = 0
+                            b.outGlow.Transparency = 0
+                            b.outGlow.Visible = false
+                        end
+                    end
+                    -- Always update outGlow fade
+                    if b.outGlow then
+                        local diff = (b.targetHoverAlpha or 0) - (b.hoverAlpha or 0)
+                        if math.abs(diff) > 0.01 then
+                            b.hoverAlpha = (b.hoverAlpha or 0) + diff * 0.18
+                            b.outGlow.Transparency = (b.hoverAlpha or 0) * dMainBg.Transparency
                             b.outGlow.Visible = ((b.hoverAlpha or 0) > 0.02)
+                        elseif b.targetHoverAlpha == 0 and (b.hoverAlpha or 0) > 0 then
+                            b.hoverAlpha = 0
+                            b.outGlow.Transparency = 0
+                            b.outGlow.Visible = false
                         end
                     end
                 end
