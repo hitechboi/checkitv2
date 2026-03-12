@@ -1383,7 +1383,7 @@ function UILib.Window(titleA, titleB, gameName)
             end
             
             -- Phase 1: Smooth horizontal expand (left to right) - time based, 3.5 seconds
-            local xDuration = 3.5
+            local xDuration = 2.0
             local xStart = tick()
             while true do
                 local elapsed = tick() - xStart
@@ -1400,7 +1400,7 @@ function UILib.Window(titleA, titleB, gameName)
             task.wait(0.15)
             
             -- Phase 2: Smooth vertical expand (up and down from center) - time based, 3 seconds
-            local yDuration = 3.0
+            local yDuration = 1.8
             local yStart = tick()
             while true do
                 local elapsed = tick() - yStart
