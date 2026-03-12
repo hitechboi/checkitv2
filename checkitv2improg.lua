@@ -888,46 +888,57 @@ function UILib.Window(titleA,titleB,gameName)
             end) end)
         end
 
-        -- ── Loading screen ────────────────────────────────
+        -- ── Loading screen (runs blocking in its own thread) ──
         task.spawn(function()
             local stages={"Connecting...","Building UI...","Almost ready...","Done!"}
             local stageT={0.25,0.55,0.85,1.0}
-            -- overlay on top of everything
-            local oBg=d(sq(uiX,uiY,W,FULL_H,Color3.fromRGB(7,9,17),true,30,1))
-            local oTitle=d(tx((gameName or (titleA.." "..titleB)).." Loading",uiX+W/2,uiY+FULL_H/2-28,14,C.TXT,true,31,true))
-            local oDesc=d(tx(stages[1],uiX+W/2,uiY+FULL_H/2-8,10,C.GRY,true,31))
-            local oBarBg=d(sq(uiX+W/2-80,uiY+FULL_H/2+10,160,5,C.DIM,true,31,1)); pcall(function() oBarBg.Corner=3 end)
-            local oBar=d(sq(uiX+W/2-80,uiY+FULL_H/2+10,0,5,C.ACC,true,32,1)); pcall(function() oBar.Corner=3 end)
-            local oPct=d(tx("0%",uiX+W/2,uiY+FULL_H/2+22,9,C.GRY,true,31))
+            -- Solid backdrop that sits above the (hidden) menu chrome
+            local oBg    = sq(uiX,uiY,W,FULL_H,Color3.fromRGB(7,9,17),true,30,1)
+            local oTitle = tx((gameName~="" and gameName or (titleA.." "..titleB)).." Loading",uiX+W/2,uiY+FULL_H/2-28,14,C.TXT,true,31,true)
+            local oDesc  = tx(stages[1],uiX+W/2,uiY+FULL_H/2-8,10,C.GRY,true,31)
+            local oBarBg = sq(uiX+W/2-80,uiY+FULL_H/2+10,160,5,C.DIM,true,31,1)
+            local oBar   = sq(uiX+W/2-80,uiY+FULL_H/2+10,0,5,C.ACC,true,32,1)
+            local oPct   = tx("0%",uiX+W/2,uiY+FULL_H/2+22,9,C.GRY,true,31)
+            pcall(function() oBarBg.Corner=3; oBar.Corner=3 end)
+            d(oBg); d(oTitle); d(oDesc); d(oBarBg); d(oBar); d(oPct)
 
-            -- tween the bar through stages
+            local barPct = 0  -- 0..1, driven by RenderStepped tween
+            -- Animate bar through stages using RenderStepped
             for si,target in ipairs(stageT) do
-                local proxy={v=oBar.Size.X/160}
-                tween(proxy,"v",proxy.v,target,0.35,easeInOut)
+                oDesc.Text=stages[si]
+                local proxy={v=barPct}
+                tween(proxy,"v",barPct,target,0.38,easeInOut)
+                -- step until proxy reaches target (RenderStepped not yet connected, drive manually)
                 local t0=tick()
-                while tick()-t0<0.4 and not destroyed do
+                while proxy.v < target-0.005 and not destroyed do
+                    local dt2=tick()-t0; t0=tick()
+                    stepTweens(dt2)
+                    barPct=proxy.v
+                    oBar.Size=Vector2.new(barPct*160,5)
+                    oPct.Text=math.floor(barPct*100).."%"
                     task.wait()
-                    stepTweens(0.033) -- manual step since render loop not started yet
-                    oBar.Size=Vector2.new(proxy.v*160,5)
-                    oPct.Text=math.floor(proxy.v*100).."%"
-                    oDesc.Text=stages[si]
                 end
-                oBar.Size=Vector2.new(target*160,5); oPct.Text=math.floor(target*100).."%"
+                barPct=target; oBar.Size=Vector2.new(target*160,5); oPct.Text=math.floor(target*100).."%"
+                task.wait(0.08)
             end
-            task.wait(0.15)
-            -- fade out overlay
-            local fadeProxy={v=1}
-            tween(fadeProxy,"v",1,0,0.3,easeOut)
+            task.wait(0.2)
+
+            -- Fade out overlay smoothly
+            local proxy2={v=1}
+            tween(proxy2,"v",1,0,0.32,easeOut)
             local t1=tick()
-            while tick()-t1<0.35 and not destroyed do
-                task.wait()
-                stepTweens(0.033)
-                local a=fadeProxy.v
+            while proxy2.v > 0.01 and not destroyed do
+                local dt2=tick()-t1; t1=tick()
+                stepTweens(dt2)
+                local a=proxy2.v
                 for _,dr in ipairs({oBg,oTitle,oDesc,oBarBg,oBar,oPct}) do
-                    dr.Transparency=a; dr.Visible=a>0.01
+                    dr.Transparency=a; dr.Visible=a>0.005
                 end
+                task.wait()
             end
-            for _,dr in ipairs({oBg,oTitle,oDesc,oBarBg,oBar,oPct}) do pcall(function() dr:Remove() end) end
+            for _,dr in ipairs({oBg,oTitle,oDesc,oBarBg,oBar,oPct}) do
+                dr.Visible=false; pcall(function() dr:Remove() end)
+            end
             isLoading=false
         end)
 
@@ -997,16 +1008,17 @@ function UILib.Window(titleA,titleB,gameName)
         -- INPUT  (event-driven via UserInputService)
         -- ══════════════════════════════════════════════════
         local connections={}
-        local function conn(sig,fn) table.insert(connections,sig:Connect(fn)) end
+        local function conn(sig,fn)
+            local ok,c=pcall(function() return sig:Connect(fn) end)
+            if ok and c then table.insert(connections,c) end
+        end
 
-        -- Mouse wheel scroll
-        conn(mouse.WheelForward,function()
+        -- Mouse wheel scroll via UIS.InputChanged
+        conn(UIS.InputChanged,function(inp)
+            if inp.UserInputType~=Enum.UserInputType.MouseWheel then return end
             if not isOpen or isLoading then return end
-            if hit(uiX+SB,uiY+TOP,CW,cH()) then doScroll(-30) end
-        end)
-        conn(mouse.WheelBackward,function()
-            if not isOpen or isLoading then return end
-            if hit(uiX+SB,uiY+TOP,CW,cH()) then doScroll(30) end
+            if not hit(uiX+SB,uiY+TOP,CW,cH()) then return end
+            doScroll(inp.Position.Z < 0 and 30 or -30)
         end)
 
         -- InputBegan: clicks + key presses
@@ -1024,6 +1036,7 @@ function UILib.Window(titleA,titleB,gameName)
                     listenKey=false; return
                 end
                 if kc==menuKey then
+                    if isLoading then return end  -- block during loading
                     if isMini then
                         restoreFromBar()
                     elseif isOpen then
@@ -1278,9 +1291,28 @@ function UILib.Window(titleA,titleB,gameName)
         end)
         table.insert(connections,dragConn)
 
-        -- initial visibility
-        globalAlpha=1; flushAlpha(); reposChrome()
-        pcall(function() setrobloxinput(false) end)
+        -- Hide everything until loading screen finishes
+        globalAlpha=0
+        for _,dr in ipairs(chromeD) do dr.Visible=false end
+        for _,tb in ipairs(tabObjs) do tb.bg.Visible=false; tb.acc.Visible=false; tb.lbl.Visible=false; tb.lblG.Visible=false end
+        dScrBg.Visible=false; dScrThumb.Visible=false
+        reposChrome()
+        -- After loading finishes, fade the menu in
+        task.spawn(function()
+            repeat task.wait() until not isLoading or destroyed
+            if destroyed then return end
+            -- fade in from 0 to 1
+            local proxy={v=0}
+            tween(proxy,"v",0,1,0.4,easeOut,function() globalAlpha=1 end)
+            while not destroyed do
+                task.wait()
+                globalAlpha=proxy.v
+                flushAlpha()
+                if proxy.v>=0.99 then break end
+            end
+            globalAlpha=1; flushAlpha()
+            pcall(function() setrobloxinput(false) end)
+        end)
     end -- Init
 
     -- ── Public API ────────────────────────────────────────
