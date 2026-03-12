@@ -2089,7 +2089,6 @@ function UILib.Window(titleA, titleB, gameName)
                         dCharLbl.Text = " | " .. nt
                     end
                 end
-            end 
         end 
     end) 
     end 
