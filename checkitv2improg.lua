@@ -1531,9 +1531,8 @@ function UILib.Window(titleA, titleB, gameName)
         task.spawn(function()
         while not destroyed do
             task.wait()
-            local _rbxOk, _rbxActive = pcall(function() return isrbxactive() end)
-            if not _rbxOk or _rbxActive then
-                local clicking=ismouse1pressed()
+            -- Removed isrbxactive check - not supported in Matcha and blocks all input
+            local clicking=ismouse1pressed()
             local keyDown=iskeypressed(menuKey)
             if keyDown and not wasMenuKey and not isLoading then
                 if miniClosed then
@@ -2153,7 +2152,6 @@ function UILib.Window(titleA, titleB, gameName)
                         dCharLbl.Text = " | " .. nt
                     end
                 end
-            end 
         end 
     end) 
     end 
