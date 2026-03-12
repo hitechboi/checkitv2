@@ -1043,36 +1043,35 @@ function UILib.Window(titleA,titleB,gameName)
 
                 -- ── CLICK handling ────────────────────────
                 if clicked then
+                  (function()
 
                     -- MINI BAR clicks
                     if isMini then
-                        -- close (red dot)
                         if hit(uiX+W-47,uiY+11,13,13) then
                             isMini=false; showMini(false)
-                        -- restore (yellow dot)
                         elseif hit(uiX+W-60,uiY+11,13,13) then
                             isMini=false; showMini(false); isOpen=true; showAll(true); reposChrome(); updScr()
                             pcall(function() setrobloxinput(false) end)
                         elseif hit(uiX,uiY,W,MH) then
                             miniDrag=true; miniDOX=mx-uiX; miniDOY=my-uiY
                         end
-                        goto continue
+                        return
                     end
 
-                    if not isOpen or isLoading then goto continue end
+                    if not isOpen or isLoading then return end
 
                     -- CLOSE dot (red)
                     if hit(uiX+W-47,uiY+11,13,13) then
                         isOpen=false; showAll(false)
                         pcall(function() setrobloxinput(true) end)
-                        goto continue
+                        return
                     end
                     -- MINIMIZE dot (yellow)
                     if hit(uiX+W-60,uiY+11,13,13) then
                         isOpen=false; showAll(false)
                         isMini=true; showMini(true); reposMini(); refreshMiniLbls()
                         pcall(function() setrobloxinput(true) end)
-                        goto continue
+                        return
                     end
 
                     -- SCROLLBAR click
@@ -1089,25 +1088,23 @@ function UILib.Window(titleA,titleB,gameName)
                             else
                                 doScroll((clamp((my-uiY-TOP-2-tH/2)/(sbH-tH),0,1)*maxSc)-(sc))
                             end
-                            goto continue
+                            return
                         end
                     end
 
                     -- WINDOW DRAG (topbar)
                     if hit(uiX,uiY,W,TOP) then
-                        winDrag=true; winDOX=mx-uiX; winDOY=my-uiY; goto continue
+                        winDrag=true; winDOX=mx-uiX; winDOY=my-uiY; return
                     end
 
                     -- SIDEBAR tab buttons
-                    local tabClicked=false
                     for _,tb in ipairs(tabObjs) do
                         if hit(uiX+7,uiY+tb.tY,SB-14,26) then
-                            switchTab(tb.name); tabClicked=true; break
+                            switchTab(tb.name); return
                         end
                     end
-                    if tabClicked then goto continue end
 
-                    if not curTab then goto continue end
+                    if not curTab then return end
 
                     -- close open DD if clicking outside
                     if openDD then
@@ -1242,7 +1239,7 @@ function UILib.Window(titleA,titleB,gameName)
                         end
                     end
 
-                    ::continue::
+                  end)()
                 end -- clicked
 
                 -- scroll wheel via polling iskeypressed not available,
