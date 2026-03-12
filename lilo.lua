@@ -1541,7 +1541,7 @@ function UILib.Window(titleA, titleB, gameName)
             updatePos()
         end)
         task.spawn(function()
-        while not destroyed do
+            while not destroyed do
             task.wait()
             -- Removed isrbxactive check - not supported in Matcha and blocks all input
             local clicking = false
@@ -2169,8 +2169,8 @@ function UILib.Window(titleA, titleB, gameName)
             end -- end of "if not minimized and not isLoading"
             -- Always update wasClicking outside the conditional blocks
             wasClicking = clicking
-        end -- end of while loop
-    end) 
+            end -- end of while loop
+        end)
     win._tabOrder = {}
     function win:Tab(name)
         table.insert(win._tabOrder, name)
