@@ -1,5 +1,15 @@
 local UILib = {}
 local _collapseSections = {}
+
+-- Matcha compatibility shims
+if not task then
+    task = {
+        spawn = function(fn) coroutine.wrap(fn)() end,
+        wait = function(t) local start = (tick or os.clock)(); while ((tick or os.clock)() - start) < (t or 0) do end end,
+        delay = function(t, fn) task.spawn(function() task.wait(t); fn() end) end
+    }
+end
+if not tick then tick = os.clock end
 local THEMES = {
     ["Check it"] = {
         ACCENT=Color3.fromRGB(70,120,255),  BG=Color3.fromRGB(9,11,20),
@@ -129,15 +139,13 @@ local function mkSq(x,y,w,h,col,filled,transp,zi,thick,corner)
     s.Color=col; s.Filled=filled; s.Transparency=transp or 1
     s.ZIndex=zi or 1; s.Visible=true
     if not filled then s.Thickness=thick or 1 end
-    -- FIX: Corner is not supported on Matcha, skip silently
-    -- (was: if corner and corner>0 then pcall(function() s.Corner=corner end) end)
+    -- Corner property not supported in Matcha - silently ignore
+    if corner and corner>0 then pcall(function() s.Corner=corner end) end
     return s
 end
--- Text drawing objects use Size (number) for font size on Matcha
 local function mkTx(txt,x,y,sz,col,ctr,zi,bold)
     local t = Drawing.new("Text")
-    t.Text=txt; t.Position=Vector2.new(x,y)
-    t.Size=sz or 13
+    t.Text=txt; t.Position=Vector2.new(x,y); t.Size=sz or 13
     t.Color=col or C.WHITE; t.Center=ctr or false; t.Outline=false
     t.Font=bold and Drawing.Fonts.SystemBold or Drawing.Fonts.System
     t.Transparency=1; t.ZIndex=zi or 3; t.Visible=true
@@ -195,10 +203,19 @@ kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
 function UILib.Window(titleA, titleB, gameName)
     local win = {}
-    local mouse = game.Players.LocalPlayer:GetMouse()
+    local mouse
+    pcall(function() mouse = game.Players.LocalPlayer:GetMouse() end)
+    if not mouse then
+        mouse = {X = 0, Y = 0}
+        pcall(function()
+            local m = game:FindFirstChildOfClass("Players") and game:FindFirstChildOfClass("Players").LocalPlayer and game:FindFirstChildOfClass("Players").LocalPlayer:GetMouse()
+            if m then mouse = m end
+        end)
+    end
     local _scrollDelta = 0
-    pcall(function() mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end)
-    pcall(function() mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end) end)
+    -- Mouse wheel events not supported in Matcha - use mousescroll polling instead
+    pcall(function() if mouse.WheelForward then mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end end)
+    pcall(function() if mouse.WheelBackward then mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end) end end)
     local PAD = 10
     local uiX, uiY       = 300, 200
     local dragging        = false
@@ -246,7 +263,6 @@ function UILib.Window(titleA, titleB, gameName)
     local miniActivePulse= {}
     local MAX_MINI_LBLS  = 12
     for i=1,MAX_MINI_LBLS do
-        -- FIX: use mkTx so FontSize is set correctly
         local lb = mkTx("",0,0,13,C.WHITE,false,9,false)
         lb.Outline=true
         lb.Visible=false
@@ -701,18 +717,18 @@ function UILib.Window(titleA, titleB, gameName)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
         local ox=rx+cw-L.TOG_W-8; local oy=ry+ch/2-L.TOG_H/2
-        local bg  =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3))
+        local bg  =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,4))
         local dl  =mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb  =mkD(mkTx(lbl,uiX+rx+10,uiY+ry+ch/2-6,12,C.WHITE,false,8))
-        local tog =mkD(mkSq(uiX+ox,uiY+oy,L.TOG_W,L.TOG_H,init and C.ON or C.OFF,true,1,4))
-        local dot =mkD(mkSq(uiX+ox+(init and L.TOG_W-L.TOG_H+2 or 2),uiY+oy+2,L.TOG_H-4,L.TOG_H-4,init and C.ONDOT or C.OFFDOT,true,1,5))
+        local tog =mkD(mkSq(uiX+ox,uiY+oy,L.TOG_W,L.TOG_H,init and C.ON or C.OFF,true,1,4,nil,L.TOG_H))
+        local dot =mkD(mkSq(uiX+ox+(init and L.TOG_W-L.TOG_H+2 or 2),uiY+oy+2,L.TOG_H-4,L.TOG_H-4,init and C.ONDOT or C.OFFDOT,true,1,5,nil,L.TOG_H))
         local qbg, qlb
         if desc then
             local qx=uiX+ox-22; local qy=uiY+ry+ch/2-7
-            qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6))
+            qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
             qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
-        local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1)),
+        local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
                  desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
@@ -736,10 +752,10 @@ function UILib.Window(titleA, titleB, gameName)
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
         local outBg = col or C.ROWBG
         local outColor = Color3.new(math.min(1, outBg.R*1.5), math.min(1, outBg.G*1.5), math.min(1, outBg.B*1.5))
-        local out=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,outColor,true,1,3))
-        local bg=mkD(mkSq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,col or C.ROWBG,true,1,4))
+        local out=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,outColor,true,1,3,nil,4))
+        local bg=mkD(mkSq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,col or C.ROWBG,true,1,4,nil,4))
         local lb=mkD(mkTx(lbl,uiX+rx+cw/2,uiY+ry+ch/2-6,12,lblCol or C.WHITE,true,8))
-        local outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1))
+        local outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4))
         local b={tab=tab,isAct=true,customCol=col~=nil,out=out,bg=bg,lbl=lb,outGlow=outGlow,ln=nil,rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,cb=cb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
     end
@@ -748,7 +764,7 @@ function UILib.Window(titleA, titleB, gameName)
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H+6
         local trackW=cw-16
         local initLbl=isFloat and string.format("%.1f",initV) or math.floor(initV)
-        local bg  =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3))
+        local bg  =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,4))
         local dl  =mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb  =mkD(mkTx(lbl..": "..initLbl,uiX+rx+8,uiY+ry+7,12,C.WHITE,false,8))
         local dlb = desc and mkD(mkTx(desc,uiX+rx+8,uiY+ry+21,9,C.GRAY,false,8)) or nil
@@ -757,8 +773,8 @@ function UILib.Window(titleA, titleB, gameName)
         local frac=(initV-minV)/(maxV-minV)
         local fx  =uiX+rx+8+frac*trackW
         local fil =mkD(mkLn(uiX+rx+8,ty,fx,ty,C.ACCENT,6,3))
-        local hdl =mkD(mkSq(fx-4,ty-4,L.HDL,L.HDL,C.WHITE,true,1,7))
-        local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1)),
+        local hdl =mkD(mkSq(fx-4,ty-4,L.HDL,L.HDL,C.WHITE,true,1,7,nil,3))
+        local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
                  value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
@@ -766,7 +782,7 @@ function UILib.Window(titleA, titleB, gameName)
     local function addColorPicker(tab,lbl,relY,initCol,cb)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
-        local bg =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3))
+        local bg =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,4))
         local dl =mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb =mkD(mkTx(lbl,uiX+rx+10,uiY+ry+ch/2-6,12,C.WHITE,false,8))
         local swatchW=14; local swatchH=14; local swatchPad=5
@@ -785,11 +801,11 @@ function UILib.Window(titleA, titleB, gameName)
         for i,col in ipairs(swatches) do
             local sx=startX+(i-1)*(swatchW+swatchPad)
             local sy=uiY+ry+ch/2-swatchH/2
-            local s=mkD(mkSq(sx,sy,swatchW,swatchH,col,true,1,6))
-            local border=mkD(mkSq(sx-1,sy-1,swatchW+2,swatchH+2,i==1 and C.WHITE or C.BORDER,false,1,7,1))
+            local s=mkD(mkSq(sx,sy,swatchW,swatchH,col,true,1,6,nil,3))
+            local border=mkD(mkSq(sx-1,sy-1,swatchW+2,swatchH+2,i==1 and C.WHITE or C.BORDER,false,1,7,1,3))
             table.insert(swatchBgs,{sq=s,border=border,col=col,x=sx,y=sy})
         end
-        local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1)),
+        local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,swatches=swatchBgs,
                  selected=selected,value=swatches[1],cb=cb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
@@ -823,8 +839,8 @@ function UILib.Window(titleA, titleB, gameName)
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
         local outBg = C.ROWBG
         local outColor = Color3.new(math.min(1, outBg.R*1.5), math.min(1, outBg.G*1.5), math.min(1, outBg.B*1.5))
-        local out=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,outColor,true,1,3))
-        local bg=mkD(mkSq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,C.ROWBG,true,1,4))
+        local out=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,outColor,true,1,3,nil,4))
+        local bg=mkD(mkSq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,C.ROWBG,true,1,4,nil,4))
         local dl=nil
         local lb=mkD(mkTx(lbl,uiX+rx+10,uiY+ry+ch/2-6,12,C.WHITE,false,8))
         local valIdx=initIdx or 1
@@ -833,13 +849,13 @@ function UILib.Window(titleA, titleB, gameName)
         local optBgs={}
         for i,opt in ipairs(options) do
             local oy2=ry+ch+((i-1)*ch)
-            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,C.ROWBG,true,0,10))
+            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,C.ROWBG,true,0,10,nil,0))
             local oln=mkD(mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,C.DIV,11,1))
             local olb=mkD(mkTx(opt,uiX+rx+14,oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11))
             obg.Visible=false; oln.Visible=false; olb.Visible=false
             table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0})
         end
-        local b={tab=tab,isDropdown=true,out=out,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1)),
+        local b={tab=tab,isDropdown=true,out=out,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
                  selected=valIdx,open=false,openedAt=0,cb=cb,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
@@ -850,23 +866,19 @@ function UILib.Window(titleA, titleB, gameName)
         local lineH=18; local starH=starFirst and 26 or 0; local pad=10
         local ch=starH+(#lines-(starFirst and 1 or 0))*lineH+pad*2
         local ry=L.TOPBAR+relY
-        local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3))
+        local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,6))
         local lbls={}
         for i,line in ipairs(lines) do
             local lb=mkD(Drawing.new("Text"))
             if starFirst and i==1 then
                 lb.Text=line; lb.Position=Vector2.new(uiX+rx+cw/2,uiY+ry+pad)
-                lb.Size=14
-                lb.Color=Color3.fromRGB(255,200,40); lb.Center=true
-                lb.Outline=true
-                pcall(function() lb.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
+                lb.Size=14; lb.Color=Color3.fromRGB(255,200,40); lb.Center=true
+                lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
             else
                 local off=starFirst and (starH+pad+(i-2)*lineH) or (pad+(i-1)*lineH)
                 lb.Text=line; lb.Position=Vector2.new(uiX+rx+8,uiY+ry+off)
-                lb.Size=11
-                lb.Color=C.WHITE; lb.Center=false
-                lb.Outline=true
-                pcall(function() lb.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
+                lb.Size=11; lb.Color=C.WHITE; lb.Center=false
+                lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
             end
             lb.Transparency=1; lb.ZIndex=8; lb.Visible=false
             table.insert(lbls,lb)
@@ -880,14 +892,14 @@ function UILib.Window(titleA, titleB, gameName)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local rowH=44; local pad=0
         local ch = (maxUsers*rowH)+pad*2
-        local bg = mkD(mkSq(uiX+rx, uiY+ry, cw, ch, C.CONTENT, true, 0, 1))
+        local bg = mkD(mkSq(uiX+rx, uiY+ry, cw, ch, C.CONTENT, true, 0, 1, nil, 0))
         local users = {}
         for i=1,maxUsers do
             local yOff = (i-1)*rowH
             local uBgOut = C.ROWBG
             local uOutColor = Color3.new(math.min(1, uBgOut.R*1.5), math.min(1, uBgOut.G*1.5), math.min(1, uBgOut.B*1.5))
-            local uOut = mkSq(uiX+rx+18, uiY+ry+yOff+10, cw-18, 38, uOutColor, true, 0, 3)
-            local uBg = mkSq(uiX+rx+19, uiY+ry+yOff+11, cw-20, 36, C.ROWBG, true, 0, 4)
+            local uOut = mkSq(uiX+rx+18, uiY+ry+yOff+10, cw-18, 38, uOutColor, true, 0, 3, nil, 4)
+            local uBg = mkSq(uiX+rx+19, uiY+ry+yOff+11, cw-20, 36, C.ROWBG, true, 0, 4, nil, 4)
             local uName = mkTx("", uiX+rx+52, uiY+ry+yOff+10+38/2-7, 13, C.WHITE, false, 8)
             local uYouTag = mkTx(" <-- you", uiX+rx+52, uiY+ry+yOff+10+38/2-7, 13, C.GRAY, false, 8)
             uOut.Visible = false; uBg.Visible = false; uName.Visible = false; uYouTag.Visible = false
@@ -1172,13 +1184,13 @@ function UILib.Window(titleA, titleB, gameName)
         local notif = notifFn or function(msg,title,dur)
             pcall(function() notify(msg, title or titleA.." "..titleB, dur or 3) end)
         end
-        dShadow  = mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,   C.SHADOW,true,0.5,0))
-        dMainBg  = mkD(mkSq(uiX,uiY,L.W,L.H,            C.BG,    true,1,1))
-        dGlow1   = mkD(mkSq(uiX-1,uiY-1,L.W+2,L.H+2,   C.ACCENT,false,0.9,1,1))
-        dGlow2   = mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,   C.ACCENT,false,0.35,0,2))
+        dShadow  = mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,   C.SHADOW,true,0.5,0,nil,12))
+        dMainBg  = mkD(mkSq(uiX,uiY,L.W,L.H,            C.BG,    true,1,1,nil,10))
+        dGlow1   = mkD(mkSq(uiX-1,uiY-1,L.W+2,L.H+2,   C.ACCENT,false,0.9,1,1,11))
+        dGlow2   = mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,   C.ACCENT,false,0.35,0,2,12))
         glowLines= {dGlow1,dGlow2}
-        dBorder  = mkD(mkSq(uiX,uiY,L.W,L.H,            C.BORDER,false,0.2,3,1))
-        dTopBar  = mkD(mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR, C.TOPBAR,true,1,3))
+        dBorder  = mkD(mkSq(uiX,uiY,L.W,L.H,            C.BORDER,false,0.2,3,1,10))
+        dTopBar  = mkD(mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR, C.TOPBAR,true,1,3,nil,9))
         dTopFill = mkD(mkSq(uiX+1,uiY+L.TOPBAR-5,L.W-2,7,C.TOPBAR,true,1,3))
         dTopLine = mkD(mkLn(uiX+1,uiY+L.TOPBAR,uiX+L.W-1,uiY+L.TOPBAR,C.BORDER,4,1))
         dTitleW  = mkD(mkTx(titleA,  uiX+14,     uiY+12,14,C.WHITE, false,9,true))
@@ -1186,7 +1198,7 @@ function UILib.Window(titleA, titleB, gameName)
         local gameNameShort = gameName or ""
         dTitleG  = mkD(mkTx(gameNameShort, uiX+100, uiY+12,13,C.ORANGE,false,9,false))
         dOnlineTxt = mkD(mkTx("Online:", uiX+200, uiY+14, 11, C.GRAY, false, 9, false))
-        dOnlineDot = mkD(mkSq(uiX+240, uiY+16, 6, 6, Color3.new(0.9, 0.1, 0.1), true, 1, 9))
+        dOnlineDot = mkD(mkSq(uiX+240, uiY+16, 6, 6, Color3.new(0.9, 0.1, 0.1), true, 1, 9, nil, 3))
         
         local function posOnline(gn)
             local tx = uiX + 100 + #gn * 7.5 + 15
@@ -1201,7 +1213,9 @@ function UILib.Window(titleA, titleB, gameName)
             task.spawn(function()
                 pcall(function()
                     local gn
-                    if type(getgamename) == "function" then
+                    if type(getgetname) == "function" then
+                        gn = getgetname()
+                    elseif type(getgamename) == "function" then
                         gn = getgamename()
                     else
                         local info = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
@@ -1216,21 +1230,23 @@ function UILib.Window(titleA, titleB, gameName)
             end)
         end
         dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
-        dDotY    = mkD(mkSq(uiX+L.W-55,uiY+15,8,8,C.YELLOW,true,1,9))
-        dDotR    = mkD(mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9))
-        dSide    = mkD(mkSq(uiX+1,uiY+L.TOPBAR,L.SIDEBAR-1,L.H-L.TOPBAR-L.FOOTER-1,C.SIDEBAR,true,1,2))
+        dDotY    = mkD(mkSq(uiX+L.W-55,uiY+15,8,8,C.YELLOW,true,1,9,nil,3))
+        dDotR    = mkD(mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3))
+        dSide    = mkD(mkSq(uiX+1,uiY+L.TOPBAR,L.SIDEBAR-1,L.H-L.TOPBAR-L.FOOTER-1,C.SIDEBAR,true,1,2,nil,8))
         dSideLn  = mkD(mkLn(uiX+L.SIDEBAR,uiY+L.TOPBAR,uiX+L.SIDEBAR,uiY+L.H-L.FOOTER,C.BORDER,4,1))
-        dContent = mkD(mkSq(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W-1,L.H-L.TOPBAR-L.FOOTER-1,C.CONTENT,true,1,2))
-        dFooter  = mkD(mkSq(uiX+1,uiY+L.H-L.FOOTER,L.W-2,L.FOOTER-1,C.TOPBAR,true,1,3))
+        dContent = mkD(mkSq(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W-1,L.H-L.TOPBAR-L.FOOTER-1,C.CONTENT,true,1,2,nil,8))
+        dFooter  = mkD(mkSq(uiX+1,uiY+L.H-L.FOOTER,L.W-2,L.FOOTER-1,C.TOPBAR,true,1,3,nil,6))
         dFotLine = mkD(mkLn(uiX+1,uiY+L.H-L.FOOTER,uiX+L.W-1,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         dCharLbl = mkD(mkTx("",0,0,11,C.GRAY,false,9))
-        dScrollBg = mkSq(uiX+L.W-6,uiY+L.TOPBAR+2,4,L.H-L.TOPBAR-L.FOOTER-4,Color3.fromRGB(18,20,28),true,1,4)
+        dScrollBg = mkSq(uiX+L.W-6,uiY+L.TOPBAR+2,4,L.H-L.TOPBAR-L.FOOTER-4,Color3.fromRGB(18,20,28),true,1,4,nil,2)
         dScrollBg.Visible = false
-        dScrollThumb = mkSq(uiX+L.W-6,uiY+L.TOPBAR+2,4,20,C.ACCENT,true,1,5)
+        dScrollThumb = mkSq(uiX+L.W-6,uiY+L.TOPBAR+2,4,20,C.ACCENT,true,1,5,nil,2)
         dScrollThumb.Visible = false
-        tipBg   = mkSq(0,0,10,10,Color3.fromRGB(10,13,24),true,1,12)
+        tipBg   = mkSq(0,0,10,10,Color3.fromRGB(10,13,24),true,1,12,nil,4)
+        pcall(function() tipBg.Corner=4 end)
         tipBg.Visible=false
-        local tipBorder=mkSq(0,0,10,10,C.ACCENT,false,0.7,12,1)
+        local tipBorder=mkSq(0,0,10,10,C.ACCENT,false,0.7,12,1,4)
+        pcall(function() tipBorder.Corner=4 end)
         tipBorder.Visible=false
         tipLbl  = mkTx("",0,0,11,Color3.fromRGB(70,120,255),false,13,true)
         tipLbl.Visible=false
@@ -1244,30 +1260,34 @@ function UILib.Window(titleA, titleB, gameName)
         for i,name in ipairs(win._tabOrder) do
             local relTY=L.TOPBAR+8+(i-1)*34
             local isSel=name==defaultTab
-            local tbg =mkD(mkSq(uiX+7,uiY+relTY,L.SIDEBAR-14,26,isSel and C.TABSEL or C.SIDEBAR,true,1,3))
-            local tacc=mkD(mkSq(uiX+7,uiY+relTY,3,26,isSel and C.ACCENT or C.SIDEBAR,true,1,4))
+            local tbg =mkD(mkSq(uiX+7,uiY+relTY,L.SIDEBAR-14,26,isSel and C.TABSEL or C.SIDEBAR,true,1,3,nil,5))
+            local tacc=mkD(mkSq(uiX+7,uiY+relTY,3,26,isSel and C.ACCENT or C.SIDEBAR,true,1,4,nil,2))
             local tlW =mkD(mkTx(name,uiX+18,uiY+relTY+7,11,C.WHITE,false,8))
             local tlG =mkD(mkTx(name,uiX+18,uiY+relTY+7,11,C.GRAY, false,8))
             setShow(tbg,false); setShow(tacc,false)
             setShow(tlW,false); setShow(tlG,false)
             table.insert(tabObjs,{bg=tbg,acc=tacc,lbl=tlW,lblG=tlG,name=name,sel=isSel,lt=isSel and 1 or 0,relTY=relTY})
         end
-        -- Mini bar drawing objects — not tracked in allDrawings so built directly
-        dMiniShadow  = mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.SHADOW,true,0.5,0)
-        dMiniBg      = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BG,    true,1,1)
-        dMiniGlow1   = mkSq(uiX-1,uiY-1,L.W+2,L.MINI_H+2, C.ACCENT,false,0.9,1,1)
-        dMiniGlow2   = mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4, C.ACCENT,false,0.35,0,2)
+        dMiniShadow  = mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.SHADOW,true,0.5,0,nil,12)
+        dMiniBg      = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BG,    true,1,1,nil,10)
+        dMiniGlow1   = mkSq(uiX-1,uiY-1,L.W+2,L.MINI_H+2, C.ACCENT,false,0.9,1,1,11)
+        dMiniGlow2   = mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4, C.ACCENT,false,0.35,0,2,12)
         miniGlowLines= {dMiniGlow1,dMiniGlow2}
-        dMiniBorder  = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BORDER,false,0.2,3,1)
-        dMiniTopBar  = mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,   C.TOPBAR,true,1,3)
+        dMiniBorder  = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BORDER,false,0.2,3,1,10)
+        dMiniTopBar  = mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,   C.TOPBAR,true,1,3,nil,9)
         dMiniTitleW  = mkTx(titleA,  uiX+14,    uiY+12,14,C.WHITE, false,9,true)
         dMiniTitleA  = mkTx(titleB,  uiX+14+(#titleA*8)+3, uiY+12,14,C.ACCENT,false,9,true)
         dMiniTitleG  = mkTx(dTitleG.Text, uiX+100,  uiY+12,13,C.ORANGE,false,9,false)
         dMiniKeyLbl  = mkTx("F1",    uiX+L.W-22,uiY+14,11,C.GRAY,  false,9)
-        dMiniDotG    = mkSq(uiX+L.W-55,uiY+15,8,8,C.ACCENT,true,1,9)
-        dMiniDotR    = mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9)
+        dMiniDotG    = mkSq(uiX+L.W-55,uiY+15,8,8,C.ACCENT,true,1,9,nil,3)
+        dMiniDotR    = mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3)
         dMiniDivLn   = mkLn(uiX+1,uiY+L.TOPBAR,uiX+L.W-1,uiY+L.TOPBAR,C.BORDER,4,1)
-        dMiniActiveBg= mkSq(uiX+1,uiY+L.TOPBAR,L.W-2,L.MINI_H-L.TOPBAR-1,C.MINIBAR,true,1,2)
+        dMiniActiveBg= mkSq(uiX+1,uiY+L.TOPBAR,L.W-2,L.MINI_H-L.TOPBAR-1,C.MINIBAR,true,1,2,nil,8)
+        pcall(function() dMiniShadow.Corner=12 end)
+        pcall(function() dMiniBg.Corner=10 end)
+        pcall(function() dMiniGlow1.Corner=11 end)
+        pcall(function() dMiniGlow2.Corner=12 end)
+        pcall(function() dMiniBorder.Corner=10 end)
         miniDrawings={dMiniShadow,dMiniBg,dMiniGlow2,dMiniGlow1,dMiniBorder,
                       dMiniTopBar,dMiniTitleW,dMiniTitleA,dMiniTitleG,
                       dMiniKeyLbl,dMiniDotG,dMiniDotR,dMiniDivLn,dMiniActiveBg}
@@ -1275,7 +1295,9 @@ function UILib.Window(titleA, titleB, gameName)
         currentTab=defaultTab
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
         updateLoaderFrame = nil
-        local uname = game:GetService("Players").LocalPlayer.Name
+        local uname = "Player"
+        pcall(function() uname = game:FindFirstChildOfClass("Players").LocalPlayer.Name end)
+        pcall(function() uname = game:GetService("Players").LocalPlayer.Name end)
         dWelcomeTxt = mkTx("Welcome, ", 0, 0, 13, C.WHITE, false, 5, true)
         dWelcomeTxt.Visible = true
         dNameTxt = mkTx(uname, 0, 0, 13, C.WHITE, false, 5, false)
@@ -1283,7 +1305,11 @@ function UILib.Window(titleA, titleB, gameName)
         avatarDrawings = {}
         task.spawn(function()
             local url = "https://api.luard.co/v1/user?v5="..uname.."&res=64"
-            local s, code = pcall(function() return game:HttpGet(url) end)
+            -- HttpGet not supported in Matcha - avatar loading will be skipped
+            local s, code = pcall(function() 
+                if game.HttpGet then return game:HttpGet(url) end
+                return nil
+            end)
             if s and code and #code > 100 then
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
@@ -1321,16 +1347,16 @@ function UILib.Window(titleA, titleB, gameName)
         local chosenDesc = descriptions[math.random(1, #descriptions)]
         local dBg = Drawing.new("Square")
         dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
+        pcall(function() dBg.Corner = 6 end)
         dBg.Size = Vector2.new(0, 4)
         dBg.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 2)
         dBg.Visible = true
 
-        local uname = game:GetService("Players").LocalPlayer.Name
+        local uname2 = uname -- reuse the already-fetched username
         local dWelcomeLoad = Drawing.new("Text")
-        dWelcomeLoad.Size=14
-        dWelcomeLoad.Color=C.WHITE; dWelcomeLoad.Center=true; dWelcomeLoad.Outline=true; dWelcomeLoad.ZIndex=16
-        pcall(function() dWelcomeLoad.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
-        dWelcomeLoad.Text = "Welcome, " .. uname
+        dWelcomeLoad.Size=14; dWelcomeLoad.Color=C.WHITE; dWelcomeLoad.Center=true; dWelcomeLoad.Outline=true; dWelcomeLoad.ZIndex=16
+        pcall(function() dWelcomeLoad.Font=Drawing.Fonts.Minecraft end)
+        dWelcomeLoad.Text = "Welcome, " .. uname2
         dWelcomeLoad.Visible = false
 
         task.spawn(function()
@@ -1359,21 +1385,23 @@ function UILib.Window(titleA, titleB, gameName)
             dWelcomeLoad.Visible = false
             
             local dTxt = Drawing.new("Text")
-            dTxt.Size=18
-            dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
-            pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
+            dTxt.Size=18; dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
+            pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)
             local dDesc = Drawing.new("Text")
-            dDesc.Size=13
-            dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
-            pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)  -- FIX: pcall-wrapped
+            dDesc.Size=13; dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
+            pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)
             local dBarOuter = Drawing.new("Square")
             dBarOuter.Filled=true; dBarOuter.ZIndex=16; dBarOuter.Color=Color3.fromRGB(12, 12, 16)
+            pcall(function() dBarOuter.Corner = 4 end)
             local dBarBg = Drawing.new("Square")
             dBarBg.Filled=true; dBarBg.ZIndex=17; dBarBg.Color=Color3.fromRGB(25, 25, 30)
+            pcall(function() dBarBg.Corner = 2 end)
             local dBarFg = Drawing.new("Square")
             dBarFg.Filled=true; dBarFg.ZIndex=18; dBarFg.Color=C.ACCENT
+            pcall(function() dBarFg.Corner = 2 end)
             local dBarGlow = Drawing.new("Square")
             dBarGlow.Filled=true; dBarGlow.ZIndex=16; dBarGlow.Color=C.ACCENT
+            pcall(function() dBarGlow.Corner = 8 end)
             
             local function setLoadPos(alpha, text, fillAmt, textDesc)
                 dBg.Position = Vector2.new(uiX, uiY); dBg.Size = Vector2.new(L.W, L.H)
@@ -1470,9 +1498,8 @@ function UILib.Window(titleA, titleB, gameName)
         task.spawn(function()
         while not destroyed do
             task.wait()
-            -- FIX: removed isrbxactive() window-focus gate that would freeze UI on alt-tab in Matcha
-            -- Matcha does not require window focus check the same way
-            do
+            local _rbxOk, _rbxActive = pcall(function() return isrbxactive() end)
+            if not _rbxOk or _rbxActive then
                 local clicking=ismouse1pressed()
             local keyDown=iskeypressed(menuKey)
             if keyDown and not wasMenuKey and not isLoading then
@@ -2077,10 +2104,10 @@ function UILib.Window(titleA, titleB, gameName)
                         dCharLbl.Text = " | " .. nt
                     end
                 end
-            end -- do block
-        end -- while loop
-    end) -- task.spawn
-    end -- win:Init
+            end 
+        end 
+    end) 
+    end 
     win._tabOrder = {}
     function win:Tab(name)
         table.insert(win._tabOrder, name)
