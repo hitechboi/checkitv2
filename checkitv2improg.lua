@@ -1410,29 +1410,60 @@ function UILib.Window(titleA,titleB,gameName)
         end)
         table.insert(connections,dragConn)
 
-        -- Hide everything until loading screen finishes
+        -- Hide everything until loading finishes, then force-show
         globalAlpha=0
         for _,dr in ipairs(chromeD) do dr.Visible=false end
-        for _,tb in ipairs(tabObjs) do tb.bg.Visible=false; tb.acc.Visible=false; tb.lbl.Visible=false; tb.lblG.Visible=false end
+        for _,tb in ipairs(tabObjs) do
+            tb.bg.Visible=false; tb.acc.Visible=false
+            tb.lbl.Visible=false; tb.lblG.Visible=false
+        end
         dScrBg.Visible=false; dScrThumb.Visible=false
         reposChrome()
-        -- After loading finishes, fade the menu in (manual loop, no tween engine dependency)
+
         task.spawn(function()
+            -- wait for loading to finish
             repeat task.wait() until not isLoading or destroyed
             if destroyed then return end
+
+            -- force everything visible immediately at full alpha
             isOpen=true
-            local dur=0.35; local t0=os.clock()
-            while not destroyed do
-                local elapsed=os.clock()-t0
-                local tf=math.min(elapsed/dur,1)
-                -- easeOut cubic
-                globalAlpha=1-(1-tf)^3
-                flushAlpha()
-                if tf>=1 then break end
-                task.wait()
+            globalAlpha=1
+            -- make sure tabAlpha for current tab is 1
+            if curTab then tabAlpha[curTab]=1 end
+
+            -- directly set every chrome drawing visible
+            for _,dr in ipairs(chromeD) do
+                dr.Visible=true; dr.Transparency=1
             end
-            globalAlpha=1; flushAlpha()
+            -- tab sidebar buttons
+            for _,tb in ipairs(tabObjs) do
+                tb.bg.Visible=true;  tb.bg.Transparency=1
+                tb.acc.Visible=true; tb.acc.Transparency=1
+                if tb.sel then
+                    tb.lbl.Visible=true;  tb.lbl.Transparency=1
+                    tb.lblG.Visible=false
+                else
+                    tb.lbl.Visible=false
+                    tb.lblG.Visible=true; tb.lblG.Transparency=1
+                end
+            end
+            -- content buttons for current tab
+            if curTab then
+                for _,b in ipairs(btns) do
+                    if b.tab==curTab then
+                        posBtn(b); setDrawings(b,true)
+                        -- force transparency on each drawing
+                        local function fv(dr) if dr then dr.Transparency=1 end end
+                        fv(b.bg); fv(b.outline); fv(b.sep); fv(b.lbl)
+                        fv(b.tog); fv(b.dot); fv(b.track); fv(b.fill)
+                        fv(b.handle); fv(b.valLbl); fv(b.arrow); fv(b.dlbl)
+                    end
+                end
+            end
+            reposChrome()
+            updateScrollbar()
             pcall(function() setrobloxinput(false) end)
+            print("[UILib] menu revealed")
         end)
     end -- Init
 
