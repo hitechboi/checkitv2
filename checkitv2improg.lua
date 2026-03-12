@@ -1134,5 +1134,5 @@ function UILib.Window(titleA,titleB,gameName)
 end
 
 _G.UILib=UILib
-print("[UILib] v2.1 loaded")
+print("[UILib] v2.1 loaded t")
 return UILib
