@@ -5,8 +5,11 @@
     star my post :p, have fun!
 ]]
 local _0xD=function(b)local r=""for i=1,#b do r=r..string.char(b[i])end return r end
+local tick = tick or os.clock
+local warn = warn or function(msg) end
 local _0x00=math.floor local _0x01=table.insert local _0x02=pairs local _0x03=ipairs local _0x04=pcall local _0x05=Vector3.new
-if _0x00(game.GameId)~=_0x00(73885730)then notify(_0xD({67,104,101,99,107,32,105,116}),_0xD({84,104,105,115,32,115,99,114,105,112,116,32,105,115,32,110,111,116,32,115,117,112,112,111,114,116,101,100,32,102,111,114,32,116,104,105,115,32,103,97,109,101,46}),5)return end
+local _0xGID=0;pcall(function()_0xGID=_0x00(game.GameId)end)
+if _0xGID~=_0x00(73885730)then pcall(function()notify(_0xD({67,104,101,99,107,32,105,116}),_0xD({84,104,105,115,32,115,99,114,105,112,116,32,105,115,32,110,111,116,32,115,117,112,112,111,114,116,101,100,32,102,111,114,32,116,104,105,115,32,103,97,109,101,46}),5)end)return end
 if _G.MyMoms_Cleanup then pcall(_G.MyMoms_Cleanup) task.wait(0.2) end
 _G.MyMoms_Cleanup = function() end
 local _0x06={}local _0x07={}local _0x08=true local _0x09=os.clock()local _0x0A=0 local _0x0B={}local _0x0C=0 local _0x0E=10 local _0x0F=0
@@ -25,9 +28,9 @@ if _0x08 then local _n=0 for _ in _0x02(_0x07)do _n=_n+1 end if _n~=_0x0C then _
 if _0x08 then _0x06.RenderStepped:Fire(_d)end
 if _0x08 then _0x06.Heartbeat:Fire(_d)end end)
 if not _ok then _0x0F=_0x0F+1 if _0x0F>=_0x0E then _0x08=false break end else _0x0F=math.max(0,_0x0F-1)end
-if _0x08 then task.wait()end end end)
-local _0x11 = loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/checkitv2.lua"))() or _G.UILib
-local _0x12=game.Players.LocalPlayer.Name local _0x13=getgamename()
+if _0x08 then task.wait(0.016)end end end)
+local _0x11;do local _ok,_r=pcall(function()return loadstring(game:HttpGet(_0xD({104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,104,105,116,101,99,104,98,111,105,47,99,104,101,99,107,105,116,118,50,47,114,101,102,115,47,104,101,97,100,115,47,109,97,105,110,47,98,114,111,99,111,108,105,46,108,117,97}).."?cache="..tostring(os.time())))()end);_0x11=_ok and _r or _G.UILib;if not _0x11 then pcall(function()notify("Check it","Failed to load UI library",5)end)return end end
+local _0x12=game.Players.LocalPlayer.Name local _0x13="";pcall(function()if type(getgetname)=="function"then _0x13=getgetname()elseif type(getgamename)=="function"then _0x13=getgamename()end end)
 local _0x14=false local _0x15=false local _0x16=false local _0x17=false local _0x18=false local _0x19=false local _0x1A=false local _0x1B=false local _0x1C=false
 local _0x1D=1 local _0x1E=0.01 local _0x1F=0.1 local _0x20=1500 local _0x21=false local _0x22=false
 local _0x23={["AK-47"]=true,["MP5"]=true,["FAL"]=true,["M4A1"]=true}
@@ -51,7 +54,7 @@ _0xAutoBtn = _0xAutoT:Toggle("Auto Cuffs", false, function(s)
         if not t or (not string.match(string.lower(t.Name), "guard") and not string.match(string.lower(t.Name), "police")) then
             _0xAC = false
             if _0xAutoBtn and type(_0xAutoBtn.SetState) == "function" then _0xAutoBtn:SetState(false) end
-            game:GetService("StarterGui"):SetCore("SendNotification", {Title="Auto Arrest", Text="Warning: You aren't on the Guards team!", Duration=4})
+            pcall(function() if type(notify)=="function" then notify("Auto Arrest","Warning: You aren't on the Guards team!",4) end end)
         end
     end) end
 end, "Hold out cuffs. Checks Guards team. Teleports to Criminals & locks camera.")
@@ -109,7 +112,8 @@ local _0x37 = _0xD({104,116,116,112,115,58,47,47,97,99,116,105,118,101,45,117,11
 task.spawn(function()
     local _0x39 = pcall(function() return game.HttpGet end) or (type(HttpGet) == "function")
     local _0x3A = pcall(function() return game.HttpPost end) or (type(HttpPost) == "function")
-    local _0x3B = request or http_request or (syn and syn.request) or (fluxus and fluxus.request)
+    local _0x3B = nil
+    pcall(function() _0x3B = request or http_request or (syn and syn.request) or (fluxus and fluxus.request) end)
     if not (_0x39 and _0x3A) and not _0x3B then return end
 
     local _0x3C = _0x37:gsub("/+$", "")
@@ -242,7 +246,7 @@ task.spawn(function()
     local _0xLC = 0
     local _0xHadTargets = false
     while not _0x21 and _0x08 do
-        task.wait()
+        task.wait(0.1)
         if not _0xAC then
             task.wait(0.2)
             _0xHadTargets = false
@@ -268,11 +272,7 @@ task.spawn(function()
                     if _0xAutoBtn and type(_0xAutoBtn.SetState) == "function" then pcall(function() _0xAutoBtn:SetState(false) end) end
                     pcall(function()
                         local msg = _0xHadTargets and "Arrested all criminals" or "Untoggled no criminals"
-                        if type(notify) == "function" then
-                            notify("Auto Arrest", msg, 3)
-                        else
-                            game:GetService("StarterGui"):SetCore("SendNotification", {Title="Auto Arrest", Text=msg, Duration=3})
-                        end
+                        if type(notify) == "function" then notify("Auto Arrest", msg, 3) end
                     end)
                     _0xHadTargets = false
                     return
@@ -293,9 +293,7 @@ task.spawn(function()
                                     if not _notified then
                                         _notified = true
                                         pcall(function()
-                                            if type(notify) == "function" then notify("Auto Arrest", "Arrested " .. _0xWatchP.DisplayName, 3) else
-                                                game:GetService("StarterGui"):SetCore("SendNotification", {Title="Auto Arrest", Text="Arrested " .. _0xWatchP.DisplayName, Duration=3})
-                                            end
+                                            if type(notify) == "function" then notify("Auto Arrest", "Arrested " .. _0xWatchP.DisplayName, 3) end
                                         end)
                                     end
                                     break
@@ -304,7 +302,7 @@ task.spawn(function()
                         end)
                         local _0xST = tick()
                         while _0xAC and not _0x21 and (tick() - _0xST) < 5.5 do
-                            task.wait()
+                            task.wait(0.016)
                             local _0xPC = _0xP.Character
                             local _0xMC = _0x24.Character
                             if not _0xPC or not _0xMC then break end
@@ -313,9 +311,7 @@ task.spawn(function()
                                 _0xAC = false
                                 if _0xAutoBtn and type(_0xAutoBtn.SetState) == "function" then pcall(function() _0xAutoBtn:SetState(false) end) end
                                 pcall(function()
-                                    if type(notify) == "function" then notify("Auto Arrest", "You died! Turning off.", 4) else
-                                        game:GetService("StarterGui"):SetCore("SendNotification", {Title="Auto Arrest", Text="You died! Turning off.", Duration=4})
-                                    end
+                                    if type(notify) == "function" then notify("Auto Arrest", "You died! Turning off.", 4) end
                                 end)
                                 break
                             end
@@ -327,12 +323,14 @@ task.spawn(function()
                             if not _0xCHP or not _0xMHP2 then break end
                             local _0xCP = _0xCHP.Position
                             _0xMHP2.Position = Vector3.new(_0xCP.X, _0xCP.Y, _0xCP.Z + 3)
-                            local _0xCM = workspace.CurrentCamera
-                            if _0xCM then
-                                _0xCM.CFrame = CFrame.lookAt(_0xMHP2.Position, _0xCP)
-                            end
+                            pcall(function()
+                                local _0xCM = workspace.CurrentCamera
+                                if _0xCM and CFrame and CFrame.lookAt then
+                                    _0xCM.CFrame = CFrame.lookAt(_0xMHP2.Position, _0xCP)
+                                end
+                            end)
                             if (tick() - _0xLC) > 0.15 then
-                                pcall(function() mouse1click() end)
+                                pcall(function() if type(mouse1click)=="function" then mouse1click() elseif type(click)=="function" then click() end end)
                                 _0xLC = tick()
                             end
                         end
