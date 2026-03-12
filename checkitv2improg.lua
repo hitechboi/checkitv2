@@ -553,7 +553,9 @@ function UILib.Window(titleA, titleB, gameName)
         if dOnlineTxt and dOnlineDot then
             local tx = dTitleG.Position.X + #(dTitleG.Text)*7.5 + 15
             dOnlineTxt.Position = Vector2.new(tx, uiY+14)
-            dOnlineDot.Position = Vector2.new(tx + 48, uiY+17)
+            -- Red dot after "Online:" text
+            local onlineTextWidth = 42
+            dOnlineDot.Position = Vector2.new(tx + onlineTextWidth + 6, uiY+17)
         end
         dKeyLbl.Position  =Vector2.new(uiX+L.W-55,uiY+14)
         dBtnMinimize.Position =Vector2.new(uiX+L.W-38,uiY+10)
@@ -1193,8 +1195,9 @@ function UILib.Window(titleA, titleB, gameName)
         local function posOnline(gn)
             local tx = uiX + 100 + #gn * 7.5 + 15
             if dOnlineTxt then dOnlineTxt.Position = Vector2.new(tx, uiY+14) end
-            -- Red dot positioned right after "Online:" text
-            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + 48, uiY+17) end
+            -- Red dot positioned right after "Online:" text (after the word)
+            local onlineTextWidth = 42 -- approximate width of "Online:" text
+            if dOnlineDot then dOnlineDot.Position = Vector2.new(tx + onlineTextWidth + 6, uiY+17) end
         end
         posOnline(gameNameShort)
 
@@ -1218,10 +1221,13 @@ function UILib.Window(titleA, titleB, gameName)
                 end)
             end)
         end
-        dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
+        dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-55, uiY+14,11,C.GRAY,  false,9))
         -- Yellow minimize button and Red close button in top right
-        dBtnMinimize = mkD(mkSq(uiX+L.W-38,uiY+10,12,12,Color3.fromRGB(230,180,50),true,1,9,nil,3))
-        dBtnClose    = mkD(mkSq(uiX+L.W-22,uiY+10,12,12,Color3.fromRGB(200,60,60),true,1,9,nil,3))
+        dBtnMinimize = mkD(mkSq(uiX+L.W-38,uiY+10,12,12,Color3.fromRGB(230,180,50),true,1,10,nil,3))
+        dBtnClose    = mkD(mkSq(uiX+L.W-22,uiY+10,12,12,Color3.fromRGB(200,60,60),true,1,10,nil,3))
+        -- Set them to show immediately (they're in baseUI so will be shown when loading completes)
+        setShow(dBtnMinimize, true)
+        setShow(dBtnClose, true)
         dSide    = mkD(mkSq(uiX+1,uiY+L.TOPBAR,L.SIDEBAR-1,L.H-L.TOPBAR-L.FOOTER-1,C.SIDEBAR,true,1,2,nil,8))
         dSideLn  = mkD(mkLn(uiX+L.SIDEBAR,uiY+L.TOPBAR,uiX+L.SIDEBAR,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         dContent = mkD(mkSq(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W-1,L.H-L.TOPBAR-L.FOOTER-1,C.CONTENT,true,1,2,nil,8))
