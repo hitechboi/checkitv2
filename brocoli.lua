@@ -977,6 +977,18 @@ function UILib.Window(titleA, titleB, gameName)
             local y = nextY(L.ROW_H + 4)
             local idx = addToggle(tabName, lbl, y, init, cb, desc)
             if currentSection then btns[idx].section = currentSection end
+            local togApi = {}
+            function togApi:SetState(newState, skipCallback)
+                local b = btns[idx]
+                if not b then return end
+                if b.state == newState then return end
+                b.state = newState
+                b.lt = newState and 1 or 0
+                if b.tog then b.tog.Color = newState and C.ON or C.OFF end
+                if b.dot then b.dot.Color = newState and C.ONDOT or C.OFFDOT end
+                if not skipCallback and b.cb then pcall(b.cb, newState) end
+            end
+            return togApi
         end
         function api:Slider(lbl, minV, maxV, initV, cb, isFloat, desc)
             local y = nextY(L.ROW_H + 10)
