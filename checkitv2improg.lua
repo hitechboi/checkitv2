@@ -6,11 +6,78 @@
 local UILib = {}
 
 -- ── Services ─────────────────────────────────────────────
-local Players   = game:GetService("Players")
-local RunService= game:GetService("RunService")
-local UIS       = game:GetService("UserInputService")
-local lp        = Players.LocalPlayer
-local mouse     = lp:GetMouse()
+local Players = game:GetService("Players")
+local UIS     = game:GetService("UserInputService")
+local lp      = Players.LocalPlayer
+local mouse   = lp:GetMouse()
+
+-- ── RunService VM (os.clock based, Matcha compatible) ────
+local RunService = (function()
+    local RS = {}
+    local _bindings = {}
+    local _running = true
+    local _lastT = os.clock()
+    local _sortedBinds = {}
+    local _bindCount = 0
+
+    local function Signal()
+        local s = {_conns={}}
+        function s:Connect(fn)
+            local c = {fn=fn, active=true}
+            table.insert(s._conns, c)
+            return {Disconnect=function() c.active=false; c.fn=nil end}
+        end
+        function s:Fire(...)
+            local i=1
+            while i<=#s._conns do
+                local c=s._conns[i]
+                if c.active then pcall(c.fn,...); i=i+1
+                else table.remove(s._conns,i) end
+            end
+        end
+        return s
+    end
+
+    RS.Heartbeat     = Signal()
+    RS.RenderStepped = Signal()
+    RS.Stepped       = Signal()
+
+    function RS:BindToRenderStep(name,pri,fn)
+        _bindings[name]={Priority=pri or 0,Function=fn}; _bindCount=-1
+    end
+    function RS:UnbindFromRenderStep(name)
+        _bindings[name]=nil; _bindCount=-1
+    end
+    function RS:IsRunning() return _running end
+
+    task.spawn(function()
+        while _running do
+            local now=os.clock()
+            local dt=math.min(now-_lastT,1)
+            _lastT=now
+
+            RS.Stepped:Fire(now,dt)
+
+            -- rebuild sorted bind cache if dirty
+            local cnt=0; for _ in pairs(_bindings) do cnt=cnt+1 end
+            if cnt~=_bindCount then
+                _sortedBinds={}
+                for _,bd in pairs(_bindings) do
+                    if type(bd.Function)=="function" then table.insert(_sortedBinds,bd) end
+                end
+                table.sort(_sortedBinds,function(a,b) return a.Priority<b.Priority end)
+                _bindCount=cnt
+            end
+            for _,bd in ipairs(_sortedBinds) do pcall(bd.Function,dt) end
+
+            RS.RenderStepped:Fire(dt)
+            RS.Heartbeat:Fire(dt)
+            task.wait()
+        end
+    end)
+
+    return RS
+end)()
 
 -- ── Themes ───────────────────────────────────────────────
 local THEMES = {
@@ -909,9 +976,9 @@ function UILib.Window(titleA,titleB,gameName)
                 local proxy={v=barPct}
                 tween(proxy,"v",barPct,target,0.38,easeInOut)
                 -- step until proxy reaches target (RenderStepped not yet connected, drive manually)
-                local t0=tick()
+                local t0=os.clock()
                 while proxy.v < target-0.005 and not destroyed do
-                    local dt2=tick()-t0; t0=tick()
+                    local dt2=os.clock()-t0; t0=os.clock()
                     stepTweens(dt2)
                     barPct=proxy.v
                     oBar.Size=Vector2.new(barPct*160,5)
@@ -926,9 +993,9 @@ function UILib.Window(titleA,titleB,gameName)
             -- Fade out overlay smoothly
             local proxy2={v=1}
             tween(proxy2,"v",1,0,0.32,easeOut)
-            local t1=tick()
+            local t1=os.clock()
             while proxy2.v > 0.01 and not destroyed do
-                local dt2=tick()-t1; t1=tick()
+                local dt2=os.clock()-t1; t1=os.clock()
                 stepTweens(dt2)
                 local a=proxy2.v
                 for _,dr in ipairs({oBg,oTitle,oDesc,oBarBg,oBar,oPct}) do
@@ -946,10 +1013,10 @@ function UILib.Window(titleA,titleB,gameName)
         -- RENDER LOOP  (RenderStepped for smooth animation)
         -- ══════════════════════════════════════════════════
         local renderConn; renderConn=RunService.RenderStepped:Connect(function(dt)
-            if destroyed then renderConn:Disconnect(); return end
+            if destroyed then if renderConn then renderConn.Disconnect() end; return end
             stepTweens(dt)
 
-            local t=tick()
+            local t=os.clock()
             -- Glow pulse
             if dGlow1 and isOpen then
                 local p1=math.abs(math.sin(t))
@@ -1251,7 +1318,7 @@ function UILib.Window(titleA,titleB,gameName)
 
         -- MouseMove (drag logic via RenderStepped polling of mouse pos)
         local dragConn; dragConn=RunService.RenderStepped:Connect(function(dt)
-            if destroyed then dragConn:Disconnect(); return end
+            if destroyed then if dragConn then dragConn.Disconnect() end; return end
             local mx,my=mouse.X,mouse.Y
             local vpW,vpH=getVP()
 
@@ -1352,5 +1419,5 @@ function UILib.Window(titleA,titleB,gameName)
 end
 
 _G.UILib=UILib
-print("[UILib] v13.0 loaded - event driven")
+print("[UILib] v3.0 loaded - event driven")
 return UILib
