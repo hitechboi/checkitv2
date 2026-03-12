@@ -962,16 +962,17 @@ function UILib.Window(titleA,titleB,gameName)
         local oBg    = Drawing.new("Square")
         oBg.Position=Vector2.new(uiX,uiY); oBg.Size=Vector2.new(W,FULL_H)
         oBg.Color=Color3.fromRGB(7,9,17); oBg.Filled=true; oBg.ZIndex=50; oBg.Transparency=1; oBg.Visible=true
+        pcall(function() oBg.Corner=12 end)
 
         local oTitle = Drawing.new("Text")
         oTitle.Text=_loadTitle.." Loading"; oTitle.Position=Vector2.new(uiX+W/2,uiY+FULL_H/2-28)
-        oTitle.Size=14; oTitle.Color=C.TXT; oTitle.Center=true; oTitle.Outline=false
-        oTitle.Font=Drawing.Fonts.SystemBold; oTitle.ZIndex=51; oTitle.Transparency=1; oTitle.Visible=true
+        oTitle.Size=14; oTitle.Color=C.TXT; oTitle.Center=true; oTitle.Outline=true
+        oTitle.Font=Drawing.Fonts.Minecraft; oTitle.ZIndex=51; oTitle.Transparency=1; oTitle.Visible=true
 
         local oDesc = Drawing.new("Text")
         oDesc.Text="Connecting..."; oDesc.Position=Vector2.new(uiX+W/2,uiY+FULL_H/2-8)
         oDesc.Size=10; oDesc.Color=C.GRY; oDesc.Center=true; oDesc.Outline=false
-        oDesc.Font=Drawing.Fonts.System; oDesc.ZIndex=51; oDesc.Transparency=1; oDesc.Visible=true
+        oDesc.Font=Drawing.Fonts.Minecraft; oDesc.ZIndex=51; oDesc.Transparency=1; oDesc.Visible=true
 
         local oBarBg = Drawing.new("Square")
         oBarBg.Position=Vector2.new(uiX+W/2-80,uiY+FULL_H/2+10); oBarBg.Size=Vector2.new(160,5)
@@ -986,7 +987,7 @@ function UILib.Window(titleA,titleB,gameName)
         local oPct = Drawing.new("Text")
         oPct.Text="0%"; oPct.Position=Vector2.new(uiX+W/2,uiY+FULL_H/2+22)
         oPct.Size=9; oPct.Color=C.GRY; oPct.Center=true; oPct.Outline=false
-        oPct.Font=Drawing.Fonts.System; oPct.ZIndex=51; oPct.Transparency=1; oPct.Visible=true
+        oPct.Font=Drawing.Fonts.Minecraft; oPct.ZIndex=51; oPct.Transparency=1; oPct.Visible=true
 
         local _loadDrawings={oBg,oTitle,oDesc,oBarBg,oBar,oPct}
         -- register for cleanup on Destroy
@@ -1408,18 +1409,20 @@ function UILib.Window(titleA,titleB,gameName)
         for _,tb in ipairs(tabObjs) do tb.bg.Visible=false; tb.acc.Visible=false; tb.lbl.Visible=false; tb.lblG.Visible=false end
         dScrBg.Visible=false; dScrThumb.Visible=false
         reposChrome()
-        -- After loading finishes, fade the menu in
+        -- After loading finishes, fade the menu in (manual loop, no tween engine dependency)
         task.spawn(function()
             repeat task.wait() until not isLoading or destroyed
             if destroyed then return end
-            -- fade in from 0 to 1
-            local proxy={v=0}
-            tween(proxy,"v",0,1,0.4,easeOut,function() globalAlpha=1 end)
+            isOpen=true
+            local dur=0.35; local t0=os.clock()
             while not destroyed do
-                task.wait()
-                globalAlpha=proxy.v
+                local elapsed=os.clock()-t0
+                local tf=math.min(elapsed/dur,1)
+                -- easeOut cubic
+                globalAlpha=1-(1-tf)^3
                 flushAlpha()
-                if proxy.v>=0.99 then break end
+                if tf>=1 then break end
+                task.wait()
             end
             globalAlpha=1; flushAlpha()
             pcall(function() setrobloxinput(false) end)
