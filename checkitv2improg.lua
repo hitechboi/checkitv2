@@ -1352,5 +1352,5 @@ function UILib.Window(titleA,titleB,gameName)
 end
 
 _G.UILib=UILib
-print("[UILib] v3.0 loaded - event driven")
+print("[UILib] v13.0 loaded - event driven")
 return UILib
