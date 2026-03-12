@@ -994,18 +994,23 @@ function UILib.Window(titleA,titleB,gameName)
         for _,dr in ipairs(_loadDrawings) do d(dr) end
 
         task.spawn(function()
-            local stages={"Connecting...","Building UI...","Almost ready...","Done!"}
-            local stageT={0.25,0.55,0.85,1.0}
+            -- each stage: {label, target bar fraction, hold time after bar reaches target}
+            local stages={
+                {"Connecting...",     0.25, 0.55},
+                {"Building UI...",    0.55, 0.5},
+                {"Almost ready...",   0.85, 0.45},
+                {"Done!",             1.0,  0.3},
+            }
             local barPct=0
 
-            for si,target in ipairs(stageT) do
-                oDesc.Text=stages[si]
-                local startV=barPct; local dur=0.38
-                local t0=os.clock()
+            for _,stage in ipairs(stages) do
+                local label,target,hold = stage[1],stage[2],stage[3]
+                oDesc.Text=label
+                -- animate bar to target over 0.45s easeInOut
+                local startV=barPct; local dur=0.45; local t0=os.clock()
                 while not destroyed do
                     local elapsed=os.clock()-t0
                     local tf=math.min(elapsed/dur,1)
-                    -- easeInOut
                     local et=tf<0.5 and 4*tf^3 or 1-(-2*tf+2)^3/2
                     barPct=startV+(target-startV)*et
                     oBar.Size=Vector2.new(barPct*160,5)
@@ -1013,18 +1018,20 @@ function UILib.Window(titleA,titleB,gameName)
                     if tf>=1 then break end
                     task.wait()
                 end
-                barPct=target; oBar.Size=Vector2.new(target*160,5)
+                barPct=target
+                oBar.Size=Vector2.new(target*160,5)
                 oPct.Text=math.floor(target*100).."%"
-                task.wait(0.06)
+                -- hold at this stage so the user can read it
+                task.wait(hold)
             end
-            task.wait(0.2)
 
-            -- Smooth fade out
-            local dur2=0.3; local t1=os.clock()
+            task.wait(0.25)
+
+            -- Smooth fade out over 0.4s
+            local dur2=0.4; local t1=os.clock()
             while not destroyed do
                 local elapsed=os.clock()-t1
-                local a=1-(elapsed/dur2)
-                if a<=0 then a=0 end
+                local a=math.max(0, 1-(elapsed/dur2))
                 for _,dr in ipairs(_loadDrawings) do
                     dr.Transparency=a; dr.Visible=a>0.005
                 end
