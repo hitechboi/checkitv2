@@ -72,6 +72,11 @@ UILib.Colors = THEMES["Check it"]
 _G.UILib = UILib
 print("[UILib] v1.6.0 loaded")
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
+local function lerp(a,b,t) return a + (b - a) * t end
+local function lerpV2(a,b,t) return Vector2.new(lerp(a.X,b.X,t), lerp(a.Y,b.Y,t)) end
+local function easeOutQuad(t) return 1 - (1 - t) * (1 - t) end
+local function easeOutCubic(t) return 1 - math.pow(1 - t, 3) end
+local function easeInOutQuad(t) return t < 0.5 and 2 * t * t or 1 - math.pow(-2 * t + 2, 2) / 2 end
 local function lerpC(a,b,t)
     return Color3.fromRGB(
         math.floor(a.R*255+(b.R*255-a.R*255)*t),
@@ -229,8 +234,12 @@ function UILib.Window(titleA, titleB, gameName)
     local wasMenuKey      = false
     local menuOpen        = true
     local menuToggledAt   = tick() - 1
-    local FADE_DUR        = 0.4
-    local TAB_FADE_DUR    = 0.2
+    local FADE_DUR        = 0.5
+    local TAB_FADE_DUR    = 0.3
+    local MENU_OPEN_FADE  = 0.6
+    local menuFadeProgress = 0
+    local menuTargetScale = 1
+    local menuCurrentScale = 0.85
     local tabSwitchedAt   = tick() - 1
     local prevTab         = nil
     local minimized       = false
@@ -308,15 +317,21 @@ function UILib.Window(titleA, titleB, gameName)
         if not minimized then
             for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
         end
-        local mf=1-(menuToggledAt-(tick()-FADE_DUR))/FADE_DUR
-        if not menuOpen and mf>=1.1 then
+        local rawT = clamp((tick() - menuToggledAt) / MENU_OPEN_FADE, 0, 1)
+        local easedT = easeOutCubic(rawT)
+        if menuOpen then
+            menuFadeProgress = easedT
+            menuCurrentScale = lerp(0.85, 1, easedT)
+        else
+            menuFadeProgress = 1 - easedT
+            menuCurrentScale = lerp(1, 0.85, easedT)
+        end
+        if not menuOpen and rawT >= 1 then
             for _,d in ipairs(allDrawings) do d.Visible=false end
             return
         end
-        local mOp=mf<1.1
-            and math.abs((menuOpen and 0 or 1)-clamp(mf,0,1))
-            or  (menuOpen and 1 or 0)
-        local tp=clamp((tick()-tabSwitchedAt)/TAB_FADE_DUR,0,1)
+        local mOp = menuFadeProgress
+        local tp = easeOutQuad(clamp((tick()-tabSwitchedAt)/TAB_FADE_DUR,0,1))
         for _,d in ipairs(allDrawings) do
             if showSet[d] then
                 local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
@@ -1484,16 +1499,34 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 task.wait(0.1)
             end
-            local t2 = tick(); local durOut = 0.3
+            local t2 = tick(); local durOut = 0.5
             while tick()-t2 < durOut and not destroyed do
                 task.wait()
-                setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, "")
+                local prog = easeOutCubic((tick()-t2)/durOut)
+                setLoadPos(1 - prog, "Ready!", 1, "")
             end
             pcall(function() dBg:Remove() end)
             pcall(function() dTxt:Remove() end)
             pcall(function() dDesc:Remove() end)
             pcall(function() dBarBg:Remove() end)
+            pcall(function() dBarFg:Remove() end)
+            pcall(function() dBarOuter:Remove() end)
+            pcall(function() dBarGlow:Remove() end)
+            pcall(function() dWelcomeLoad:Remove() end)
             isLoading = false
+            -- Trigger smooth fade-in of main menu
+            menuOpen = true
+            menuToggledAt = tick()
+            menuFadeProgress = 0
+            menuCurrentScale = 0.85
+            -- Show all base UI elements
+            for _,d in ipairs(baseUI) do setShow(d,true) end
+            for _,t2 in ipairs(tabObjs) do
+                setShow(t2.bg,true); setShow(t2.acc,true)
+                setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
+            end
+            showTab(currentTab)
+            updatePos()
         end)
         task.spawn(function()
         while not destroyed do
@@ -1568,14 +1601,16 @@ function UILib.Window(titleA, titleB, gameName)
                 for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
-                    t.lt=t.lt+(tgt-t.lt)*0.15
-                    t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,t.lt)
-                    t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,t.lt)
+                    -- Smoother tab selection animation
+                    t.lt=t.lt+(tgt-t.lt)*0.08
+                    t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,easeOutQuad(t.lt))
+                    t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,easeOutQuad(t.lt))
                 end
                 for _,b in ipairs(btns) do
                     if b.isTog and b.tog and b.tab==currentTab then
                         local tgt=b.state and 1 or 0
-                        b.lt=b.lt+(tgt-b.lt)*0.18
+                        -- Smoother toggle animation
+                        b.lt=b.lt+(tgt-b.lt)*0.10
                         b.tog.Color=lerpC(C.OFF,   C.ON,   b.lt)
                         b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
                         local dox=b.rx+b.cw-L.TOG_W-8
@@ -1632,9 +1667,10 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                         if b.outGlow then
                             local diff = (b.targetHoverAlpha or 0) - (b.hoverAlpha or 0)
-                            if math.abs(diff) > 0.05 then
-                                b.hoverAlpha = (b.hoverAlpha or 0) + diff * 0.15
-                                b.outGlow.Transparency = b.hoverAlpha * dMainBg.Transparency
+                            if math.abs(diff) > 0.02 then
+                                -- Smoother hover glow animation
+                                b.hoverAlpha = (b.hoverAlpha or 0) + diff * 0.08
+                                b.outGlow.Transparency = easeOutQuad(b.hoverAlpha) * menuFadeProgress
                             elseif (b.targetHoverAlpha == 0 and (b.hoverAlpha or 0) ~= 0) then
                                 b.hoverAlpha = 0
                                 b.outGlow.Transparency = 0
@@ -1649,28 +1685,29 @@ function UILib.Window(titleA, titleB, gameName)
                     local wX = uiX + 42
                     local tY = uiY + uiCurrentH - L.FOOTER + 9
                     dWelcomeTxt.Position = Vector2.new(wX, tY)
-                    dWelcomeTxt.Transparency = menuOpen and 1 or 0
-                    dWelcomeTxt.Visible = menuOpen
+                    dWelcomeTxt.Transparency = menuFadeProgress
+                    dWelcomeTxt.Visible = menuFadeProgress > 0.01
                     dNameTxt.Position = Vector2.new(wX + 64, tY) 
-                    dNameTxt.Transparency = menuOpen and 1 or 0
-                    dNameTxt.Visible = menuOpen
+                    dNameTxt.Transparency = menuFadeProgress
+                    dNameTxt.Visible = menuFadeProgress > 0.01
                 end
                 if dCharLbl then
-                    dCharLbl.Transparency = menuOpen and 1 or 0
-                    dCharLbl.Visible = menuOpen
+                    dCharLbl.Transparency = menuFadeProgress
+                    dCharLbl.Visible = menuFadeProgress > 0.01
                 end
                 local ax = uiX + 12
                 local ay = uiY + uiCurrentH - L.FOOTER + 6
                 for _,ap in ipairs(avatarDrawings or {}) do
                     ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
-                    ap.d.Visible = menuOpen
+                    ap.d.Transparency = menuFadeProgress
+                    ap.d.Visible = menuFadeProgress > 0.01
                 end
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
                         if b._collapsing and b._collapseTarget then
                             local diff = b._collapseTarget - b.currentRY
                             if math.abs(diff) > 0.5 then
-                                b.currentRY = b.currentRY + diff * 0.18
+                                b.currentRY = b.currentRY + diff * 0.12
                                 bPos(b)
                             else
                                 b.currentRY = b._collapseTarget
@@ -1680,7 +1717,9 @@ function UILib.Window(titleA, titleB, gameName)
                         else
                             local diff = b.ry - b.currentRY
                             if math.abs(diff) > 0.3 then
-                                b.currentRY = b.currentRY + diff * 0.15
+                                -- Smooth eased position animation
+                                local smoothFactor = 0.08 + 0.04 * easeOutQuad(clamp(math.abs(diff) / 50, 0, 1))
+                                b.currentRY = b.currentRY + diff * smoothFactor
                                 if showSet[b.bg] then bPos(b) end
                             elseif b.currentRY ~= b.ry then
                                 b.currentRY = b.ry
@@ -1688,11 +1727,21 @@ function UILib.Window(titleA, titleB, gameName)
                             end
                         end
                     end
+                    -- Smooth transparency fade for individual buttons
+                    if b._targetAlpha ~= nil and b._currentAlpha ~= nil then
+                        local aDiff = b._targetAlpha - b._currentAlpha
+                        if math.abs(aDiff) > 0.01 then
+                            b._currentAlpha = b._currentAlpha + aDiff * 0.12
+                        end
+                    end
                 end
                 local dt = tick() - lastTick
                 lastTick = tick()
                 if math.abs(uiCurrentH - uiTargetH) > 2.0 then
-                    uiCurrentH = uiCurrentH + (uiTargetH - uiCurrentH) * clamp(dt * UI_RESIZE_SPD, 0, 1)
+                    -- Smooth eased height animation
+                    local heightDiff = uiTargetH - uiCurrentH
+                    local smoothH = 0.06 + 0.06 * easeOutQuad(clamp(math.abs(heightDiff) / 100, 0, 1))
+                    uiCurrentH = uiCurrentH + heightDiff * smoothH
                     updatePos()
                     _wasResizing = true
                     local contentBottom = uiY + uiCurrentH - L.FOOTER
