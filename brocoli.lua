@@ -1,7 +1,6 @@
 local UILib = {}
 local _collapseSections = {}
 
--- Matcha compatibility shims
 local tick = tick or os.clock
 local warn = warn or function() end
 if not task then
