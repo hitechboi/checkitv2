@@ -1713,7 +1713,7 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 for _,b in ipairs(btns) do
-                    if b.tab==currentTab and showSet[b.bg] and not b.isDiv and not b.isLog and not b.isUserList then
+                    if menuOpen and not minimized and b.tab==currentTab and showSet[b.bg] and not b.isDiv and not b.isLog and not b.isUserList then
                         local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
                         if inBox(uiX+b.rx, itemY, b.cw, b.ch) then
                             if not b.isAct or not b.customCol then
@@ -1932,10 +1932,12 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 if tipBg then
                     local hov=nil
+                    if menuOpen and not minimized then
                     for _,b in ipairs(btns) do
                         if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
                             if showSet[b.bg] and inBox(uiX+b.ox-22,uiY+(b.currentRY or b.ry)-(tabScroll[currentTab] or 0)+b.ch/2-7,14,14) then hov=b; break end
                         end
+                    end
                     end
                     if hov~=hoveredBtn then
                         hoveredBtn=hov
