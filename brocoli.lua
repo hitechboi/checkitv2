@@ -1436,7 +1436,7 @@ function UILib.Window(titleA, titleB, gameName)
             end
             
             -- Phase 1: Smooth horizontal expand (left to right) - time based, 3.5 seconds
-            local xDuration = 1.0
+            local xDuration = 1.6
             local xStart = tick()
             while true do
                 local elapsed = tick() - xStart
@@ -1453,7 +1453,7 @@ function UILib.Window(titleA, titleB, gameName)
             task.wait(0.15)
             
             -- Phase 2: Smooth vertical expand (up and down from center) - time based, 3 seconds
-            local yDuration = 0.8
+            local yDuration = 1.2
             local yStart = tick()
             while true do
                 local elapsed = tick() - yStart
@@ -1469,8 +1469,8 @@ function UILib.Window(titleA, titleB, gameName)
             dBg.Size = Vector2.new(L.W, L.H); dBg.Position = Vector2.new(uiX, uiY)
             dWelcomeLoad.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 10)
             dWelcomeLoad.Visible = true
-            task.wait(0.5)
-            for i = 1, 15 do
+            task.wait(0.3)
+            for i = 1, 10 do
                 dWelcomeLoad.Transparency = 1 - (i/30)
                 task.wait(0.016)
             end
@@ -1558,14 +1558,14 @@ function UILib.Window(titleA, titleB, gameName)
             local fillAmt = 0.0
             setLoadPos(1, gameName.." Initializing...", fillAmt)
             local progressStages = {
-                {pct=0.12, text="bypassing security...",                   delay=0.5},
-                {pct=0.28, text="fetching assets...",                      delay=0.45},
-                {pct=0.42, text="syncing check.lua routines...",           delay=0.5},
-                {pct=0.56, text="warming up layout engine... v1.6.0",      delay=0.45},
-                {pct=0.70, text="initializing core Check it interface...", delay=0.5},
-                {pct=0.84, text="loading modules...",                      delay=0.4},
-                {pct=0.94, text=chosenDesc,                                delay=0.3},
-                {pct=1.00, text="done.",                                   delay=0.25}
+                {pct=0.12, text="bypassing security...",                   delay=0.35},
+                {pct=0.28, text="fetching assets...",                      delay=0.3},
+                {pct=0.42, text="syncing check.lua routines...",           delay=0.35},
+                {pct=0.56, text="warming up layout engine... v1.6.0",      delay=0.3},
+                {pct=0.70, text="initializing core Check it interface...", delay=0.35},
+                {pct=0.84, text="loading modules...",                      delay=0.25},
+                {pct=0.94, text=chosenDesc,                                delay=0.2},
+                {pct=1.00, text="done.",                                   delay=0.15}
             }
             for _, stage in ipairs(progressStages) do
                 local startFill = fillAmt
