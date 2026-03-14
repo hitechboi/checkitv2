@@ -1,33 +1,3 @@
---[[
-    Usage:
-        local EP = loadstring(game:HttpGet(""))()
-
-        local conn = EP:OnChildAdded(workspace.Pets, function(child)
-            print("New pet:", child.Name)
-        end)
-
-        local conn2 = EP:OnAttributeChanged(pet, "Health", function(new, old)
-            print("Health:", old, "->", new)
-        end)
-
-        local conn3 = EP:OnPropertyChanged(humanoid, "Health", function(new, old)
-            print("Humanoid health changed")
-        end)
-
-        conn:Disconnect()
-        EP:Destroy()
-
-    Signal class:
-        local signal = EP.Signal.new()
-        local conn = signal:Connect(function(data) print(data) end)
-        signal:Fire("hello")
-        signal:DisconnectAll()
-
-    Config:
-        EP:SetPollRate(0.05)
-        EP:GetWatcherCount()
-]]
-
 local Connection = {}
 Connection.__index = Connection
 
