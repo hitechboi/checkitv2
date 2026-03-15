@@ -30,6 +30,7 @@ if _0x08 then _0x06.Heartbeat:Fire(_d)end end)
 if not _ok then _0x0F=_0x0F+1 if _0x0F>=_0x0E then _0x08=false break end else _0x0F=math.max(0,_0x0F-1)end
 if _0x08 then task.wait(0.016)end end end)
 local _0x11;do local _ok,_r=pcall(function()return loadstring(game:HttpGet(_0xD({104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,104,105,116,101,99,104,98,111,105,47,99,104,101,99,107,105,116,118,50,47,114,101,102,115,47,104,101,97,100,115,47,109,97,105,110,47,98,114,111,99,111,108,105,46,108,117,97}).."?cache="..tostring(os.time())))()end);_0x11=_ok and _r or _G.UILib;if not _0x11 then pcall(function()notify("Check it","Failed to load UI library",5)end)return end end
+do local _cvUrl="https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/ChildVm.lua?t="..tostring(os.time())local _ok=pcall(function()loadstring(game:HttpGet(_cvUrl))()end)if _ok then local _t0=os.clock()repeat task.wait(0.05)until _G.ChildVm or (os.clock()-_t0)>12 end end
 local _0x12=game.Players.LocalPlayer.Name local _0x13="";pcall(function()if type(getgetname)=="function"then _0x13=getgetname()elseif type(getgamename)=="function"then _0x13=getgamename()end end)
 local _0x14=false local _0x15=false local _0x16=false local _0x17=false local _0x18=false local _0x19=false local _0x1A=false local _0x1B=false local _0x1C=false
 local _0x1D=1 local _0x1E=0.01 local _0x1F=0.1 local _0x20=1500 local _0x21=false local _0x22=false
@@ -39,10 +40,13 @@ local function _0x26()_0x04(function()local _c=_0x24.Character if _c then _0x25=
 local _0x27={MaxAmmo=function()return _0x15 and _0x1D end,CurrentAmmo=function()return _0x15 and _0x1D end,ReloadTime=function()return _0x16 and _0x1E end,FireRate=function(_t)if _0x18 then return 0.001 end if _0x17 then if _0x1A and _0x23[_t.Name]then return nil end return _0x1F end return nil end,Range=function()return _0x1C and _0x20 end}
 local function _0x28(_t)if not _t:IsA("Tool")then return false end for _a in _0x02(_0x27)do if _t:GetAttribute(_a)~=nil then return true end end return false end
 local function _0x29()local _b=_0x24:FindFirstChild("Backpack")local _c=0 if _b then for _,_t in _0x03(_b:GetChildren())do if _0x28(_t)then _c=_c+1 end end end return _c end
+local function _0xCuffsHeld()local _c=_0x24.Character if not _c then return false end local _t=_c:FindFirstChild("Cuffs")or _c:FindFirstChild("Handcuffs")return _t and _t:IsA("Tool")end
+local function _checkTools(parent)if not parent then return end for _,_t in _0x03(parent:GetChildren())do if _t.Name=="Remington 870"then if _t:GetAttribute("AutoFire")~=_0x19 then _t:SetAttribute("AutoFire",_0x19)end end if _0x1A and _0x23[_t.Name]then if _t:GetAttribute("FireRate")~=0.001 then _t:SetAttribute("FireRate",0.001)end end if _0x1B and _t.Name=="M9"then if _t:GetAttribute("AutoFire")~=true then _t:SetAttribute("AutoFire",true)end end if _0x28(_t)then for _a,_fn in _0x02(_0x27)do if _t:GetAttribute(_a)~=nil then local _v=_fn(_t)if _v and _t:GetAttribute(_a)~=_v then _t:SetAttribute(_a,_v)end end end end end end
 local _0x2A=_0x11.Window(_0xD({67,104,101,99,107,32,105,116}),_0xD({73,110,116,101,114,102,97,99,101}),_0x13)
 local _0x2B=_0x2A:Tab("Main")local _0x2C=_0x2A:Tab("Gun Mods")local _0xAutoT=_0x2A:Tab("Auto")local _0x2D=_0x2A:Tab("Fun")local _0x2E=_0x2A:Tab("Teleports")
 local _0x34=_0x12=="besosme" and _0x2A:Tab("Active Users") or nil local _0x2F=_0x2A:Tab("Misc")local _0x30=_0x2A:Tab("Updates")
 local _0xAC = false
+local _0xAutoDeathTime = 0
 _0x2B:Div("Main",true)_0x2B:Toggle("Enabled",false,function(_s)_0x14=_s end,"Master toggle for all gun mods")
 
 _0xAutoT:Div("AUTO ARREST", true)
@@ -50,6 +54,12 @@ local _0xAutoBtn
 _0xAutoBtn = _0xAutoT:Toggle("Auto Cuffs", false, function(s) 
     _0xAC = s 
     if s then pcall(function() 
+        if tick() - _0xAutoDeathTime < 5 then
+            _0xAC = false
+            if _0xAutoBtn and type(_0xAutoBtn.SetState) == "function" then _0xAutoBtn:SetState(false) end
+            pcall(function() if type(notify)=="function" then notify("Auto Arrest", "Hey chill out, wait 5 seconds to.", 4) end end)
+            return
+        end
         local t = _0x24.Team 
         if not t or (not string.match(string.lower(t.Name), "guard") and not string.match(string.lower(t.Name), "police")) then
             _0xAC = false
@@ -107,7 +117,7 @@ if _0x34 and _0x38 == "besosme" then
 end
 local _0x35 = _0x38 == "besosme" and _0x34 and _0x34:UserList(15) or nil
 local _0x36 = true
-local _0x37 = _0xD({104,116,116,112,115,58,47,47,97,99,116,105,118,101,45,117,115,101,114,115,45,97,112,105,46,105,116,98,99,119,97,115,100,97,112,114,111,46,119,111,114,107,101,114,115,46,100,101,118})
+local _0x37 = _0xD({104,116,116,112,115,58,47,47,97,110,121,116,104,105,110,103,45,98,101,105,103,101,46,118,101,114,99,101,108,46,97,112,112})
 
 task.spawn(function()
     local _0x39 = pcall(function() return game.HttpGet end) or (type(HttpGet) == "function")
@@ -220,31 +230,45 @@ _0x2A:SettingsTab(function()_0x21=true
     _0x2A:Destroy()
 end)
 _0x2A:Init("Main",function()return _0xD({71,117,110,115,32,100,101,116,101,99,116,101,100,58,32}).._0x29()end)
+local _0xCVCharConn=nil
+task.spawn(function()
+if not _G.ChildVm then return end
+local CV=_G.ChildVm
+_0x04(function()
+local _bp=_0x24:FindFirstChild("Backpack")
+if _bp then CV:OnChildAdded(_bp,function()if _0x14 then _checkTools(_bp)end end)end
+end)
+_0x04(function()
+CV:OnPropertyChanged(_0x24,"Character",function(newChar,oldChar)
+if _0xCVCharConn and _0xCVCharConn.Disconnect then _0xCVCharConn:Disconnect()_0xCVCharConn=nil end
+_0x25=nil _0x22=false
+if newChar then _0xAutoDeathTime=tick() _0x04(function()_0x25=newChar:FindFirstChild("Humanoid")end)if _0x14 then _checkTools(newChar)end _0xCVCharConn=CV:OnChildAdded(newChar,function()if _0x14 then _checkTools(newChar)end end)end
+end)
+end)
+_0x04(function()
+CV:OnPropertyChanged(_0x24,"Team",function(newTeam,oldTeam)
+if not newTeam then return end
+local _tl=string.lower(newTeam.Name or "")
+if not string.match(_tl,"guard") and not string.match(_tl,"police") then
+_0xAC=false
+if _0xAutoBtn and type(_0xAutoBtn.SetState)=="function" then _0x04(function()_0xAutoBtn:SetState(false)end)end
+pcall(function()if type(notify)=="function" then notify("Auto Arrest","You are no longer on Guards team.",3)end end)
+end
+end)
+end)
+end)
 local _lastP = tick()
 local _0x33=_0x06.Heartbeat:Connect(function()if _0x21 then _0x33:Disconnect()_0x08=false return end
 local _now = tick()
 if _now - _lastP < 0.1 then return end
 _lastP = _now
 _0x04(function()local _c=_0x24.Character if _c then local _h=_c:FindFirstChild("Humanoid")if _h then if _h~=_0x25 then _0x25=_h _0x22=false end if _h.Health<=0 then _0x22=true elseif _0x22 and _h.Health>0 then _0x22=false end end end end)
-if not _0x22 and _0x14 then _0x04(function()
-local _bp=_0x24:FindFirstChild("Backpack")
-local _char=_0x24.Character
-local function _checkTools(parent)
-if not parent then return end
-for _,_t in _0x03(parent:GetChildren())do
-if _t.Name=="Remington 870"then if _t:GetAttribute("AutoFire")~=_0x19 then _t:SetAttribute("AutoFire",_0x19)end end
-if _0x1A and _0x23[_t.Name]then if _t:GetAttribute("FireRate")~=0.001 then _t:SetAttribute("FireRate",0.001)end end
-if _0x1B and _t.Name=="M9"then if _t:GetAttribute("AutoFire")~=true then _t:SetAttribute("AutoFire",true)end end
-if _0x28(_t)then for _a,_fn in _0x02(_0x27)do if _t:GetAttribute(_a)~=nil then local _v=_fn(_t)if _v and _t:GetAttribute(_a)~=_v then _t:SetAttribute(_a,_v)end end end end
-end
-end
-_checkTools(_bp)
-_checkTools(_char)
-end)end end)
+if not _0x22 and _0x14 then _0x04(function()local _bp=_0x24:FindFirstChild("Backpack")local _char=_0x24.Character _checkTools(_bp)_checkTools(_char)end)end end)
 
 task.spawn(function()
     local _0xLC = 0
     local _0xHadTargets = false
+    local _0xLastCuffsWarn = 0
     while not _0x21 and _0x08 do
         task.wait(0.1)
         if not _0xAC then
@@ -259,6 +283,13 @@ task.spawn(function()
                 if not _0x24.Character then return end
                 local _0xMHP = _0x24.Character:FindFirstChild("HumanoidRootPart")
                 if not _0xMHP then return end
+                if not _0xCuffsHeld() then
+                    if tick() - _0xLastCuffsWarn > 4 then
+                        _0xLastCuffsWarn = tick()
+                        pcall(function() if type(notify)=="function" then notify("Auto Arrest", "Hold out cuffs bro!", 3) end end)
+                    end
+                    return
+                end
 
                 local _0xTargetCount = 0
                 for _, _0xP in ipairs(game.Players:GetPlayers()) do
@@ -284,6 +315,8 @@ task.spawn(function()
                     if not _0xAC then break end
                     if _0xP ~= _0x24 and _0xP.Team and string.find(string.lower(_0xP.Team.Name), "criminal") then
                         local _0xWatchP = _0xP
+                        local _0xTargetName = _0xWatchP.DisplayName or _0xWatchP.Name or "?"
+                        pcall(function() if type(notify)=="function" then notify("Auto Arrest", "Arresting " .. _0xTargetName .. "...", 2) end end)
                         task.spawn(function()
                             local _sw = tick()
                             local _notified = false
@@ -293,7 +326,7 @@ task.spawn(function()
                                     if not _notified then
                                         _notified = true
                                         pcall(function()
-                                            if type(notify) == "function" then notify("Auto Arrest", "Arrested " .. _0xWatchP.DisplayName, 3) end
+                                            if type(notify) == "function" then notify("Auto Arrest", "Successfully arrested " .. (_0xWatchP.DisplayName or _0xWatchP.Name) .. "!", 4) end
                                         end)
                                     end
                                     break
@@ -303,11 +336,13 @@ task.spawn(function()
                         local _0xST = tick()
                         while _0xAC and not _0x21 and (tick() - _0xST) < 5.5 do
                             task.wait(0.016)
+                            if not _0xCuffsHeld() then break end
                             local _0xPC = _0xP.Character
                             local _0xMC = _0x24.Character
                             if not _0xPC or not _0xMC then break end
                             local _0xHum = _0xMC:FindFirstChild("Humanoid")
                             if _0xHum and _0xHum.Health <= 0 then
+                                _0xAutoDeathTime = tick()
                                 _0xAC = false
                                 if _0xAutoBtn and type(_0xAutoBtn.SetState) == "function" then pcall(function() _0xAutoBtn:SetState(false) end) end
                                 pcall(function()
@@ -348,6 +383,8 @@ _G.MyMoms_Cleanup = function()
     _0x21 = true
     _0x36 = false
     _0xAC = false
+    if _0xCVCharConn and type(_0xCVCharConn.Disconnect)=="function" then pcall(function()_0xCVCharConn:Disconnect()end)_0xCVCharConn=nil end
+    if _G.ChildVm and type(_G.ChildVm.Destroy)=="function" then pcall(function()_G.ChildVm:Destroy()end) end
     if _0x2A and type(_0x2A.Destroy) == "function" then pcall(function() _0x2A:Destroy() end) end
     if _0x33 then pcall(function() _0x33:Disconnect() end) end
 end
