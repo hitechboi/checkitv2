@@ -1231,6 +1231,42 @@ function UILib.Window(titleA, titleB, gameName)
             local y = nextY(L.ROW_H + 4)
             local idx = addDropdown(tabName, lbl, y, options, initIdx, cb)
             if currentSection and btns[idx] then btns[idx].section = currentSection end
+            local ddApi = {}
+            function ddApi:SetOptions(newOpts)
+                local b = btns[idx]
+                if not b then return end
+                local maxO = #b.optBgs
+                local trimmed = {}
+                for i = 1, math.min(#newOpts, maxO) do trimmed[i] = newOpts[i] end
+                b.options = trimmed
+                for i = 1, maxO do
+                    if i <= #trimmed then
+                        b.optBgs[i].lb.Text = trimmed[i]
+                        b.optBgs[i].lb.Color = (i == b.selected) and C.ACCENT or C.WHITE
+                    else
+                        b.optBgs[i].lb.Text = ""
+                        b.optBgs[i].targetAlpha = 0
+                        setShow(b.optBgs[i].bg, false)
+                        setShow(b.optBgs[i].ln, false)
+                        setShow(b.optBgs[i].lb, false)
+                    end
+                end
+                if b.selected > #trimmed then b.selected = 1 end
+                b.valLbl.Text = b.options[b.selected] or ""
+                if b.open then
+                    b.open = false
+                    if b.arrow then b.arrow.Text = "v" end
+                    openDropdown = nil
+                    resizeForDropdown(b, false)
+                    recalculateLayout(currentTab)
+                end
+            end
+            function ddApi:GetSelected()
+                local b = btns[idx]
+                if not b then return 1, "" end
+                return b.selected, b.options[b.selected] or ""
+            end
+            return ddApi
         end
         function api:MultiDropdown(lbl, options, initIndices, cb, saveKey)
             local h = (#options + 1) * L.ROW_H + 12
@@ -1908,7 +1944,7 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     else
                         local scrollOff=bd.scrollOffset or 0
-                        for vi=1,math.min(DROPDOWN_MAX_VISIBLE,#bd.optBgs) do
+                        for vi=1,math.min(DROPDOWN_MAX_VISIBLE,#bd.options) do
                             local i=scrollOff+vi
                             if i>#bd.optBgs then break end
                             local o=bd.optBgs[i]
@@ -2337,14 +2373,21 @@ function UILib.Window(titleA, titleB, gameName)
                                         if b.isMultiDropdown then resizeForMultiDropdown(b,b.open) else resizeForDropdown(b,b.open) end
                                         if b.open and b.isDropdown then
                                             local dax=uiX+b.rx; local day=uiY+b.ry
-                                            for oi,o in ipairs(b.optBgs) do
-                                                local oy2=day+b.ch+((oi-1)*b.ch)
-                                                o.bg.Position=Vector2.new(dax,oy2); o.bg.Size=Vector2.new(b.cw,b.ch)
-                                                o.ln.From=Vector2.new(dax,oy2+b.ch); o.ln.To=Vector2.new(dax+b.cw,oy2+b.ch)
-                                                o.lb.Position=Vector2.new(dax+14,oy2+b.ch/2-6)
-                                                o.ry=b.ry+b.ch+((oi-1)*b.ch)
-                                                o.alpha=0; o.targetAlpha=1
-                                                setShow(o.bg, true); setShow(o.ln, true); setShow(o.lb, true)
+                                            local _vc=math.min(#b.options,#b.optBgs)
+                                            for oi=1,#b.optBgs do
+                                                local o=b.optBgs[oi]
+                                                if oi<=_vc then
+                                                    local oy2=day+b.ch+((oi-1)*b.ch)
+                                                    o.bg.Position=Vector2.new(dax,oy2); o.bg.Size=Vector2.new(b.cw,b.ch)
+                                                    o.ln.From=Vector2.new(dax,oy2+b.ch); o.ln.To=Vector2.new(dax+b.cw,oy2+b.ch)
+                                                    o.lb.Position=Vector2.new(dax+14,oy2+b.ch/2-6)
+                                                    o.ry=b.ry+b.ch+((oi-1)*b.ch)
+                                                    o.alpha=0; o.targetAlpha=1
+                                                    setShow(o.bg, true); setShow(o.ln, true); setShow(o.lb, true)
+                                                else
+                                                    o.targetAlpha=0
+                                                    setShow(o.bg,false); setShow(o.ln,false); setShow(o.lb,false)
+                                                end
                                             end
                                         end
                                         if b.open and b.isMultiDropdown then
