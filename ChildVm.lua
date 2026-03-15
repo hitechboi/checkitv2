@@ -168,19 +168,25 @@ function ChildVm:OnChildRemoved(parent, callback)
     local watcher = {
         active = true,
         poll = function()
+            if not parent or not parent.Parent then return end
             local now = snapshotChildren(parent)
             for addr, child in pairs(current) do
                 if not now[addr] then
                     missingFor[addr] = (missingFor[addr] or 0) + 1
                     if missingFor[addr] >= 2 then
                         missingFor[addr] = nil
+                        current[addr] = nil
                         pcall(callback, child)
                     end
                 else
                     missingFor[addr] = nil
                 end
             end
-            current = now
+            for addr, child in pairs(now) do
+                if not current[addr] then
+                    current[addr] = child
+                end
+            end
         end,
     }
     table.insert(self._watchers, watcher)
