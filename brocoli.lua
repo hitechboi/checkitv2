@@ -1235,6 +1235,7 @@ function UILib.Window(titleA, titleB, gameName)
             function ddApi:SetOptions(newOpts)
                 local b = btns[idx]
                 if not b then return end
+                if b.open then return end
                 local maxO = #b.optBgs
                 local trimmed = {}
                 for i = 1, math.min(#newOpts, maxO) do trimmed[i] = newOpts[i] end
