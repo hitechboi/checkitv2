@@ -115,36 +115,39 @@ end
 
 local function snapshotChildren(parent)
     local set = {}
-    local list = {}
-    local ok = pcall(function()
-        list = parent:GetChildren()
-    end)
-    if ok then
-        for _, child in ipairs(list) do
-            set[child] = true
+    pcall(function()
+        for _, child in ipairs(parent:GetChildren()) do
+            local addr = child.Address
+            if addr then
+                set[addr] = child
+            end
         end
-    end
+    end)
     return set
 end
 
 function ChildVm:OnChildAdded(parent, callback)
     local current = snapshotChildren(parent)
-
+    local pending = {}
     local watcher = {
         active = true,
         poll = function()
             if not parent or not parent.Parent then return end
             local now = snapshotChildren(parent)
-            for child in pairs(now) do
-                if not current[child] then
-                    pcall(callback, child)
+            for addr, child in pairs(now) do
+                if not current[addr] then
+                    if not pending[addr] then
+                        pending[addr] = true
+                        pcall(callback, child)
+                    end
+                else
+                    pending[addr] = nil
                 end
             end
             current = now
         end,
     }
     table.insert(self._watchers, watcher)
-
     return Connection.new(function()
         watcher.active = false
     end)
@@ -161,22 +164,27 @@ end
 
 function ChildVm:OnChildRemoved(parent, callback)
     local current = snapshotChildren(parent)
-
+    local missingFor = {}
     local watcher = {
         active = true,
         poll = function()
             if not parent or not parent.Parent then return end
             local now = snapshotChildren(parent)
-            for child in pairs(current) do
-                if not now[child] then
-                    pcall(callback, child)
+            for addr, child in pairs(current) do
+                if not now[addr] then
+                    missingFor[addr] = (missingFor[addr] or 0) + 1
+                    if missingFor[addr] >= 2 then
+                        missingFor[addr] = nil
+                        pcall(callback, child)
+                    end
+                else
+                    missingFor[addr] = nil
                 end
             end
             current = now
         end,
     }
     table.insert(self._watchers, watcher)
-
     return Connection.new(function()
         watcher.active = false
     end)
@@ -196,7 +204,6 @@ function ChildVm:OnAttributeChanged(instance, attrName, callback)
     pcall(function()
         currentValue = instance:GetAttribute(attrName)
     end)
-
     local watcher = {
         active = true,
         poll = function()
@@ -213,7 +220,6 @@ function ChildVm:OnAttributeChanged(instance, attrName, callback)
         end,
     }
     table.insert(self._watchers, watcher)
-
     return Connection.new(function()
         watcher.active = false
     end)
@@ -231,7 +237,6 @@ end
 local function valuesEqual(a, b)
     if typeof(a) ~= typeof(b) then return false end
     local t = typeof(a)
-
     if t == "Vector3" then
         local eq = false
         pcall(function()
@@ -242,7 +247,6 @@ local function valuesEqual(a, b)
         end)
         return eq
     end
-
     if t == "Vector2" then
         local eq = false
         pcall(function()
@@ -252,40 +256,13 @@ local function valuesEqual(a, b)
         end)
         return eq
     end
-
-    if t == "CFrame" then
-        local eq = false
-        pcall(function()
-            local p1, p2 = a.Position, b.Position
-            local dx = math.abs(p2.X - p1.X)
-            local dy = math.abs(p2.Y - p1.Y)
-            local dz = math.abs(p2.Z - p1.Z)
-            eq = dx < 0.001 and dy < 0.001 and dz < 0.001
-        end)
-        return eq
+    if t == "table" then
+        if a.X and a.Y and a.Z then
+            return math.abs(b.X - a.X) < 0.001
+                and math.abs(b.Y - a.Y) < 0.001
+                and math.abs(b.Z - a.Z) < 0.001
+        end
     end
-
-    if t == "Color3" then
-        local eq = false
-        pcall(function()
-            eq = math.abs(a.R - b.R) < 0.001
-                and math.abs(a.G - b.G) < 0.001
-                and math.abs(a.B - b.B) < 0.001
-        end)
-        return eq
-    end
-
-    if t == "UDim2" then
-        local eq = false
-        pcall(function()
-            eq = a.X.Scale == b.X.Scale
-                and a.X.Offset == b.X.Offset
-                and a.Y.Scale == b.Y.Scale
-                and a.Y.Offset == b.Y.Offset
-        end)
-        return eq
-    end
-
     return a == b
 end
 
@@ -294,7 +271,6 @@ function ChildVm:OnPropertyChanged(instance, propName, callback)
     pcall(function()
         currentValue = instance[propName]
     end)
-
     local watcher = {
         active = true,
         poll = function()
@@ -312,7 +288,6 @@ function ChildVm:OnPropertyChanged(instance, propName, callback)
         end,
     }
     table.insert(self._watchers, watcher)
-
     return Connection.new(function()
         watcher.active = false
     end)
@@ -330,23 +305,38 @@ end
 function ChildVm:OnChanged(instance, callback, properties)
     properties = properties or {
         "Name", "Parent", "Visible", "Text", "Value",
-        "Position", "CFrame", "Size",
-        "Health", "MaxHealth", "WalkSpeed",
-        "Transparency", "Color", "BrickColor",
-        "Enabled", "Anchored",
+        "Position", "Size", "Health", "MaxHealth",
+        "WalkSpeed", "Transparency", "Enabled", "Anchored",
+        "CFrame",
     }
-
     local conns = {}
     for _, prop in ipairs(properties) do
-        local readable = pcall(function() local _ = instance[prop] end)
-        if readable then
-            local c = self:OnPropertyChanged(instance, prop, function(new, old)
-                pcall(callback, prop, new, old)
-            end)
-            table.insert(conns, c)
+        if prop == "CFrame" then
+            local ok = pcall(function() memory_read("uintptr_t", instance.Address + 0x148) end)
+            if ok then
+                local c = self:OnCFrameChanged(instance, function(new, old)
+                    pcall(callback, "CFrame", new, old)
+                end)
+                table.insert(conns, c)
+            end
+        elseif prop == "Size" then
+            local ok = pcall(function() memory_read("uintptr_t", instance.Address + 0x148) end)
+            if ok then
+                local c = self:OnSizeChanged(instance, function(new, old)
+                    pcall(callback, "Size", new, old)
+                end)
+                table.insert(conns, c)
+            end
+        else
+            local readable = pcall(function() local _ = instance[prop] end)
+            if readable then
+                local c = self:OnPropertyChanged(instance, prop, function(new, old)
+                    pcall(callback, prop, new, old)
+                end)
+                table.insert(conns, c)
+            end
         end
     end
-
     return Connection.new(function()
         for _, c in ipairs(conns) do
             c:Disconnect()
@@ -356,7 +346,6 @@ end
 
 function ChildVm:OnDescendantAdded(ancestor, callback)
     local conns = {}
-
     local function watchNode(parent)
         local c = self:OnChildAdded(parent, function(child)
             pcall(callback, child)
@@ -364,7 +353,6 @@ function ChildVm:OnDescendantAdded(ancestor, callback)
         end)
         table.insert(conns, c)
     end
-
     watchNode(ancestor)
     pcall(function()
         local function walkExisting(parent)
@@ -375,7 +363,6 @@ function ChildVm:OnDescendantAdded(ancestor, callback)
         end
         walkExisting(ancestor)
     end)
-
     return Connection.new(function()
         for _, c in ipairs(conns) do
             c:Disconnect()
@@ -385,14 +372,12 @@ end
 
 function ChildVm:OnDescendantRemoved(ancestor, callback)
     local conns = {}
-
     local function watchNode(parent)
         local c = self:OnChildRemoved(parent, function(child)
             pcall(callback, child)
         end)
         table.insert(conns, c)
     end
-
     watchNode(ancestor)
     pcall(function()
         local function walkExisting(parent)
@@ -403,7 +388,6 @@ function ChildVm:OnDescendantRemoved(ancestor, callback)
         end
         walkExisting(ancestor)
     end)
-
     return Connection.new(function()
         for _, c in ipairs(conns) do
             c:Disconnect()
@@ -418,7 +402,6 @@ function ChildVm:WaitForChild(parent, childName, timeout)
         existing = parent:FindFirstChild(childName)
     end)
     if existing then return existing end
-
     local result = nil
     local done = false
     local conn = self:OnChildAdded(parent, function(child)
@@ -429,13 +412,101 @@ function ChildVm:WaitForChild(parent, childName, timeout)
             end
         end)
     end)
-
     local start = tick()
     while not done and (tick() - start) < timeout do
         task.wait(self._pollRate)
     end
     conn:Disconnect()
     return result
+end
+
+function ChildVm:OnCFrameChanged(instance, callback, threshold)
+    threshold = threshold or 0.001
+    local function readPos()
+        local result = nil
+        pcall(function()
+            local prim = memory_read("uintptr_t", instance.Address + 0x148)
+            local cf_base = prim + 0xC0
+            result = {
+                X = memory_read("float", cf_base + 36),
+                Y = memory_read("float", cf_base + 40),
+                Z = memory_read("float", cf_base + 44),
+                r00 = memory_read("float", cf_base),
+                r01 = memory_read("float", cf_base + 4),
+                r02 = memory_read("float", cf_base + 8),
+                r10 = memory_read("float", cf_base + 12),
+                r11 = memory_read("float", cf_base + 16),
+                r12 = memory_read("float", cf_base + 20),
+                r20 = memory_read("float", cf_base + 24),
+                r21 = memory_read("float", cf_base + 28),
+                r22 = memory_read("float", cf_base + 32),
+            }
+        end)
+        return result
+    end
+
+    local current = readPos()
+    local watcher = {
+        active = true,
+        poll = function()
+            if not instance or not instance.Parent then return end
+            local new = readPos()
+            if not new or not current then current = new return end
+            local dx = math.abs(new.X - current.X)
+            local dy = math.abs(new.Y - current.Y)
+            local dz = math.abs(new.Z - current.Z)
+            local rotChanged = math.abs(new.r00 - current.r00) > threshold
+                or math.abs(new.r11 - current.r11) > threshold
+                or math.abs(new.r22 - current.r22) > threshold
+            if dx > threshold or dy > threshold or dz > threshold or rotChanged then
+                local old = current
+                current = new
+                pcall(callback, new, old)
+            end
+        end,
+    }
+    table.insert(self._watchers, watcher)
+    return Connection.new(function()
+        watcher.active = false
+    end)
+end
+
+function ChildVm:OnSizeChanged(instance, callback, threshold)
+    threshold = threshold or 0.001
+    local function readSize()
+        local result = nil
+        pcall(function()
+            local prim = memory_read("uintptr_t", instance.Address + 0x148)
+            result = {
+                X = memory_read("float", prim + 0xAC),
+                Y = memory_read("float", prim + 0xAC + 4),
+                Z = memory_read("float", prim + 0xAC + 8),
+            }
+        end)
+        return result
+    end
+
+    local current = readSize()
+    local watcher = {
+        active = true,
+        poll = function()
+            if not instance or not instance.Parent then return end
+            local new = readSize()
+            if not new or not current then current = new return end
+            local dx = math.abs(new.X - current.X)
+            local dy = math.abs(new.Y - current.Y)
+            local dz = math.abs(new.Z - current.Z)
+            if dx > threshold or dy > threshold or dz > threshold then
+                local old = current
+                current = new
+                pcall(callback, new, old)
+            end
+        end,
+    }
+    table.insert(self._watchers, watcher)
+    return Connection.new(function()
+        watcher.active = false
+    end)
 end
 
 function ChildVm:SetPollRate(rate)
@@ -464,5 +535,5 @@ end
 
 local singleton = ChildVm.new()
 singleton.new = ChildVm.new
-
+_G.ChildVm = singleton
 return singleton
