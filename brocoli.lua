@@ -506,9 +506,11 @@ function UILib.Window(titleA, titleB, gameName)
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
             local tx=ax+8; local ty=ay+b.ch-11
             b.track.From=Vector2.new(tx,ty); b.track.To=Vector2.new(tx+b.trackW,ty)
-            local frac=(b.value-b.minV)/(b.maxV-b.minV)
+            local range=b.maxV-b.minV
+            local frac=range and range>0 and clamp((b.value-b.minV)/range,0,1) or 0
             local fx=tx+frac*b.trackW
-            b.fill.From=Vector2.new(tx,ty); b.fill.To=Vector2.new(fx,ty)
+            b.fill.From=Vector2.new(tx,ty)
+            b.fill.To=Vector2.new(fx,ty)
             b.handle.Position=Vector2.new(fx-4,ty-4)
         else
             b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
@@ -2402,6 +2404,7 @@ function UILib.Window(titleA, titleB, gameName)
                             local frac=clamp((mouse.X-ax)/b.trackW,0,1)
                             b.value=b.minV+frac*(b.maxV-b.minV)
                             local fx=ax+frac*b.trackW
+                            b.fill.From=Vector2.new(ax,ay)
                             b.fill.To=Vector2.new(fx,ay)
                             b.handle.Position=Vector2.new(fx-4,ay-4)
                             local disp=b.isFloat and string.format("%.1f",b.value) or math.floor(b.value)
