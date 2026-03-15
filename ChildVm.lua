@@ -168,7 +168,6 @@ function ChildVm:OnChildRemoved(parent, callback)
     local watcher = {
         active = true,
         poll = function()
-            if not parent or not parent.Parent then return end
             local now = snapshotChildren(parent)
             for addr, child in pairs(current) do
                 if not now[addr] then
