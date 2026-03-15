@@ -311,19 +311,29 @@ function ChildVm:OncePropertyChanged(instance, propName, callback)
     return conn
 end
 
-function ChildVm:GetPropertyChangedSignal(instance, propName, callback, threshold)
+function ChildVm:GetPropertyChangedSignal(instance, propName, callbackOrType, callbackOrThreshold, threshold)
+    if type(propName) == "table" or type(propName) == "number" then
+        local offsets = propName
+        local memType = callbackOrType
+        local callback = callbackOrThreshold
+        local thresh = threshold
+        return self:OnOffsetValueChanged(instance, offsets, memType, callback, thresh)
+    end
+
     local known = _propertyOffsets[propName]
     if known then
         if known.type == "cframe" then
-            return self:OnCFrameChanged(instance, callback, threshold)
+            return self:OnCFrameChanged(instance, callbackOrType, callbackOrThreshold)
         elseif known.type == "size" then
-            return self:OnSizeChanged(instance, callback, threshold)
+            return self:OnSizeChanged(instance, callbackOrType, callbackOrThreshold)
         end
     end
+
     local ok = pcall(function() local _ = instance[propName] end)
     if ok then
-        return self:OnPropertyChanged(instance, propName, callback)
+        return self:OnPropertyChanged(instance, propName, callbackOrType)
     end
+
     return Connection.new(function() end)
 end
 
