@@ -12,7 +12,6 @@ local _0xGID=0;pcall(function()_0xGID=_0x00(game.GameId)end)
 if _0xGID~=_0x00(73885730)then pcall(function()notify(_0xD({67,104,101,99,107,32,105,116}),_0xD({84,104,105,115,32,115,99,114,105,112,116,32,105,115,32,110,111,116,32,115,117,112,112,111,114,116,101,100,32,102,111,114,32,116,104,105,115,32,103,97,109,101,46}),5)end)return end
 if _G.MyMoms_Cleanup then pcall(_G.MyMoms_Cleanup) task.wait(0.2) end
 _G.MyMoms_Cleanup = function() end
-
 -- CFrame Support (memory-based teleports, from cframesupport.lua)
 local _cfOK = false
 pcall(function()
