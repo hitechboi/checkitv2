@@ -205,7 +205,7 @@ function ChildVm:OnAttributeChanged(instance, attrName, callback)
         currentValue = instance:GetAttribute(attrName)
     end)
     local watcher = {
-        active = true,      
+        active = true,
         poll = function()
             if not instance or not instance.Parent then return end
             local newValue = nil
@@ -422,15 +422,15 @@ end
 
 function ChildVm:OnCFrameChanged(instance, callback, threshold)
     threshold = threshold or 0.001
-    local function readPos()
+    local function readCFrame()
         local result = nil
         pcall(function()
             local prim = memory_read("uintptr_t", instance.Address + 0x148)
             local cf_base = prim + 0xC0
             result = {
-                X = memory_read("float", cf_base + 36),
-                Y = memory_read("float", cf_base + 40),
-                Z = memory_read("float", cf_base + 44),
+                X   = memory_read("float", cf_base + 36),
+                Y   = memory_read("float", cf_base + 40),
+                Z   = memory_read("float", cf_base + 44),
                 r00 = memory_read("float", cf_base),
                 r01 = memory_read("float", cf_base + 4),
                 r02 = memory_read("float", cf_base + 8),
@@ -445,12 +445,12 @@ function ChildVm:OnCFrameChanged(instance, callback, threshold)
         return result
     end
 
-    local current = readPos()
+    local current = readCFrame()
     local watcher = {
         active = true,
         poll = function()
             if not instance or not instance.Parent then return end
-            local new = readPos()
+            local new = readCFrame()
             if not new or not current then current = new return end
             local dx = math.abs(new.X - current.X)
             local dy = math.abs(new.Y - current.Y)
@@ -474,18 +474,18 @@ end
 function ChildVm:OnSizeChanged(instance, callback, threshold)
     threshold = threshold or 0.001
     local function readSize()
-     local result = nil
-     pcall(function()
-        local prim = memory_read("uintptr_t", instance.Address + 0x148)
-        local sizePtr = memory_read("uintptr_t", prim + 0x50)
-        result = {
-            X = memory_read("float", sizePtr + 0x20),
-            Y = memory_read("float", sizePtr + 0x24),
-            Z = memory_read("float", sizePtr + 0x28),
-        }
-    end)
-    return result
-end
+        local result = nil
+        pcall(function()
+            local prim = memory_read("uintptr_t", instance.Address + 0x148)
+            local sizePtr = memory_read("uintptr_t", prim + 0x50)
+            result = {
+                X = memory_read("float", sizePtr + 0x20),
+                Y = memory_read("float", sizePtr + 0x24),
+                Z = memory_read("float", sizePtr + 0x28),
+            }
+        end)
+        return result
+    end
 
     local current = readSize()
     local watcher = {
