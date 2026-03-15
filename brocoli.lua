@@ -423,6 +423,8 @@ function UILib.Window(titleA, titleB, gameName)
             end
             local scrollOff=b.scrollOffset or 0
             local maxVis=math.min(DROPDOWN_MAX_VISIBLE,b.options and #b.options or 0)
+            if b.panelBg then setShow(b.panelBg, b.open) end
+            if b.panelBorder then setShow(b.panelBorder, b.open) end
             if b.open and b.panelBg and b.panelBorder then
                 local py=ay+b.ch
                 local ph=maxVis*b.ch
@@ -433,18 +435,19 @@ function UILib.Window(titleA, titleB, gameName)
             end
             for i,o in ipairs(b.optBgs) do
                 local vi=i-scrollOff
-                if vi>=1 and vi<=maxVis then
+                local visible = vi>=1 and vi<=maxVis
+                if visible then
                     local oy2=ay+b.ch+((vi-1)*b.ch)
                     o.bg.Position=Vector2.new(ax,oy2); o.bg.Size=Vector2.new(b.cw,b.ch)
                     o.ln.From=Vector2.new(ax,oy2+b.ch); o.ln.To=Vector2.new(ax+b.cw,oy2+b.ch)
                     o.lb.Position=Vector2.new(ax+12,oy2+b.ch/2-6)
                     o.ry=animY-sc+b.ch+((vi-1)*b.ch)
                     o.visibleIdx=i
-                    setShow(o.bg,true); setShow(o.ln,true); setShow(o.lb,true)
                     o.bg.Color=lerpC(C.ROWBG,C.WHITE,(o.hoverAlpha or 0)*0.12)
-                else
-                    setShow(o.bg,false); setShow(o.ln,false); setShow(o.lb,false)
                 end
+                setShow(o.bg, b.open and visible)
+                setShow(o.ln, b.open and visible)
+                setShow(o.lb, b.open and visible)
             end
         elseif b.isUserList then
             b.bg.Position=Vector2.new(ax,ay)
@@ -454,9 +457,15 @@ function UILib.Window(titleA, titleB, gameName)
             b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
             b.valLbl.Position=Vector2.new(ax+b.cw-28-(#b.valLbl.Text*5.5),ay+b.ch/2-6)
             if b.arrow then b.arrow.Position=Vector2.new(ax+b.cw-11,ay+b.ch/2-6) b.arrow.Text=b.open and "^" or "v" end
+            if b.panelBg then setShow(b.panelBg, b.open) end
+            if b.panelBorder then setShow(b.panelBorder, b.open) end
+            if b.headerBg then setShow(b.headerBg, b.open) end
+            if b.headerLn then setShow(b.headerLn, b.open) end
+            if b.selAllLbl then setShow(b.selAllLbl, b.open) end
+            if b.clearLbl then setShow(b.clearLbl, b.open) end
             if b.open and b.panelBg and b.panelBorder then
-                local py=ay+b.ch+ch
-                local ph=(#b.options+1)*b.ch
+                local py=ay+b.ch
+                local ph=(1+#b.options)*b.ch
                 b.panelBg.Position=Vector2.new(ax,py) b.panelBg.Size=Vector2.new(b.cw,ph)
                 b.panelBorder.Position=Vector2.new(ax,py) b.panelBorder.Size=Vector2.new(b.cw,ph)
             end
@@ -475,6 +484,10 @@ function UILib.Window(titleA, titleB, gameName)
                 o.lb.Position=Vector2.new(ax+22,oy2+b.ch/2-6)
                 if o.check then o.check.Text=b.selected[o.idx] and "x" or "" o.check.Position=Vector2.new(ax+8,oy2+b.ch/2-5) end
                 o.ry=animY-sc+b.ch+b.ch+((i-1)*b.ch)
+                setShow(o.bg, b.open)
+                setShow(o.ln, b.open)
+                setShow(o.lb, b.open)
+                if o.check then setShow(o.check, b.open) end
             end
         elseif b.isColorPicker then
             b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
