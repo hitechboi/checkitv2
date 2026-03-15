@@ -12,6 +12,136 @@ local _0xGID=0;pcall(function()_0xGID=_0x00(game.GameId)end)
 if _0xGID~=_0x00(73885730)then pcall(function()notify(_0xD({67,104,101,99,107,32,105,116}),_0xD({84,104,105,115,32,115,99,114,105,112,116,32,105,115,32,110,111,116,32,115,117,112,112,111,114,116,101,100,32,102,111,114,32,116,104,105,115,32,103,97,109,101,46}),5)end)return end
 if _G.MyMoms_Cleanup then pcall(_G.MyMoms_Cleanup) task.wait(0.2) end
 _G.MyMoms_Cleanup = function() end
+
+-- CFrame Support (memory-based teleports, from cframesupport.lua)
+local _cfOK = false
+pcall(function()
+    if type(memory_read)=="function" and type(memory_write)=="function" and type(getbase)=="function" then
+        getbase()
+        _cfOK = true
+    end
+end)
+local _cfOff = { prim=0x148, cf=0xC0, Anchored=0x12C, CanCollide=0x12D }
+local function _cfGetPrim(inst) return memory_read("uintptr_t", inst.Address + _cfOff.prim) end
+local function _cfRead(inst)
+    local b = _cfGetPrim(inst) + _cfOff.cf
+    return {
+        rot = {
+            r00=memory_read("float",b),    r01=memory_read("float",b+4),  r02=memory_read("float",b+8),
+            r10=memory_read("float",b+12),  r11=memory_read("float",b+16), r12=memory_read("float",b+20),
+            r20=memory_read("float",b+24),  r21=memory_read("float",b+28), r22=memory_read("float",b+32),
+        },
+        pos = { X=memory_read("float",b+36), Y=memory_read("float",b+40), Z=memory_read("float",b+44) },
+    }
+end
+local function _cfWrite(inst, cf)
+    local b = _cfGetPrim(inst) + _cfOff.cf
+    memory_write("float",b,cf.rot.r00)     memory_write("float",b+4,cf.rot.r01)  memory_write("float",b+8,cf.rot.r02)
+    memory_write("float",b+12,cf.rot.r10)  memory_write("float",b+16,cf.rot.r11) memory_write("float",b+20,cf.rot.r12)
+    memory_write("float",b+24,cf.rot.r20)  memory_write("float",b+28,cf.rot.r21) memory_write("float",b+32,cf.rot.r22)
+    memory_write("float",b+36,cf.pos.X)    memory_write("float",b+40,cf.pos.Y)   memory_write("float",b+44,cf.pos.Z)
+end
+local function _cfSetFlag(part, flag, state)
+    local off = _cfOff[flag]
+    if off then pcall(function() memory_write("byte", part.Address + off, state and 1 or 0) end) end
+end
+local function _cfGetFlag(part, flag)
+    local off = _cfOff[flag]
+    if not off then return nil end
+    local r = nil
+    pcall(function() r = memory_read("byte", part.Address + off) == 1 end)
+    return r
+end
+local function _cfLookAt(fromPos, targetPos)
+    local dx = targetPos.X - fromPos.X
+    local dy = targetPos.Y - fromPos.Y
+    local dz = targetPos.Z - fromPos.Z
+    local len = math.sqrt(dx*dx + dy*dy + dz*dz)
+    if len == 0 then return {r00=1,r01=0,r02=0,r10=0,r11=1,r12=0,r20=0,r21=0,r22=1} end
+    dx,dy,dz = dx/len,dy/len,dz/len
+    local yaw = math.atan2(dx, dz)
+    local pitch = math.atan2(-dy, math.sqrt(dx*dx + dz*dz))
+    local cp,sp = math.cos(pitch),math.sin(pitch)
+    local cy,sy = math.cos(yaw),math.sin(yaw)
+    return { r00=cy,r01=0,r02=sy, r10=sy*sp,r11=cp,r12=-cy*sp, r20=-sy*cp,r21=sp,r22=cy*cp }
+end
+--if _cfOK then print("[PrisonLife] CFrame support active (Unsafe Lua)") end
+local function _cfLerpF(a, b, t) return a + (b - a) * t end
+local function _cfEaseInOutSine(t) return -(math.cos(math.pi * t) - 1) / 2 end
+local function _cfRotToQuat(rot)
+    local tr = rot.r00 + rot.r11 + rot.r22
+    local w,x,y,z
+    if tr > 0 then
+        local s = 0.5 / math.sqrt(tr + 1)
+        w = 0.25 / s  x = (rot.r21 - rot.r12) * s
+        y = (rot.r02 - rot.r20) * s  z = (rot.r10 - rot.r01) * s
+    elseif rot.r00 > rot.r11 and rot.r00 > rot.r22 then
+        local s = 2 * math.sqrt(1 + rot.r00 - rot.r11 - rot.r22)
+        w = (rot.r21 - rot.r12) / s  x = 0.25 * s
+        y = (rot.r01 + rot.r10) / s  z = (rot.r02 + rot.r20) / s
+    elseif rot.r11 > rot.r22 then
+        local s = 2 * math.sqrt(1 + rot.r11 - rot.r00 - rot.r22)
+        w = (rot.r02 - rot.r20) / s  x = (rot.r01 + rot.r10) / s
+        y = 0.25 * s  z = (rot.r12 + rot.r21) / s
+    else
+        local s = 2 * math.sqrt(1 + rot.r22 - rot.r00 - rot.r11)
+        w = (rot.r10 - rot.r01) / s  x = (rot.r02 + rot.r20) / s
+        y = (rot.r12 + rot.r21) / s  z = 0.25 * s
+    end
+    return {w=w, x=x, y=y, z=z}
+end
+local function _cfQuatToRot(q)
+    return {
+        r00=1-2*(q.y*q.y+q.z*q.z), r01=2*(q.x*q.y-q.z*q.w), r02=2*(q.x*q.z+q.y*q.w),
+        r10=2*(q.x*q.y+q.z*q.w), r11=1-2*(q.x*q.x+q.z*q.z), r12=2*(q.y*q.z-q.x*q.w),
+        r20=2*(q.x*q.z-q.y*q.w), r21=2*(q.y*q.z+q.x*q.w), r22=1-2*(q.x*q.x+q.y*q.y),
+    }
+end
+local function _cfSlerp(a, b, t)
+    local qa = _cfRotToQuat(a.rot)
+    local qb = _cfRotToQuat(b.rot)
+    local dot = qa.w*qb.w + qa.x*qb.x + qa.y*qb.y + qa.z*qb.z
+    if dot < 0 then qb = {w=-qb.w,x=-qb.x,y=-qb.y,z=-qb.z} dot = -dot end
+    if dot > 0.9995 then dot = 0.9995 end
+    local theta = math.acos(dot)
+    local sinT = math.sin(theta)
+    local wa, wb
+    if sinT < 0.001 then wa = 1 - t  wb = t
+    else wa = math.sin((1-t)*theta)/sinT  wb = math.sin(t*theta)/sinT end
+    local qr = {w=wa*qa.w+wb*qb.w, x=wa*qa.x+wb*qb.x, y=wa*qa.y+wb*qb.y, z=wa*qa.z+wb*qb.z}
+    local len = math.sqrt(qr.w^2+qr.x^2+qr.y^2+qr.z^2)
+    if len > 0 then qr.w=qr.w/len qr.x=qr.x/len qr.y=qr.y/len qr.z=qr.z/len end
+    return {
+        rot = _cfQuatToRot(qr),
+        pos = {X=_cfLerpF(a.pos.X,b.pos.X,t), Y=_cfLerpF(a.pos.Y,b.pos.Y,t), Z=_cfLerpF(a.pos.Z,b.pos.Z,t)}
+    }
+end
+local function _cfSmoothTP(startPos, endPos, duration)
+    duration = duration or 0.5
+    local lp = game.Players.LocalPlayer
+    local t0 = tick()
+    while true do
+        local el = tick() - t0
+        local t = math.min(el / duration, 1)
+        local et = _cfEaseInOutSine(t)
+        local x = _cfLerpF(startPos.X, endPos.X, et)
+        local y = _cfLerpF(startPos.Y, endPos.Y, et)
+        local z = _cfLerpF(startPos.Z, endPos.Z, et)
+        local alive = true
+        pcall(function()
+            local h = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+            if h then
+                h.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                h.Position = Vector3.new(x, y, z)
+            else
+                alive = false
+            end
+        end)
+        if not alive or t >= 1 then break end
+        task.wait(0.016)
+    end
+end
+
 local _0x06={}local _0x07={}local _0x08=true local _0x09=os.clock()local _0x0A=0 local _0x0B={}local _0x0C=0 local _0x0E=10 local _0x0F=0
 local function _0x10()local _s={}_s._c={}
 function _s:Connect(_f)local _k={_fn=_f,_a=true}table.insert(_s._c,_k)return{Disconnect=function()_k._a=false _k._fn=nil end}end
@@ -92,8 +222,20 @@ _0x2C:Slider("Range",0,15000,1500,function(_v)_0x20=_0x00(_v)end)
 _0x2D:Div("AMMO",true)
 _0x2D:Toggle("Apply Ammo",false,function(_s)_0x15=_s end,"Visual only - once below original ammo count no damage")
 _0x2D:Slider("Ammo Amount",1,9999,1,function(_v)_0x1D=_0x00(_v)end)
-local function _0x31(_x,_y,_z)_0x04(function()local _h=_0x24.Character:FindFirstChild("HumanoidRootPart")if _h then local _ox,_oy,_oz=_h.Position.X,_h.Position.Y,_h.Position.Z _h.AssemblyLinearVelocity=_0x05(0,0,0)_h.Position=_0x05(_x,_y,_z)task.wait(0.5)_h.AssemblyLinearVelocity=_0x05(0,0,0)_h.Position=_0x05(_ox,_oy,_oz)end end)end
-local function _0x32(_x,_y,_z)_0x04(function()local _h=_0x24.Character:FindFirstChild("HumanoidRootPart")if _h then _h.AssemblyLinearVelocity=_0x05(0,0,0)_h.Position=_0x05(_x,_y,_z)end end)end
+local function _0x31(_x,_y,_z)_0x04(function()
+    local _h=_0x24.Character:FindFirstChild("HumanoidRootPart")
+    if not _h then return end
+    local _ox,_oy,_oz=_h.Position.X,_h.Position.Y,_h.Position.Z
+    _cfSmoothTP({X=_ox,Y=_oy,Z=_oz}, {X=_x,Y=_y,Z=_z}, 0.25)
+    task.wait(0.4)
+    _cfSmoothTP({X=_x,Y=_y,Z=_z}, {X=_ox,Y=_oy,Z=_oz}, 0.25)
+end)end
+local function _0x32(_x,_y,_z)_0x04(function()
+    local _h=_0x24.Character:FindFirstChild("HumanoidRootPart")
+    if not _h then return end
+    local _ox,_oy,_oz=_h.Position.X,_h.Position.Y,_h.Position.Z
+    _cfSmoothTP({X=_ox,Y=_oy,Z=_oz}, {X=_x,Y=_y,Z=_z}, 0.5)
+end)end
 _0x2E:Div("CRIMINAL GUNS",true)
 _0x2E:Button("Remington 870",_0x11.Colors.ROWBG,function()_0x31(-938.22,94.31,2039.17)end,_0x11.Colors.WHITE)
 _0x2E:Button("AK-47",_0x11.Colors.ROWBG,function()_0x31(-931.39,94.37,2039.39)end,_0x11.Colors.WHITE)
