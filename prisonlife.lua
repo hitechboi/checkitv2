@@ -68,6 +68,14 @@ _0xAutoBtn = _0xAutoT:Toggle("Auto Cuffs", false, function(s)
         end
     end) end
 end, "Hold out cuffs. Checks Guards team. Teleports to Criminals & locks camera.")
+local _0xArrestTarget = nil
+local _0xCrimAddrByIdx = {}
+local _0xTargetInitOpts = {"All Criminals"} for _i=2,13 do _0xTargetInitOpts[_i]=" " end
+local _0xTargetDD = _0xAutoT:Dropdown("Arrest Target", _0xTargetInitOpts, 1, function(val, idx)
+    if idx == 1 then _0xArrestTarget = nil
+    else _0xArrestTarget = _0xCrimAddrByIdx[idx] or nil end
+end)
+if _0xTargetDD and _0xTargetDD.SetOptions then _0xTargetDD:SetOptions({"All Criminals"}) end
 _0x2C:Div("FIRE",true)
 _0x2C:Toggle("Apply Reload",false,function(_s)_0x16=_s end,"Toggles Reload Slider(M9,Taser Only)")
 _0x2C:Slider("Reload Time",0.01,5.0,0.01,function(_v)_0x1E=_v end,true,"Lower = faster reload")
@@ -231,38 +239,65 @@ _0x2A:SettingsTab(function()_0x21=true
 end)
 _0x2A:Init("Main",function()return _0xD({71,117,110,115,32,100,101,116,101,99,116,101,100,58,32}).._0x29()end)
 local _0xCVCharConn=nil
+local _0xCVHealthConn=nil
+local _0xCVBpConn=nil
+local _0xCVCharWatcher=nil
+local _0xCVTeamWatcher=nil
 task.spawn(function()
 if not _G.ChildVm then return end
 local CV=_G.ChildVm
-_0x04(function()
-local _bp=_0x24:FindFirstChild("Backpack")
-if _bp then CV:OnChildAdded(_bp,function()if _0x14 then _checkTools(_bp)end end)end
-end)
-_0x04(function()
-CV:OnPropertyChanged(_0x24,"Character",function(newChar,oldChar)
-if _0xCVCharConn and _0xCVCharConn.Disconnect then _0xCVCharConn:Disconnect()_0xCVCharConn=nil end
-_0x25=nil _0x22=false
-if newChar then _0xAutoDeathTime=tick() _0x04(function()_0x25=newChar:FindFirstChild("Humanoid")end)if _0x14 then _checkTools(newChar)end _0xCVCharConn=CV:OnChildAdded(newChar,function()if _0x14 then _checkTools(newChar)end end)end
-end)
-end)
-_0x04(function()
-CV:OnPropertyChanged(_0x24,"Team",function(newTeam,oldTeam)
-if not newTeam then return end
-local _tl=string.lower(newTeam.Name or "")
-if not string.match(_tl,"guard") and not string.match(_tl,"police") then
-_0xAC=false
-if _0xAutoBtn and type(_0xAutoBtn.SetState)=="function" then _0x04(function()_0xAutoBtn:SetState(false)end)end
-pcall(function()if type(notify)=="function" then notify("Auto Arrest","You are no longer on Guards team.",3)end end)
-end
-end)
-end)
+local _lastCharAddr=nil
+_0x04(function()local c=_0x24.Character if c then _lastCharAddr=c.Address end end)
+_0xCVCharWatcher={active=true,poll=function()
+    local char,charAddr=nil,nil
+    _0x04(function()char=_0x24.Character if char then charAddr=char.Address end end)
+    if charAddr==_lastCharAddr then return end
+    if _0xCVCharConn and _0xCVCharConn.Disconnect then _0x04(function()_0xCVCharConn:Disconnect()end)_0xCVCharConn=nil end
+    if _0xCVHealthConn and _0xCVHealthConn.Disconnect then _0x04(function()_0xCVHealthConn:Disconnect()end)_0xCVHealthConn=nil end
+    if _0xCVBpConn and _0xCVBpConn.Disconnect then _0x04(function()_0xCVBpConn:Disconnect()end)_0xCVBpConn=nil end
+    if _lastCharAddr then _0xAutoDeathTime=tick() _0x22=true end
+    _0x25=nil _lastCharAddr=charAddr
+    if not char then return end
+    _0x22=false
+    _0x04(function()_0x25=char:FindFirstChild("Humanoid")end)
+    if _0x14 then _checkTools(char)end
+    _0xCVCharConn=CV:OnChildAdded(char,function()if _0x14 then _checkTools(char)end end)
+    _0x04(function()
+        local bp=_0x24:FindFirstChild("Backpack")
+        if bp then
+            _0xCVBpConn=CV:OnChildAdded(bp,function()if _0x14 then _checkTools(bp)end end)
+            if _0x14 then _checkTools(bp)end
+        end
+    end)
+    if _0x25 then
+        _0xCVHealthConn=CV:OnPropertyChanged(_0x25,"Health",function(newHP)
+            if newHP<=0 and not _0x22 then _0x22=true _0xAutoDeathTime=tick()end
+        end)
+    end
+end}
+table.insert(CV._watchers,_0xCVCharWatcher)
+local _lastTeamAddr=nil
+_0x04(function()local t=_0x24.Team if t then _lastTeamAddr=t.Address end end)
+_0xCVTeamWatcher={active=true,poll=function()
+    local teamAddr,teamName=nil,nil
+    _0x04(function()local t=_0x24.Team if t then teamAddr=t.Address teamName=t.Name end end)
+    if teamAddr==_lastTeamAddr then return end
+    _lastTeamAddr=teamAddr
+    if not teamName then return end
+    local tl=string.lower(teamName)
+    if not string.match(tl,"guard") and not string.match(tl,"police") then
+        _0xAC=false
+        if _0xAutoBtn and type(_0xAutoBtn.SetState)=="function" then _0x04(function()_0xAutoBtn:SetState(false)end)end
+        pcall(function()if type(notify)=="function" then notify("Auto Arrest","You are no longer on Guards team.",3)end end)
+    end
+end}
+table.insert(CV._watchers,_0xCVTeamWatcher)
 end)
 local _lastP = tick()
 local _0x33=_0x06.Heartbeat:Connect(function()if _0x21 then _0x33:Disconnect()_0x08=false return end
 local _now = tick()
 if _now - _lastP < 0.1 then return end
 _lastP = _now
-_0x04(function()local _c=_0x24.Character if _c then local _h=_c:FindFirstChild("Humanoid")if _h then if _h~=_0x25 then _0x25=_h _0x22=false end if _h.Health<=0 then _0x22=true elseif _0x22 and _h.Health>0 then _0x22=false end end end end)
 if not _0x22 and _0x14 then _0x04(function()local _bp=_0x24:FindFirstChild("Backpack")local _char=_0x24.Character _checkTools(_bp)_checkTools(_char)end)end end)
 
 task.spawn(function()
@@ -294,7 +329,9 @@ task.spawn(function()
                 local _0xTargetCount = 0
                 for _, _0xP in ipairs(game.Players:GetPlayers()) do
                     if _0xP ~= _0x24 and _0xP.Team and string.find(string.lower(_0xP.Team.Name), "criminal") then
-                        _0xTargetCount = _0xTargetCount + 1
+                        if not _0xArrestTarget or _0xP.Address == _0xArrestTarget then
+                            _0xTargetCount = _0xTargetCount + 1
+                        end
                     end
                 end
 
@@ -313,9 +350,9 @@ task.spawn(function()
 
                 for _, _0xP in ipairs(game.Players:GetPlayers()) do
                     if not _0xAC then break end
-                    if _0xP ~= _0x24 and _0xP.Team and string.find(string.lower(_0xP.Team.Name), "criminal") then
+                    if _0xP ~= _0x24 and _0xP.Team and string.find(string.lower(_0xP.Team.Name), "criminal") and (not _0xArrestTarget or _0xP.Address == _0xArrestTarget) then
                         local _0xWatchP = _0xP
-                        local _0xTargetName = _0xWatchP.DisplayName or _0xWatchP.Name or "?"
+                        local _0xTargetName = _0xWatchP.Name or "?"
                         pcall(function() if type(notify)=="function" then notify("Auto Arrest", "Arresting " .. _0xTargetName .. "...", 2) end end)
                         task.spawn(function()
                             local _sw = tick()
@@ -326,7 +363,7 @@ task.spawn(function()
                                     if not _notified then
                                         _notified = true
                                         pcall(function()
-                                            if type(notify) == "function" then notify("Auto Arrest", "Successfully arrested " .. (_0xWatchP.DisplayName or _0xWatchP.Name) .. "!", 4) end
+                                            if type(notify) == "function" then notify("Auto Arrest", "Successfully arrested " .. _0xWatchP.Name .. "!", 4) end
                                         end)
                                     end
                                     break
@@ -340,9 +377,7 @@ task.spawn(function()
                             local _0xPC = _0xP.Character
                             local _0xMC = _0x24.Character
                             if not _0xPC or not _0xMC then break end
-                            local _0xHum = _0xMC:FindFirstChild("Humanoid")
-                            if _0xHum and _0xHum.Health <= 0 then
-                                _0xAutoDeathTime = tick()
+                            if _0x22 then
                                 _0xAC = false
                                 if _0xAutoBtn and type(_0xAutoBtn.SetState) == "function" then pcall(function() _0xAutoBtn:SetState(false) end) end
                                 pcall(function()
@@ -376,6 +411,39 @@ task.spawn(function()
     end
 end)
 
+local _0xLastOptStr=""
+task.spawn(function()
+    while not _0x21 and _0x08 do
+        task.wait(1)
+        if not _0xTargetDD then break end
+        if _0xTargetDD.IsOpen and _0xTargetDD:IsOpen() then _0x04(function()end) else
+        _0x04(function()
+            local opts={"All Criminals"}
+            local addrMap={}
+            for _,p in ipairs(game.Players:GetPlayers()) do
+                if p~=_0x24 and p.Team and string.find(string.lower(p.Team.Name),"criminal") then
+                    local idx=#opts+1
+                    opts[idx]=p.Name or "?"
+                    addrMap[idx]=p.Address
+                end
+            end
+            local key=table.concat(opts,"|")
+            if key~=_0xLastOptStr then
+                _0xLastOptStr=key
+                _0xCrimAddrByIdx=addrMap
+                if _0xTargetDD.SetOptions then _0xTargetDD:SetOptions(opts)end
+            else
+                _0xCrimAddrByIdx=addrMap
+            end
+            if _0xArrestTarget then
+                local found=false
+                for _,addr in pairs(addrMap) do if addr==_0xArrestTarget then found=true break end end
+                if not found then _0xArrestTarget=nil end
+            end
+        end)
+        end
+    end
+end)
 while not _0x21 do task.wait(1)end _0x08=false
 
 _G.MyMoms_Cleanup = function()
@@ -384,6 +452,10 @@ _G.MyMoms_Cleanup = function()
     _0x36 = false
     _0xAC = false
     if _0xCVCharConn and type(_0xCVCharConn.Disconnect)=="function" then pcall(function()_0xCVCharConn:Disconnect()end)_0xCVCharConn=nil end
+    if _0xCVHealthConn and type(_0xCVHealthConn.Disconnect)=="function" then pcall(function()_0xCVHealthConn:Disconnect()end)_0xCVHealthConn=nil end
+    if _0xCVBpConn and type(_0xCVBpConn.Disconnect)=="function" then pcall(function()_0xCVBpConn:Disconnect()end)_0xCVBpConn=nil end
+    if _0xCVCharWatcher then _0xCVCharWatcher.active=false end
+    if _0xCVTeamWatcher then _0xCVTeamWatcher.active=false end
     if _G.ChildVm and type(_G.ChildVm.Destroy)=="function" then pcall(function()_G.ChildVm:Destroy()end) end
     if _0x2A and type(_0x2A.Destroy) == "function" then pcall(function() _0x2A:Destroy() end) end
     if _0x33 then pcall(function() _0x33:Disconnect() end) end
