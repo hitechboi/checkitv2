@@ -69,7 +69,7 @@ local THEMES = {
 UILib.Themes = THEMES
 UILib.Colors = THEMES["Check it"] 
 _G.UILib = UILib
-print("[UILib] v1.6.0 loaded")
+print("[UILib] v1.7.0 loaded")
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
     return Color3.fromRGB(
@@ -203,8 +203,18 @@ function UILib.Window(titleA, titleB, gameName)
     local win = {}
     local mouse = game.Players.LocalPlayer:GetMouse()
     local _scrollDelta = 0
+    local lastKey = nil
     pcall(function() mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end)
     pcall(function() mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end) end)
+    pcall(function()
+        local uis = game:GetService("UserInputService")
+        local kb = Enum and Enum.UserInputType and Enum.UserInputType.Keyboard
+        if uis and uis.InputBegan and kb then
+            uis.InputBegan:Connect(function(inp)
+                if inp.UserInputType == kb then lastKey = inp.KeyCode end
+            end)
+        end
+    end)
     local PAD = 10
     local uiX, uiY       = 300, 200
     local dragging        = false
@@ -271,6 +281,7 @@ function UILib.Window(titleA, titleB, gameName)
     local function inBox(x,y,w,h)
         return mouse.X>=x and mouse.X<=x+w and mouse.Y>=y and mouse.Y<=y+h
     end
+    local DROPDOWN_MAX_VISIBLE = 6
     local uiTargetH = L.H
     local uiCurrentH = L.H
     local function applyFade()
@@ -338,10 +349,26 @@ function UILib.Window(titleA, titleB, gameName)
             for _,sw in ipairs(b.swatches) do setShow(sw.sq,yes); setShow(sw.border,yes) end
         end
         if b.isDropdown then
+            if b.panelBg then setShow(b.panelBg, yes and b.open) end
+            if b.panelBorder then setShow(b.panelBorder, yes and b.open) end
             for _,o in ipairs(b.optBgs) do
                 setShow(o.bg, yes and b.open)
                 setShow(o.ln, yes and b.open)
                 setShow(o.lb, yes and b.open)
+            end
+        end
+        if b.isMultiDropdown then
+            if b.panelBg then setShow(b.panelBg, yes and b.open) end
+            if b.panelBorder then setShow(b.panelBorder, yes and b.open) end
+            if b.headerBg then setShow(b.headerBg, yes and b.open) end
+            if b.headerLn then setShow(b.headerLn, yes and b.open) end
+            if b.selAllLbl then setShow(b.selAllLbl, yes and b.open) end
+            if b.clearLbl then setShow(b.clearLbl, yes and b.open) end
+            for _,o in ipairs(b.optBgs) do
+                setShow(o.bg, yes and b.open)
+                setShow(o.ln, yes and b.open)
+                setShow(o.lb, yes and b.open)
+                if o.check then setShow(o.check, yes and b.open) end
             end
         end
         if b.isUserList then
@@ -394,15 +421,61 @@ function UILib.Window(titleA, titleB, gameName)
                 b.arrow.Position=Vector2.new(ax+b.cw-11,ay+b.ch/2-6)
                 b.arrow.Text=b.open and "^" or "v"
             end
+            local scrollOff=b.scrollOffset or 0
+            local maxVis=math.min(DROPDOWN_MAX_VISIBLE,b.options and #b.options or 0)
+            if b.open and b.panelBg and b.panelBorder then
+                local py=ay+b.ch
+                local ph=maxVis*b.ch
+                b.panelBg.Position=Vector2.new(ax,py)
+                b.panelBg.Size=Vector2.new(b.cw,ph)
+                b.panelBorder.Position=Vector2.new(ax,py)
+                b.panelBorder.Size=Vector2.new(b.cw,ph)
+            end
             for i,o in ipairs(b.optBgs) do
-                local oy2=ay+b.ch+((i-1)*b.ch)
-                o.bg.Position=Vector2.new(ax,oy2); o.bg.Size=Vector2.new(b.cw,b.ch)
-                o.ln.From=Vector2.new(ax,oy2+b.ch); o.ln.To=Vector2.new(ax+b.cw,oy2+b.ch)
-                o.lb.Position=Vector2.new(ax+12,oy2+b.ch/2-6)
-                o.ry=animY-sc+b.ch+((i-1)*b.ch)
+                local vi=i-scrollOff
+                if vi>=1 and vi<=maxVis then
+                    local oy2=ay+b.ch+((vi-1)*b.ch)
+                    o.bg.Position=Vector2.new(ax,oy2); o.bg.Size=Vector2.new(b.cw,b.ch)
+                    o.ln.From=Vector2.new(ax,oy2+b.ch); o.ln.To=Vector2.new(ax+b.cw,oy2+b.ch)
+                    o.lb.Position=Vector2.new(ax+12,oy2+b.ch/2-6)
+                    o.ry=animY-sc+b.ch+((vi-1)*b.ch)
+                    o.visibleIdx=i
+                    setShow(o.bg,true); setShow(o.ln,true); setShow(o.lb,true)
+                    o.bg.Color=lerpC(C.ROWBG,C.WHITE,(o.hoverAlpha or 0)*0.12)
+                else
+                    setShow(o.bg,false); setShow(o.ln,false); setShow(o.lb,false)
+                end
             end
         elseif b.isUserList then
             b.bg.Position=Vector2.new(ax,ay)
+        elseif b.isMultiDropdown then
+            if b.out then b.out.Position=Vector2.new(ax,ay) end
+            b.bg.Position=Vector2.new(ax+1,ay+1)
+            b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
+            b.valLbl.Position=Vector2.new(ax+b.cw-28-(#b.valLbl.Text*5.5),ay+b.ch/2-6)
+            if b.arrow then b.arrow.Position=Vector2.new(ax+b.cw-11,ay+b.ch/2-6) b.arrow.Text=b.open and "^" or "v" end
+            if b.open and b.panelBg and b.panelBorder then
+                local py=ay+b.ch+ch
+                local ph=(#b.options+1)*b.ch
+                b.panelBg.Position=Vector2.new(ax,py) b.panelBg.Size=Vector2.new(b.cw,ph)
+                b.panelBorder.Position=Vector2.new(ax,py) b.panelBorder.Size=Vector2.new(b.cw,ph)
+            end
+            if b.open and b.headerBg then
+                local hy=ay+b.ch
+                b.headerBg.Position=Vector2.new(ax,hy) b.headerBg.Size=Vector2.new(b.cw,b.ch)
+                b.headerLn.From=Vector2.new(ax,hy+b.ch) b.headerLn.To=Vector2.new(ax+b.cw,hy+b.ch)
+                b.selAllLbl.Position=Vector2.new(ax+14,hy+b.ch/2-5)
+                b.clearLbl.Position=Vector2.new(ax+b.cw/2+8,hy+b.ch/2-5)
+            end
+            for i,o in ipairs(b.optBgs) do
+                local oy2=ay+b.ch+b.ch+((i-1)*b.ch)
+                o.bg.Position=Vector2.new(ax,oy2) o.bg.Size=Vector2.new(b.cw,b.ch)
+                o.bg.Color=lerpC(C.ROWBG,C.WHITE,(o.hoverAlpha or 0)*0.12)
+                o.ln.From=Vector2.new(ax,oy2+b.ch) o.ln.To=Vector2.new(ax+b.cw,oy2+b.ch)
+                o.lb.Position=Vector2.new(ax+22,oy2+b.ch/2-6)
+                if o.check then o.check.Text=b.selected[o.idx] and "x" or "" o.check.Position=Vector2.new(ax+8,oy2+b.ch/2-5) end
+                o.ry=animY-sc+b.ch+b.ch+((i-1)*b.ch)
+            end
         elseif b.isColorPicker then
             b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
@@ -438,7 +511,7 @@ function UILib.Window(titleA, titleB, gameName)
                 local dox2=b.rx+b.cw-L.TOG_W-8
                 local qx=uiX+dox2-22; local qy=uiY+(b.currentRY or b.ry)-sc+b.ch/2-7
                 b.qbg.Position=Vector2.new(qx,qy)
-                if b.qlb then b.qlb.Position=Vector2.new(qx+7,qy+2) end
+                if b.qlb then b.qlb.Position=Vector2.new(qx+7,qy+4) end
             end
         end
     end
@@ -462,8 +535,22 @@ function UILib.Window(titleA, titleB, gameName)
             for _,sw in ipairs(b.swatches) do tabSet[sw.sq]=group; tabSet[sw.border]=group end
         end
         if b.isDropdown then
+            if b.panelBg then tabSet[b.panelBg]=group end
+            if b.panelBorder then tabSet[b.panelBorder]=group end
             for _,o in ipairs(b.optBgs) do
                 tabSet[o.bg]=group; tabSet[o.ln]=group; tabSet[o.lb]=group
+            end
+        end
+        if b.isMultiDropdown then
+            if b.panelBg then tabSet[b.panelBg]=group end
+            if b.panelBorder then tabSet[b.panelBorder]=group end
+            if b.headerBg then tabSet[b.headerBg]=group end
+            if b.headerLn then tabSet[b.headerLn]=group end
+            if b.selAllLbl then tabSet[b.selAllLbl]=group end
+            if b.clearLbl then tabSet[b.clearLbl]=group end
+            for _,o in ipairs(b.optBgs) do
+                tabSet[o.bg]=group; tabSet[o.ln]=group; tabSet[o.lb]=group
+                if o.check then tabSet[o.check]=group end
             end
         end
     end
@@ -480,6 +567,7 @@ function UILib.Window(titleA, titleB, gameName)
             openDropdown.open=false
             if openDropdown.arrow then openDropdown.arrow.Text="v" end
             for _,o in ipairs(openDropdown.optBgs) do o.targetAlpha=0 end
+            if openDropdown.isMultiDropdown and resizeForMultiDropdown then resizeForMultiDropdown(openDropdown,false) else resizeForDropdown(openDropdown,false) end
             openDropdown=nil
         end
         uiTargetH=L.H
@@ -526,6 +614,9 @@ function UILib.Window(titleA, titleB, gameName)
     local tipFadeOut = false
     local tipFadedAt = tick()-1
     local TIP_FADE = 0.35
+    local TIP_DELAY = 0.2
+    local hoverDelayBtn = nil
+    local hoverDelayAt = 0
     local dWelcomeTxt, dNameTxt
     local avatarDrawings
     local function updatePos()
@@ -719,7 +810,7 @@ function UILib.Window(titleA, titleB, gameName)
         if desc then
             local qx=uiX+ox-22; local qy=uiY+ry+ch/2-7
             qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
-            qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
+            qlb=mkD(mkTx("?",qx+7,qy+4,9,C.GRAY,true,7,true))
         end
         local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
@@ -824,7 +915,9 @@ function UILib.Window(titleA, titleB, gameName)
         end
     end
     local function resizeForDropdown(dd, expanding)
-        local extra = expanding and (#dd.options * dd.ch) or 0
+        local n = #dd.options
+        local vis = math.min(DROPDOWN_MAX_VISIBLE, n)
+        local extra = expanding and (vis * dd.ch) or 0
         uiTargetH = L.H + extra
     end
     local function addDropdown(tab,lbl,relY,options,initIdx,cb)
@@ -839,19 +932,87 @@ function UILib.Window(titleA, titleB, gameName)
         local valIdx=initIdx or 1
         local val=mkD(mkTx(options[valIdx] or "",uiX+rx+cw-60,uiY+ry+ch/2-6,11,C.ACCENT,false,8))
         local arrow=mkD(mkTx("v",uiX+rx+cw-14,uiY+ry+ch/2-6,9,C.GRAY,false,8))
+        local panelBg=mkD(mkSq(0,0,1,1,Color3.fromRGB(10,12,22),true,0,9,nil,6))
+        local panelBorder=mkD(mkSq(0,0,1,1,C.BORDER,false,0.6,9,1,6))
+        panelBg.Visible=false; panelBorder.Visible=false
+        pcall(function() panelBg.Corner=6 end) pcall(function() panelBorder.Corner=6 end)
         local optBgs={}
         for i,opt in ipairs(options) do
             local oy2=ry+ch+((i-1)*ch)
-            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,C.ROWBG,true,0,10,nil,0))
+            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,C.ROWBG,true,0,10,nil,4))
             local oln=mkD(mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,C.DIV,11,1))
             local olb=mkD(mkTx(opt,uiX+rx+14,oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11))
             obg.Visible=false; oln.Visible=false; olb.Visible=false
-            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0})
+            pcall(function() obg.Corner=2 end)
+            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0,hoverAlpha=0,targetHoverAlpha=0})
         end
         local b={tab=tab,isDropdown=true,out=out,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
-                 rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
-                 selected=valIdx,open=false,openedAt=0,cb=cb,hoverAlpha=0,targetHoverAlpha=0}
+                 rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,panelBg=panelBg,panelBorder=panelBorder,
+                 selected=valIdx,open=false,openedAt=0,cb=cb,hoverAlpha=0,targetHoverAlpha=0,scrollOffset=0,highlightIdx=1}
         table.insert(btns,b); return #btns
+    end
+    if not _G.UILib_Save then _G.UILib_Save={} end
+    local function addMultiDropdown(tab,lbl,relY,options,initIndices,cb,saveKey)
+        local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
+        local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
+        local selected={}
+        if saveKey and _G.UILib_Save[saveKey] then
+            for _,i in ipairs(_G.UILib_Save[saveKey]) do selected[i]=true end
+        end
+        if not next(selected) and initIndices then
+            for i,v in ipairs(initIndices) do if v then selected[i]=true end end
+            for _,i in ipairs(initIndices) do if type(i)=="number" then selected[i]=true end end
+        end
+        local outBg=C.ROWBG
+        local outColor=Color3.new(math.min(1,outBg.R*1.5),math.min(1,outBg.G*1.5),math.min(1,outBg.B*1.5))
+        local out=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,outColor,true,1,3,nil,4))
+        local bg=mkD(mkSq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,C.ROWBG,true,1,4,nil,4))
+        local lb=mkD(mkTx(lbl,uiX+rx+10,uiY+ry+ch/2-6,12,C.WHITE,false,8))
+        local val=mkD(mkTx("None",uiX+rx+cw-60,uiY+ry+ch/2-6,11,C.ACCENT,false,8))
+        local arrow=mkD(mkTx("v",uiX+rx+cw-14,uiY+ry+ch/2-6,9,C.GRAY,false,8))
+        local panelBg=mkD(mkSq(0,0,1,1,Color3.fromRGB(10,12,22),true,0,9,nil,6))
+        local panelBorder=mkD(mkSq(0,0,1,1,C.BORDER,false,0.6,9,1,6))
+        panelBg.Visible=false; panelBorder.Visible=false
+        pcall(function() panelBg.Corner=6 end) pcall(function() panelBorder.Corner=6 end)
+        local headerBg=mkD(mkSq(0,0,cw,ch,C.DIMGRAY,true,0,10,nil,2))
+        local headerLn=mkD(mkLn(uiX+rx,0,uiX+rx+cw,0,C.DIV,11,1))
+        local selAllLbl=mkD(mkTx("Select all",uiX+rx+14,0,10,C.WHITE,false,11))
+        local clearLbl=mkD(mkTx("Clear",uiX+rx+cw/2+8,0,10,C.GRAY,false,11))
+        headerBg.Visible=false; headerLn.Visible=false; selAllLbl.Visible=false; clearLbl.Visible=false
+        local optBgs={}
+        for i,opt in ipairs(options) do
+            local oy2=ry+ch+ch+((i-1)*ch)
+            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,C.ROWBG,true,0,10,nil,4))
+            local oln=mkD(mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,C.DIV,11,1))
+            local check=mkD(mkTx(selected[i] and "x" or "",uiX+rx+8,oy2+ch/2-5,10,C.ACCENT,false,11))
+            local olb=mkD(mkTx(opt,uiX+rx+22,oy2+ch/2-6,11,C.WHITE,false,11))
+            obg.Visible=false; oln.Visible=false; olb.Visible=false; check.Visible=false
+            pcall(function() obg.Corner=2 end)
+            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,check=check,ry=oy2,alpha=0,targetAlpha=0,hoverAlpha=0,targetHoverAlpha=0,idx=i})
+        end
+        local b={tab=tab,isMultiDropdown=true,out=out,bg=bg,lbl=lb,ln=nil,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,outGlow=mkD(mkSq(uiX+rx-1,uiY+ry-1,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
+                 rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,panelBg=panelBg,panelBorder=panelBorder,
+                 headerBg=headerBg,headerLn=headerLn,selAllLbl=selAllLbl,clearLbl=clearLbl,
+                 selected=selected,open=false,cb=cb,saveKey=saveKey,scrollOffset=0}
+        function b.updateValLbl()
+            local n=0 for i=1,#options do if selected[i] then n=n+1 end end
+            if n==0 then b.valLbl.Text="None" return end
+            if n<=2 then local t={} for i=1,#options do if selected[i] then table.insert(t,options[i]) end end b.valLbl.Text=table.concat(t, ", ") else b.valLbl.Text=n.." selected" end
+        end
+        function b.fireCb()
+            local idx={} local lbls={} for i=1,#options do if selected[i] then table.insert(idx,i) table.insert(lbls,options[i]) end end
+            if b.cb then b.cb(idx,lbls) end
+            if saveKey then _G.UILib_Save[saveKey]=idx end
+        end
+        table.insert(btns,b)
+        b.updateValLbl()
+        return #btns
+    end
+    local function resizeForMultiDropdown(md,expanding)
+        local n=#md.options+1
+        local vis=math.min(DROPDOWN_MAX_VISIBLE+1,n)
+        local extra=expanding and (vis*md.ch) or 0
+        uiTargetH=L.H+extra
     end
     local function wrapLogText(text, maxChars)
         if #text <= maxChars then return {text} end
@@ -976,7 +1137,10 @@ function UILib.Window(titleA, titleB, gameName)
                         bPos(b)
                         currentY = currentY + b.ch + 8
                         if b.isDropdown and b.open then
-                            currentY = currentY + (#b.options * b.ch)
+                            currentY = currentY + (math.min(DROPDOWN_MAX_VISIBLE,#b.options) * b.ch)
+                        end
+                        if b.isMultiDropdown and b.open then
+                            currentY = currentY + ((#b.options+1) * b.ch)
                         end
                     end
                 end
@@ -1051,6 +1215,12 @@ function UILib.Window(titleA, titleB, gameName)
         function api:Dropdown(lbl, options, initIdx, cb)
             local y = nextY(L.ROW_H + 4)
             local idx = addDropdown(tabName, lbl, y, options, initIdx, cb)
+            if currentSection and btns[idx] then btns[idx].section = currentSection end
+        end
+        function api:MultiDropdown(lbl, options, initIndices, cb, saveKey)
+            local h = (#options + 1) * L.ROW_H + 12
+            local y = nextY(h)
+            local idx = addMultiDropdown(tabName, lbl, y, options, initIndices, cb, saveKey)
             if currentSection and btns[idx] then btns[idx].section = currentSection end
         end
         function api:Log(lines, starFirst)
@@ -1711,6 +1881,28 @@ function UILib.Window(titleA, titleB, gameName)
                         tipLbl.Transparency=op; tipDesc.Transparency=op
                     end
                 end
+                if openDropdown then
+                    local bd=openDropdown
+                    local listY=uiY+(bd.currentRY or bd.ry)-(tabScroll[currentTab] or 0)+bd.ch
+                    if bd.isMultiDropdown then
+                        listY=listY+bd.ch
+                        for i,o in ipairs(bd.optBgs) do
+                            local oy=listY+(i-1)*bd.ch
+                            o.targetHoverAlpha=inBox(uiX+bd.rx,oy,bd.cw,bd.ch) and 1 or 0
+                            o.hoverAlpha=(o.hoverAlpha or 0)+(o.targetHoverAlpha-(o.hoverAlpha or 0))*0.2
+                        end
+                    else
+                        local scrollOff=bd.scrollOffset or 0
+                        for vi=1,math.min(DROPDOWN_MAX_VISIBLE,#bd.optBgs) do
+                            local i=scrollOff+vi
+                            if i>#bd.optBgs then break end
+                            local o=bd.optBgs[i]
+                            local oy=listY+(vi-1)*bd.ch
+                            o.targetHoverAlpha=inBox(uiX+bd.rx,oy,bd.cw,bd.ch) and 1 or 0
+                            o.hoverAlpha=(o.hoverAlpha or 0)+(o.targetHoverAlpha-(o.hoverAlpha or 0))*0.2
+                        end
+                    end
+                end
                 for _,b in ipairs(btns) do
                     if menuOpen and not minimized and b.tab==currentTab and showSet[b.bg] and not b.isDiv and not b.isLog and not b.isUserList then
                         local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
@@ -1934,27 +2126,38 @@ function UILib.Window(titleA, titleB, gameName)
                     if menuOpen and not minimized then
                     for _,b in ipairs(btns) do
                         if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
-                            if showSet[b.bg] and inBox(uiX+b.ox-22,uiY+(b.currentRY or b.ry)-(tabScroll[currentTab] or 0)+b.ch/2-7,14,14) then hov=b; break end
+                            local qx=uiX+b.ox-22; local qy=uiY+(b.currentRY or b.ry)-(tabScroll[currentTab] or 0)+b.ch/2-7
+                            if showSet[b.bg] and inBox(qx-2,qy-2,18,18) then hov=b; break end
                         end
                     end
                     end
-                    if hov~=hoveredBtn then
-                        hoveredBtn=hov
-                        if hov then
+                    if hov then
+                        if hoverDelayBtn~=hov then hoverDelayBtn=hov hoverDelayAt=tick() end
+                        if tick()-hoverDelayAt>=TIP_DELAY and hoveredBtn~=hov then
+                            hoveredBtn=hov
                             local bx=uiX+hov.rx; local by=uiY+(hov.currentRY or hov.ry)-(tabScroll[currentTab] or 0)
-                            local tw=math.max(#hov.toggleName,#hov.desc)*6+16
-                            tipBg.Position=Vector2.new(bx, by-32)
-                            tipBg.Size=Vector2.new(tw,28)
-                            tipBorder.Position=Vector2.new(bx,by-32)
-                            tipBorder.Size=Vector2.new(tw,28)
+                            local maxDescW=38
+                            local function wrapDesc(s) if not s or #s<=maxDescW then return s or "" end local out={} for i=1,#s,maxDescW do table.insert(out,s:sub(i,math.min(i+maxDescW-1,#s))) end return table.concat(out,"\n") end
+                            local wrapped=wrapDesc(hov.desc)
+                            local lines=1 for i=1,#wrapped do if wrapped:sub(i,i)=="\n" then lines=lines+1 end end
+                            local tw=math.max(#hov.toggleName*6,(maxDescW*6))+16
+                            local th=28+math.max(0,(lines-1)*12)
+                            tipBg.Position=Vector2.new(bx, by-8-th)
+                            tipBg.Size=Vector2.new(tw,th)
+                            tipBorder.Position=Vector2.new(bx,by-8-th)
+                            tipBorder.Size=Vector2.new(tw,th)
                             tipLbl.Text=hov.toggleName
-                            tipLbl.Position=Vector2.new(bx+8, by-30)
-                            tipDesc.Text=hov.desc
-                            tipDesc.Position=Vector2.new(bx+8, by-17)
+                            tipLbl.Position=Vector2.new(bx+8, by-6-th)
+                            tipDesc.Text=wrapped
+                            tipDesc.Position=Vector2.new(bx+8, by-6-th+14)
                             tipFadeIn=true; tipFadeOut=false; tipFadedAt=tick()
                             tipBg.Visible=true; tipBorder.Visible=true
                             tipLbl.Visible=true; tipDesc.Visible=true
-                        else
+                        end
+                    else
+                        hoverDelayBtn=nil
+                        if hoveredBtn then
+                            hoveredBtn=nil
                             tipFadeOut=true; tipFadeIn=false; tipFadedAt=tick()
                         end
                     end
@@ -1999,8 +2202,39 @@ function UILib.Window(titleA, titleB, gameName)
                     local optConsumed = false
                     if openDropdown then
                         local bd=openDropdown
-                        for i,o in ipairs(bd.optBgs) do
-                            local ox=uiX+bd.rx; local oy=uiY+o.ry
+                        if bd.isMultiDropdown then
+                            local ox=uiX+bd.rx
+                            local baseY=uiY+(bd.currentRY or bd.ry)-(tabScroll[currentTab] or 0)+bd.ch
+                            if inBox(ox,baseY,bd.cw/2,bd.ch) then
+                                optConsumed=true; handleDrag=false
+                                for i=1,#bd.options do bd.selected[i]=true end
+                                for _,o in ipairs(bd.optBgs) do if o.check then o.check.Text="x" end end
+                                bd.updateValLbl() bd.fireCb()
+                            elseif inBox(ox+bd.cw/2,baseY,bd.cw/2,bd.ch) then
+                                optConsumed=true; handleDrag=false
+                                for i=1,#bd.options do bd.selected[i]=nil end
+                                for _,o in ipairs(bd.optBgs) do if o.check then o.check.Text="" end end
+                                bd.updateValLbl() bd.fireCb()
+                            else
+                                for i,o in ipairs(bd.optBgs) do
+                                    local oy=baseY+bd.ch+(i-1)*bd.ch
+                                    if inBox(ox,oy,bd.cw,bd.ch) then
+                                        optConsumed=true; handleDrag=false
+                                        bd.selected[o.idx]=not bd.selected[o.idx]
+                                        if o.check then o.check.Text=bd.selected[o.idx] and "x" or "" end
+                                        bd.updateValLbl() bd.fireCb()
+                                        break
+                                    end
+                                end
+                            end
+                        else
+                        local scrollOff=bd.scrollOffset or 0
+                        for vi=1,math.min(DROPDOWN_MAX_VISIBLE,#bd.options) do
+                            local i=scrollOff+vi
+                            if i>#bd.optBgs then break end
+                            local o=bd.optBgs[i]
+                            local ox=uiX+bd.rx
+                            local oy=uiY+(bd.currentRY or bd.ry)-(tabScroll[currentTab] or 0)+bd.ch+(vi-1)*bd.ch
                             if inBox(ox,oy,bd.cw,bd.ch) then
                                 optConsumed=true; handleDrag=false
                                 bd.selected=i
@@ -2017,7 +2251,34 @@ function UILib.Window(titleA, titleB, gameName)
                                 break
                             end
                         end
+                        end
                     end
+                    if openDropdown and lastKey and not openDropdown.isMultiDropdown then
+                    pcall(function()
+                        local bd=openDropdown
+                        local k=lastKey lastKey=nil
+                        local up=Enum and Enum.KeyCode and (k==Enum.KeyCode.Up or k==Enum.KeyCode.W)
+                        local dn=Enum and Enum.KeyCode and (k==Enum.KeyCode.Down or k==Enum.KeyCode.S)
+                        local ent=Enum and Enum.KeyCode and (k==Enum.KeyCode.Return or k==Enum.KeyCode.Space)
+                        if not Enum then up=(k==0x26 or k==0x57) dn=(k==0x28 or k==0x53) ent=(k==0x0D or k==0x20) end
+                        if up then
+                            bd.highlightIdx=math.max(1,(bd.highlightIdx or bd.selected)-1)
+                            local maxOff=math.max(0,#bd.options-DROPDOWN_MAX_VISIBLE)
+                            bd.scrollOffset=clamp(bd.highlightIdx-DROPDOWN_MAX_VISIBLE,0,maxOff)
+                            if bd.scrollOffset<0 then bd.scrollOffset=0 end
+                        elseif dn then
+                            bd.highlightIdx=math.min(#bd.options,(bd.highlightIdx or bd.selected)+1)
+                            bd.scrollOffset=clamp((bd.highlightIdx or 1)-1,0,math.max(0,#bd.options-DROPDOWN_MAX_VISIBLE))
+                        elseif ent then
+                            local i=bd.highlightIdx or bd.selected
+                            bd.selected=i bd.valLbl.Text=bd.options[i]
+                            for j,o2 in ipairs(bd.optBgs) do o2.lb.Color=j==i and C.ACCENT or C.WHITE o2.targetAlpha=0 end
+                            bd.open=false if bd.arrow then bd.arrow.Text="v" end
+                            openDropdown=nil resizeForDropdown(bd,false) recalculateLayout(currentTab)
+                            if bd.cb then bd.cb(bd.options[i],i) end
+                        end
+                    end)
+                end
                     if not optConsumed then
                         for _,t in ipairs(tabObjs) do
                             if inBox(uiX+7,uiY+t.relTY,L.SIDEBAR-14,26) then 
@@ -2040,13 +2301,13 @@ function UILib.Window(titleA, titleB, gameName)
                                             listenKey=true
                                             btns[iKeyBind].lbl.Text="Press any key..."
                                         elseif b.cb then b.cb() end
-                                    elseif b.isDropdown then
+                                    elseif b.isDropdown or b.isMultiDropdown then
                                         if openDropdown then
                                             local prev = openDropdown
                                             prev.open=false
                                             if prev.arrow then prev.arrow.Text="v" end
                                             for _,o in ipairs(prev.optBgs) do o.targetAlpha=0 end
-                                            resizeForDropdown(prev,false)
+                                            if prev.isMultiDropdown and resizeForMultiDropdown then resizeForMultiDropdown(prev,false) else resizeForDropdown(prev,false) end
                                             openDropdown=nil
                                             if prev == b then 
                                                 recalculateLayout(currentTab)
@@ -2056,9 +2317,10 @@ function UILib.Window(titleA, titleB, gameName)
                                         b.open=not b.open
                                         if b.arrow then b.arrow.Text=b.open and "^" or "v" end
                                         b.openedAt=tick()
+                                        if b.open and b.isDropdown then b.highlightIdx=b.selected b.scrollOffset=0 end
                                         openDropdown=b.open and b or nil
-                                        resizeForDropdown(b, b.open)
-                                        if b.open then
+                                        if b.isMultiDropdown then resizeForMultiDropdown(b,b.open) else resizeForDropdown(b,b.open) end
+                                        if b.open and b.isDropdown then
                                             local dax=uiX+b.rx; local day=uiY+b.ry
                                             for oi,o in ipairs(b.optBgs) do
                                                 local oy2=day+b.ch+((oi-1)*b.ch)
@@ -2069,6 +2331,9 @@ function UILib.Window(titleA, titleB, gameName)
                                                 o.alpha=0; o.targetAlpha=1
                                                 setShow(o.bg, true); setShow(o.ln, true); setShow(o.lb, true)
                                             end
+                                        end
+                                        if b.open and b.isMultiDropdown then
+                                            for _,o in ipairs(b.optBgs) do setShow(o.bg,true); setShow(o.ln,true); setShow(o.lb,true); if o.check then setShow(o.check,true) end end
                                         end
                                         recalculateLayout(currentTab)
                                     elseif b.isColorPicker then
@@ -2092,7 +2357,7 @@ function UILib.Window(titleA, titleB, gameName)
                                             openDropdown.open=false
                                             if openDropdown.arrow then openDropdown.arrow.Text="v" end
                                             for _,o in ipairs(openDropdown.optBgs) do o.targetAlpha=0 end
-                                            resizeForDropdown(openDropdown,false)
+                                            if openDropdown.isMultiDropdown and resizeForMultiDropdown then resizeForMultiDropdown(openDropdown,false) else resizeForDropdown(openDropdown,false) end
                                             openDropdown=nil
                                         end
                                         local sec=b.sectionName
@@ -2133,6 +2398,18 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 local maxSc=math.max(0,(tabRowY[currentTab] or 0)-CONTENT_H()+8)
+                if openDropdown and _scrollDelta~=0 then
+                    local bd=openDropdown
+                    local listY=uiY+(bd.currentRY or bd.ry)-(tabScroll[currentTab] or 0)+bd.ch
+                    local listH=math.min(DROPDOWN_MAX_VISIBLE,#bd.options)*bd.ch
+                    if inBox(uiX+bd.rx,listY,bd.cw,listH) then
+                        local maxOff=math.max(0,#bd.options-DROPDOWN_MAX_VISIBLE)
+                        bd.scrollOffset=clamp((bd.scrollOffset or 0)+_scrollDelta,0,maxOff)
+                        _scrollDelta=0
+                        recalculateLayout(currentTab)
+                        for _,b in ipairs(btns) do if b.tab==currentTab and showSet[b.bg] then bPos(b) end end
+                    end
+                end
                 pcall(function()
                     if isLoading then return end
                     if _scrollDelta ~= 0 and inBox(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W,CONTENT_H()) then
