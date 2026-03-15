@@ -205,7 +205,7 @@ function ChildVm:OnAttributeChanged(instance, attrName, callback)
         currentValue = instance:GetAttribute(attrName)
     end)
     local watcher = {
-        active = true,
+        active = true,      
         poll = function()
             if not instance or not instance.Parent then return end
             local newValue = nil
@@ -474,17 +474,18 @@ end
 function ChildVm:OnSizeChanged(instance, callback, threshold)
     threshold = threshold or 0.001
     local function readSize()
-        local result = nil
-        pcall(function()
-            local prim = memory_read("uintptr_t", instance.Address + 0x148)
-            result = {
-                X = memory_read("float", prim + 0xAC),
-                Y = memory_read("float", prim + 0xAC + 4),
-                Z = memory_read("float", prim + 0xAC + 8),
-            }
-        end)
-        return result
-    end
+     local result = nil
+     pcall(function()
+        local prim = memory_read("uintptr_t", instance.Address + 0x148)
+        local sizePtr = memory_read("uintptr_t", prim + 0x50)
+        result = {
+            X = memory_read("float", sizePtr + 0x20),
+            Y = memory_read("float", sizePtr + 0x24),
+            Z = memory_read("float", sizePtr + 0x28),
+        }
+    end)
+    return result
+end
 
     local current = readSize()
     local watcher = {
