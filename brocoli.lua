@@ -1262,6 +1262,10 @@ function UILib.Window(titleA, titleB, gameName)
                     recalculateLayout(currentTab)
                 end
             end
+            function ddApi:IsOpen()
+                local b = btns[idx]
+                return b and b.open or false
+            end
             function ddApi:GetSelected()
                 local b = btns[idx]
                 if not b then return 1, "" end
@@ -2395,6 +2399,7 @@ function UILib.Window(titleA, titleB, gameName)
                                             for _,o in ipairs(b.optBgs) do setShow(o.bg,true); setShow(o.ln,true); setShow(o.lb,true); if o.check then setShow(o.check,true) end end
                                         end
                                         recalculateLayout(currentTab)
+                                        break
                                     elseif b.isColorPicker then
                                         local ax2=uiX+b.rx; local ay2=uiY+b.ry
                                         local totalW=(#b.swatches*19)-5
