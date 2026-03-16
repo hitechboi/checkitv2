@@ -1,18 +1,6 @@
---[[
-    Check it V2 UI Library (layout-only draft)
-    NOTE:
-    - Keeps the same public API as v1 (Window/Tab/Div/Toggle/Slider/Dropdown/Button)
-    - Uses a new, cleaner layout roughly matching the provided preview image.
-    - Does NOT implement the animated loading screen from v1.
-    - Focuses on the controls used by the current Prison Life script.
 
-    This is a simplified ScreenGui-based implementation intended as a base
-    for further visual polish and feature parity work.
-]]
 
 local UILib = {}
-
--- Matcha-friendly service access (standard Roblox APIs)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
