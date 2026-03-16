@@ -66,7 +66,7 @@ local THEMES = {
         DIV=Color3.fromRGB(185,175,175),   MINIBAR=Color3.fromRGB(205,200,200),
     },
 }
-local ok, _ = pcall(function() return THEMES["Crimson"].ACCENT end)
+local ok, _ = pcall(function() return THEMES["Fatal Frame"].ACCENT end)
 if not ok then THEMES = {} end
 UILib.Themes = THEMES
 local C = {
@@ -241,6 +241,7 @@ function UILib.Window(titleA, titleB, gameName)
         if b.ln then setShow(b.ln,yes) end
         if b.tog then setShow(b.tog,yes) end
         if b.dot then setShow(b.dot,yes) end
+        if b.oLbl then setShow(b.oLbl,yes) end
         if b.track then setShow(b.track,yes) end
         if b.fill then setShow(b.fill,yes) end
         if b.handle then setShow(b.handle,yes) end
@@ -294,6 +295,10 @@ function UILib.Window(titleA, titleB, gameName)
             if b.ln then b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch) end
         elseif b.isSlider then
             b.lbl.Position=Vector2.new(ax+8,ay+5)
+            if b.valLbl then
+                local disp=b.isFloat and string.format("%.2f",b.value) or tostring(math.floor(b.value))
+                b.valLbl.Text=disp; b.valLbl.Position=Vector2.new(ax+b.cw-8-(#disp*6),ay+5)
+            end
             if b.dlb then b.dlb.Position=Vector2.new(ax+8,ay+18) end
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
             local tx,ty=ax+8,ay+b.ch-10
@@ -350,6 +355,7 @@ function UILib.Window(titleA, titleB, gameName)
                 local dox=b.cw-L.TOG_W-8; local dcy=b.currentRY or b.ry
                 b.tog.Position=Vector2.new(ax+dox, ay+b.ch/2-L.TOG_H/2)
                 b.dot.Position=Vector2.new(ax+dox+2+(L.TOG_W-L.TOG_H)*b.lt, ay+b.ch/2-L.TOG_H/2+2)
+                if b.oLbl then b.oLbl.Position=Vector2.new(ax+dox-12, ay+b.ch/2-5) end
             end
             if b.qbg then
                 local qx=ax+b.cw-L.TOG_W-30; local qy=ay+b.ch/2-7
@@ -366,6 +372,7 @@ function UILib.Window(titleA, titleB, gameName)
         if b.ln then tabSet[b.ln]=group end
         if b.tog then tabSet[b.tog]=group end
         if b.dot then tabSet[b.dot]=group end
+        if b.oLbl then tabSet[b.oLbl]=group end
         if b.track then tabSet[b.track]=group end
         if b.fill then tabSet[b.fill]=group end
         if b.handle then tabSet[b.handle]=group end
@@ -471,7 +478,6 @@ function UILib.Window(titleA, titleB, gameName)
         tabScroll[key] = clamp(tabScroll[key] or 0, 0, newMax)
     end
 
-    -- Component adders
     local function addToggle(tab,col,lbl,relY,init,cb,desc)
         local cw=L.COL_W; local ch=L.ROW_H-2; local ry=relY
         local ox=cw-L.TOG_W-8; local oy=ch/2-L.TOG_H/2
@@ -480,12 +486,13 @@ function UILib.Window(titleA, titleB, gameName)
         local lb=mkD(mkTx(lbl,0,0,11,C.WHITE,false,8))
         local tog=mkD(mkSq(0,0,L.TOG_W,L.TOG_H,init and C.ON or C.OFF,true,1,4,nil,L.TOG_H))
         local dot=mkD(mkSq(0,0,L.TOG_H-4,L.TOG_H-4,init and C.ONDOT or C.OFFDOT,true,1,5,nil,L.TOG_H))
+        local oLbl=mkD(mkTx("o",0,0,9,init and C.ONDOT or C.OFFDOT,false,6))
         local qbg, qlb
         if desc then
             qbg=mkD(mkSq(0,0,14,14,Color3.fromRGB(20,14,14),true,1,6,nil,3))
             qlb=mkD(mkTx("?",0,0,9,C.GRAY,true,7,true))
         end
-        local b={tab=tab,col=col,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
+        local b={tab=tab,col=col,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,oLbl=oLbl,
                  outGlow=mkD(mkSq(0,0,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=0,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,lt=init and 1 or 0,cb=cb,toggleName=lbl,
                  desc=desc,qbg=qbg,qlb=qlb,hoverAlpha=0,targetHoverAlpha=0}
@@ -512,16 +519,17 @@ function UILib.Window(titleA, titleB, gameName)
         local initLbl=isFloat and string.format("%.2f",initV) or math.floor(initV)
         local bg=mkD(mkSq(0,0,cw,ch,C.ROWBG,true,1,3,nil,4))
         local dl=mkD(mkLn(0,0,0,0,C.DIV,4,1))
-        local lb=mkD(mkTx(lbl..": "..initLbl,0,0,11,C.WHITE,false,8))
+        local lb=mkD(mkTx(lbl,0,0,11,C.WHITE,false,8))
         local dlb=desc and mkD(mkTx(desc,0,0,9,C.GRAY,false,8)) or nil
         local trk=mkD(mkLn(0,0,0,0,C.DIMGRAY,5,3))
         local fil=mkD(mkLn(0,0,0,0,C.ACCENT,6,3))
-        local hdl=mkD(mkSq(0,0,L.HDL,L.HDL,C.WHITE,true,1,7,nil,3))
+        local hdl=mkD(mkSq(0,0,L.HDL,L.HDL,C.ACCENT,true,1,7,nil,3))
+        local sValLbl=mkD(mkTx(tostring(initLbl),0,0,11,C.ACCENT,false,8))
         local b={tab=tab,col=col,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
                  outGlow=mkD(mkSq(0,0,cw+2,ch+2,C.ACCENT,false,0,5,1,4)),
                  rx=0,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,
                  minV=minV,maxV=maxV,value=initV,baseLbl=lbl,dragging=false,cb=cb,
-                 isFloat=isFloat or false,dlb=dlb,hoverAlpha=0,targetHoverAlpha=0}
+                 isFloat=isFloat or false,dlb=dlb,valLbl=sValLbl,hoverAlpha=0,targetHoverAlpha=0}
         table.insert(btns,b); return #btns
     end
 
@@ -548,8 +556,8 @@ function UILib.Window(titleA, titleB, gameName)
         local valIdx=initIdx or 1
         local val=mkD(mkTx(options[valIdx] or "",0,0,10,C.ACCENT,false,8))
         local arrow=mkD(mkTx("v",0,0,9,C.GRAY,false,8))
-        local panelBg=mkD(mkSq(0,0,1,1,Color3.fromRGB(14,10,10),true,0,9,nil,6))
-        local panelBorder=mkD(mkSq(0,0,1,1,C.BORDER,false,0.6,9,1,6))
+        local panelBg=mkD(mkSq(0,0,1,1,Color3.fromRGB(14,10,10),true,0,9,nil,2))
+        local panelBorder=mkD(mkSq(0,0,1,1,C.BORDER,false,0.6,9,1,2))
         panelBg.Visible=false; panelBorder.Visible=false
         local optBgs={}
         for i,opt in ipairs(options) do
@@ -604,7 +612,7 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(btns,b); return #btns
     end
 
-    -- Tab API builder
+    -- me builder
     local function getTabAPI(tabName, col)
         local key = tabName.."_"..col
         if tabAPI[key] then return tabAPI[key] end
@@ -690,19 +698,19 @@ function UILib.Window(titleA, titleB, gameName)
         for _,b in ipairs(btns) do
             if b.bg and not b.isDiv then b.bg.Color=C.ROWBG end
             if b.ln then b.ln.Color=C.DIV end
-            if b.isTog then b.lbl.Color=C.WHITE; b.tog.Color=b.state and C.ON or C.OFF; b.dot.Color=b.state and C.ONDOT or C.OFFDOT end
-            if b.isSlider then b.lbl.Color=C.WHITE; if b.track then b.track.Color=C.DIMGRAY end; if b.fill then b.fill.Color=C.ACCENT end end
+            if b.isTog then b.lbl.Color=C.WHITE; b.tog.Color=b.state and C.ON or C.OFF; b.dot.Color=b.state and C.ONDOT or C.OFFDOT; if b.oLbl then b.oLbl.Color=b.state and C.ONDOT or C.OFFDOT end end
+            if b.isSlider then b.lbl.Color=C.WHITE; if b.track then b.track.Color=C.DIMGRAY end; if b.fill then b.fill.Color=C.ACCENT end; if b.valLbl then b.valLbl.Color=C.ACCENT end; if b.handle then b.handle.Color=C.ACCENT end end
             if b.isDiv then b.lbl.Color=C.GRAY; if b.arrow then b.arrow.Color=C.GRAY end end
             if b.isDropdown then b.lbl.Color=C.WHITE; b.valLbl.Color=C.ACCENT; b.arrow.Color=C.GRAY end
             if b.isTextInput then b.lbl.Color=C.WHITE; b.inputTx.Color=C.ACCENT; b.inputBg.Color=C.DIMGRAY end
         end
     end
 
-    -- Base UI drawing variables
+
     local dShadow,dMainBg,dGlow1,dGlow2,dBorder
     local dTopBar,dTopLine,dTabBar,dTabLine
     local dTitleW,dTitleA,dTitleG,dKeyLbl,dBtnMinimize,dBtnClose
-    local dContent,dFooter,dFotLine
+    local dContent,dFooter,dFotLine,dFooterRight
     local dScrollBgL,dScrollThumbL,dScrollBgR,dScrollThumbR
     local glowLines
     local dMiniShadow,dMiniBg,dMiniGlow1,dMiniGlow2,dMiniBorder
@@ -731,9 +739,9 @@ function UILib.Window(titleA, titleB, gameName)
         dContent.Position=Vector2.new(uiX+1,uiY+L.CONTENT_TOP); dContent.Size=Vector2.new(L.W-2,curH-L.CONTENT_TOP-L.FOOTER-1)
         dFooter.Position=Vector2.new(uiX+1,uiY+curH-L.FOOTER); dFooter.Size=Vector2.new(L.W-2,L.FOOTER-1)
         dFotLine.From=Vector2.new(uiX+1,uiY+curH-L.FOOTER); dFotLine.To=Vector2.new(uiX+L.W-1,uiY+curH-L.FOOTER)
-        -- Tab label positions
         local tabStartX=uiX+12
         for _,t in ipairs(tabObjs) do
+            t.tabX=tabStartX
             t.lbl.Position=Vector2.new(tabStartX,uiY+L.TOPBAR+7)
             t.lblG.Position=Vector2.new(tabStartX,uiY+L.TOPBAR+7)
             t.underline.From=Vector2.new(tabStartX,uiY+L.CONTENT_TOP-1)
@@ -821,13 +829,13 @@ function UILib.Window(titleA, titleB, gameName)
 
     function win:Init(defaultTab, charLabelFn, notifFn)
         local notif = notifFn or function(msg,title,dur) pcall(function() notify(msg, title or titleA.." "..titleB, dur or 3) end) end
-        dShadow=mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,C.SHADOW,true,0.5,0,nil,10))
-        dMainBg=mkD(mkSq(uiX,uiY,L.W,L.H,C.BG,true,1,1,nil,8))
-        dGlow1=mkD(mkSq(uiX-1,uiY-1,L.W+2,L.H+2,C.ACCENT,false,0.8,1,1,9))
-        dGlow2=mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,C.ACCENT,false,0.3,0,2,10))
+        dShadow=mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,C.SHADOW,true,0.5,0,nil,4))
+        dMainBg=mkD(mkSq(uiX,uiY,L.W,L.H,C.BG,true,1,1,nil,3))
+        dGlow1=mkD(mkSq(uiX-1,uiY-1,L.W+2,L.H+2,C.ACCENT,false,0.8,1,1,4))
+        dGlow2=mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,C.ACCENT,false,0.3,0,2,4))
         glowLines={dGlow1,dGlow2}
-        dBorder=mkD(mkSq(uiX,uiY,L.W,L.H,C.BORDER,false,0.2,3,1,8))
-        dTopBar=mkD(mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,C.TOPBAR,true,1,3,nil,7))
+        dBorder=mkD(mkSq(uiX,uiY,L.W,L.H,C.BORDER,false,0.2,3,1,3))
+        dTopBar=mkD(mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,C.TOPBAR,true,1,3,nil,3))
         dTopLine=mkD(mkLn(uiX+1,uiY+L.TOPBAR,uiX+L.W-1,uiY+L.TOPBAR,C.BORDER,4,1))
         dTabBar=mkD(mkSq(uiX+1,uiY+L.TOPBAR,L.W-2,L.TABBAR,C.SIDEBAR,true,1,2))
         dTabLine=mkD(mkLn(uiX+1,uiY+L.CONTENT_TOP,uiX+L.W-1,uiY+L.CONTENT_TOP,C.BORDER,4,1))
@@ -852,12 +860,13 @@ function UILib.Window(titleA, titleB, gameName)
         dBtnClose.Transparency=1; dBtnClose.ZIndex=10; dBtnClose.Visible=false
         dBtnClose.Position=Vector2.new(uiX+L.W-28,uiY+15); table.insert(allDrawings,dBtnClose)
         dKeyLbl=mkD(mkTx("f1",uiX+L.W-16,uiY+10,10,C.GRAY,false,9))
-        dContent=mkD(mkSq(uiX+1,uiY+L.CONTENT_TOP,L.W-2,L.CONTENT_H,C.CONTENT,true,1,2,nil,6))
-        dFooter=mkD(mkSq(uiX+1,uiY+L.H-L.FOOTER,L.W-2,L.FOOTER-1,C.TOPBAR,true,1,3,nil,5))
+        dContent=mkD(mkSq(uiX+1,uiY+L.CONTENT_TOP,L.W-2,L.CONTENT_H,C.CONTENT,true,1,2,nil,2))
+        dFooter=mkD(mkSq(uiX+1,uiY+L.H-L.FOOTER,L.W-2,L.FOOTER-1,C.TOPBAR,true,1,3,nil,2))
         dFotLine=mkD(mkLn(uiX+1,uiY+L.H-L.FOOTER,uiX+L.W-1,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         local uname=game:GetService("Players").LocalPlayer.Name
         dWelcomeTxt=mkD(mkTx("welcome, ",0,0,11,C.GRAY,false,5,false))
         dNameTxt=mkD(mkTx(uname,0,0,11,C.WHITE,false,5,true))
+        dFooterRight=mkD(mkTx("",0,0,11,C.GRAY,false,5,false))
         dScrollBgL=mkSq(uiX+L.ROW_PAD+L.COL_W-2,uiY+L.CONTENT_TOP+2,3,L.CONTENT_H-4,Color3.fromRGB(18,14,14),true,0.5,4,nil,2)
         dScrollBgL.Visible=false
         dScrollThumbL=mkSq(0,0,3,20,C.ACCENT,true,1,5,nil,2); dScrollThumbL.Visible=false
@@ -869,8 +878,8 @@ function UILib.Window(titleA, titleB, gameName)
         tipLbl=mkTx("",0,0,11,C.ACCENT,false,13,true); tipLbl.Visible=false
         tipDesc=mkTx("",0,0,10,C.GRAY,false,13,false); tipDesc.Visible=false
         baseUI={dShadow,dGlow2,dGlow1,dMainBg,dBorder,dTopBar,dTopLine,dTabBar,dTabLine,
-                dTitleW,dTitleA,dTitleG,dBtnMinimize,dBtnClose,dKeyLbl,dContent,dFooter,dFotLine,dWelcomeTxt,dNameTxt}
-        -- Create horizontal tab labels
+                dTitleW,dTitleA,dTitleG,dBtnMinimize,dBtnClose,dKeyLbl,dContent,dFooter,dFotLine,dWelcomeTxt,dNameTxt,dFooterRight}
+
         local tabStartX=uiX+12
         for i,name in ipairs(win._tabOrder) do
             local isSel=name==defaultTab
@@ -882,30 +891,28 @@ function UILib.Window(titleA, titleB, gameName)
             table.insert(tabObjs,{lbl=tlW,lblG=tlG,underline=ul,name=name,sel=isSel,tw=tw,tabX=tabStartX})
             tabStartX=tabStartX+tw+16
         end
-        -- Minibar
-        dMiniShadow=mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.SHADOW,true,0.5,0,nil,10)
-        dMiniBg=mkSq(uiX,uiY,L.W,L.MINI_H,C.BG,true,1,1,nil,8)
-        dMiniGlow1=mkSq(uiX-1,uiY-1,L.W+2,L.MINI_H+2,C.ACCENT,false,0.8,1,1,9)
-        dMiniGlow2=mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.ACCENT,false,0.3,0,2,10)
+        dMiniShadow=mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.SHADOW,true,0.5,0,nil,4)
+        dMiniBg=mkSq(uiX,uiY,L.W,L.MINI_H,C.BG,true,1,1,nil,3)
+        dMiniGlow1=mkSq(uiX-1,uiY-1,L.W+2,L.MINI_H+2,C.ACCENT,false,0.8,1,1,4)
+        dMiniGlow2=mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.ACCENT,false,0.3,0,2,4)
         miniGlowLines={dMiniGlow1,dMiniGlow2}
-        dMiniBorder=mkSq(uiX,uiY,L.W,L.MINI_H,C.BORDER,false,0.2,3,1,8)
-        dMiniTopBar=mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,C.TOPBAR,true,1,3,nil,7)
+        dMiniBorder=mkSq(uiX,uiY,L.W,L.MINI_H,C.BORDER,false,0.2,3,1,3)
+        dMiniTopBar=mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,C.TOPBAR,true,1,3,nil,3)
         dMiniTitleW=mkTx(titleA,uiX+14,uiY+8,14,C.WHITE,false,9,true)
         dMiniTitleA=mkTx(titleB,uiX+60,uiY+8,14,C.ACCENT,false,9,true)
         dMiniKeyLbl=mkTx("f1",uiX+L.W-16,uiY+10,10,C.GRAY,false,9)
         dMiniDivLn=mkLn(uiX+1,uiY+L.TOPBAR,uiX+L.W-1,uiY+L.TOPBAR,C.BORDER,4,1)
-        dMiniActiveBg=mkSq(uiX+1,uiY+L.TOPBAR,L.W-2,L.MINI_H-L.TOPBAR-1,C.MINIBAR,true,1,2,nil,6)
+        dMiniActiveBg=mkSq(uiX+1,uiY+L.TOPBAR,L.W-2,L.MINI_H-L.TOPBAR-1,C.MINIBAR,true,1,2,nil,2)
         miniDrawings={dMiniShadow,dMiniBg,dMiniGlow2,dMiniGlow1,dMiniBorder,dMiniTopBar,dMiniTitleW,dMiniTitleA,dMiniKeyLbl,dMiniDivLn,dMiniActiveBg}
         for _,d in ipairs(miniDrawings) do d.Visible=false end
         currentTab=defaultTab
         notif("Loaded on "..(gameName or ""),"check it v2",4)
-        -- Show base UI immediately (no loading screen)
         for _,d in ipairs(baseUI) do setShow(d,true) end
         for _,t in ipairs(tabObjs) do setShow(t.lbl,t.sel); setShow(t.lblG,not t.sel); setShow(t.underline,t.sel) end
         showTab(currentTab)
         updatePos()
 
-        -- Main update loop
+
         task.spawn(function()
         while not destroyed do
             task.wait(0.016)
@@ -965,6 +972,7 @@ function UILib.Window(titleA, titleB, gameName)
                     if b.isTog and b.tog and b.tab==currentTab then
                         local tgt=b.state and 1 or 0; b.lt=b.lt+(tgt-b.lt)*0.18
                         b.tog.Color=lerpC(C.OFF,C.ON,b.lt); b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
+                        if b.oLbl then b.oLbl.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt) end
                         if showSet[b.bg] then bPos(b) end
                     end
                 end
@@ -1146,7 +1154,8 @@ function UILib.Window(titleA, titleB, gameName)
                             local frac=clamp((mouse.X-ax3)/b.trackW,0,1)
                             b.value=b.minV+frac*(b.maxV-b.minV)
                             local disp=b.isFloat and string.format("%.2f",b.value) or math.floor(b.value)
-                            b.lbl.Text=b.baseLbl..": "..disp
+                            b.lbl.Text=b.baseLbl
+                            if b.valLbl then b.valLbl.Text=tostring(disp) end
                             if b.cb then b.cb(b.value) end
                             bPos(b)
                         end
@@ -1188,9 +1197,13 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 -- Char label
-                if charLabelFn then
+                if charLabelFn and dFooterRight then
                     local nt=charLabelFn()
-                    -- Show info in footer right side
+                    if nt and nt~="" then
+                        dFooterRight.Text=nt
+                        local rX=uiX+L.W-14-(#nt*6); local tY=uiY+uiCurrentH-L.FOOTER+7
+                        dFooterRight.Position=Vector2.new(rX,tY); dFooterRight.Visible=menuOpen
+                    end
                 end
             end
         end
@@ -1216,7 +1229,7 @@ function UILib.Window(titleA, titleB, gameName)
     function win:SettingsTab(destroyCb)
         local s = self:Tab("settings")
         s.Left:Div("UI")
-        s.Left:Dropdown("Theme", {"Crimson","Dark","Moon","Grass","Light"}, 1, function(val)
+        s.Left:Dropdown("Theme", {"Fatal Frame","Dark","Moon","Grass","Light"}, 1, function(val)
             win:ApplyTheme(val)
         end)
         s.Left:Div("KEYBIND")
@@ -1249,3 +1262,4 @@ function UILib.Window(titleA, titleB, gameName)
     return win
 end
 return UILib
+
