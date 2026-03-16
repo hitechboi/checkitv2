@@ -10,7 +10,7 @@ if not task then
     }
 end
 local THEMES = {
-    ["Fatal Frame"] = {
+    ["Fatal Frame"] = { -- no need to change i did it for you
         ACCENT=Color3.fromRGB(122,30,44),  BG=Color3.fromRGB(12,10,10),
         SIDEBAR=Color3.fromRGB(16,12,12),  CONTENT=Color3.fromRGB(14,11,11),
         TOPBAR=Color3.fromRGB(10,8,8),     BORDER=Color3.fromRGB(50,20,25),
@@ -66,17 +66,29 @@ local THEMES = {
         DIV=Color3.fromRGB(185,175,175),   MINIBAR=Color3.fromRGB(205,200,200),
     },
 }
+local ok, _ = pcall(function() return THEMES["Crimson"].ACCENT end)
+if not ok then THEMES = {} end
 UILib.Themes = THEMES
-local C = {}
-for k,v in pairs(THEMES["Crimson"]) do C[k]=v end
-C.GREEN   = Color3.fromRGB(45,190,95)
-C.RED     = Color3.fromRGB(210,55,55)
-C.SHADOW  = Color3.fromRGB(0,0,5)
-C.ORANGE  = Color3.fromRGB(255,175,80)
-C.YELLOW  = Color3.fromRGB(190,148,0)
+local C = {
+    ACCENT  = Color3.fromRGB(122,30,44),  BG      = Color3.fromRGB(12,10,10),
+    SIDEBAR = Color3.fromRGB(16,12,12),   CONTENT = Color3.fromRGB(14,11,11),
+    TOPBAR  = Color3.fromRGB(10,8,8),     BORDER  = Color3.fromRGB(50,20,25),
+    ROWBG   = Color3.fromRGB(18,14,14),   TABSEL  = Color3.fromRGB(50,18,24),
+    WHITE   = Color3.fromRGB(220,210,210),GRAY    = Color3.fromRGB(120,100,100),
+    DIMGRAY = Color3.fromRGB(35,25,25),
+    ON      = Color3.fromRGB(122,30,44),  OFF     = Color3.fromRGB(28,18,18),
+    ONDOT   = Color3.fromRGB(220,160,170),OFFDOT  = Color3.fromRGB(70,50,50),
+    DIV     = Color3.fromRGB(30,20,20),   MINIBAR = Color3.fromRGB(14,11,11),
+    GREEN   = Color3.fromRGB(45,190,95),
+    RED     = Color3.fromRGB(210,55,55),
+    SHADOW  = Color3.fromRGB(0,0,5),
+    ORANGE  = Color3.fromRGB(255,175,80),
+    YELLOW  = Color3.fromRGB(190,148,0),
+}
 UILib.Colors = C
 _G.UILib = UILib
 print("[UILib] v2.0.0 loaded")
+
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
