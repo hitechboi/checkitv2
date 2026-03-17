@@ -2,6 +2,15 @@ local UILib = {}
 local _collapseSections = {}
 local tick = tick or os.clock
 local warn = warn or function() end
+-- Resolve Matcha globals that require() may not expose
+if not task then task = _G.task end
+if not ismouse1pressed then ismouse1pressed = _G.ismouse1pressed end
+if not iskeypressed then iskeypressed = _G.iskeypressed end
+if not setrobloxinput then setrobloxinput = _G.setrobloxinput end
+if not notify then notify = _G.notify end
+if not Drawing then Drawing = _G.Drawing end
+if not Vector2 then Vector2 = _G.Vector2 end
+if not Color3 then Color3 = _G.Color3 end
 if not task then
     task = {
         spawn = function(fn) coroutine.wrap(fn)() end,
@@ -1267,5 +1276,6 @@ function UILib.Window(titleA, titleB, gameName)
     UILib.applyTheme = function(name) applyTheme(name) end
     return win
 end
+_G.UILib = UILib
 return UILib
 
