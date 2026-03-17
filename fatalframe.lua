@@ -1,17 +1,20 @@
 local UILib = {}
 local tick = tick or os.clock
 local warn = warn or function() end
+-- Resolve Matcha globals (require may sandbox them)
 task = task or _G.task
 ismouse1pressed = ismouse1pressed or _G.ismouse1pressed or function() return false end
 iskeypressed = iskeypressed or _G.iskeypressed or function() return false end
 setrobloxinput = setrobloxinput or _G.setrobloxinput or function() end
 notify = notify or _G.notify or function() end
+-- Resolve standalone spawn/wait (these are Matcha globals, NOT part of task)
+local _spawn = spawn or _G.spawn
+local _wait = wait or _G.wait
+-- Build safe wrappers: prefer real Matcha spawn/wait, fallback to task, last resort polyfill
+if not _spawn then _spawn = (task and task.spawn) or function(fn) coroutine.wrap(fn)() end end
+if not _wait then _wait = (task and task.wait) or function(t) local s=tick(); while tick()-s<(t or 0) do end end end
 if not task then
-    task = {
-        spawn = function(fn) coroutine.wrap(fn)() end,
-        wait = function(t) local s=tick(); while tick()-s<(t or 0) do end end,
-        delay = function(t,fn) task.spawn(function() task.wait(t); fn() end) end
-    }
+    task = { spawn = _spawn, wait = _wait, delay = function(t,fn) _spawn(function() _wait(t); fn() end) end }
 end
 
 local THEMES = {
@@ -774,11 +777,11 @@ function UILib.Window(titleA, titleB, gameName, notifFn)
         updatePos()
 
         ----------------------------------------------------------------
-        -- RENDER LOOP (modeled after v1's proven approach)
+        -- RENDER LOOP (uses Matcha spawn/wait globals directly)
         ----------------------------------------------------------------
-        task.spawn(function()
+        _spawn(function()
         while not destroyed do
-            task.wait(0.016)
+            _wait(0.016)
             local clicking = false
             pcall(function() clicking = ismouse1pressed() end)
             local keyDown = false
