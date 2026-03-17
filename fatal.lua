@@ -914,8 +914,10 @@ function UILib.Window(titleA, titleB, gameName)
 
 
         task.spawn(function()
+        local _loopErrCount = 0
         while not destroyed do
             task.wait(0.016)
+            local _ok, _err = pcall(function()
             local clicking = false
             pcall(function() clicking = ismouse1pressed() end)
             local keyDown = false
@@ -1206,6 +1208,8 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
             end
+            end) -- pcall
+            if not _ok and _loopErrCount < 5 then _loopErrCount = _loopErrCount + 1; pcall(function() warn("[UILib Loop] " .. tostring(_err)) end) end
         end
         end)
     end
