@@ -97,6 +97,7 @@ function _f.Window(ta,tb,gn)
     local mouse=game.Players.LocalPlayer:GetMouse()
     local vpw,vph=_vp()
     local ux=math.floor((vpw-_l.w)/2)
+    local uy=math.floor((vph-_l.h)/2)
     local drag=false;local dox=0;local doy=0
     local clk=false;local mopen=true;local mkey=0x70
     local lkey=false;local dest=false;local ctab=nil
