@@ -909,15 +909,17 @@ function UILib.Window(titleA, titleB, gameName)
         notif("Loaded on "..(gameName or ""),"check it v2",4)
         for _,d in ipairs(baseUI) do setShow(d,true) end
         for _,t in ipairs(tabObjs) do setShow(t.lbl,t.sel); setShow(t.lblG,not t.sel); setShow(t.underline,t.sel) end
-        showTab(currentTab)
-        updatePos()
-
+        pcall(function() showTab(currentTab) end)
+        pcall(function() updatePos() end)
+        print("[UILib] Init done, starting loop")
 
         task.spawn(function()
         local _loopErrCount = 0
+        local _firstFrame = true
         while not destroyed do
             task.wait(0.016)
-            local _ok, _err = pcall(function()
+            local _fOk, _fErr = pcall(function()
+            if _firstFrame then print("[UILib] Loop running"); _firstFrame = false end
             local clicking = false
             pcall(function() clicking = ismouse1pressed() end)
             local keyDown = false
@@ -1208,8 +1210,8 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
             end
-            end) -- pcall
-            if not _ok and _loopErrCount < 5 then _loopErrCount = _loopErrCount + 1; pcall(function() warn("[UILib Loop] " .. tostring(_err)) end) end
+            end) -- pcall frame
+            if not _fOk and _loopErrCount < 10 then _loopErrCount = _loopErrCount + 1; print("[UILib Loop Error] " .. tostring(_fErr)) end
         end
         end)
     end
