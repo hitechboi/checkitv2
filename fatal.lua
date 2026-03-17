@@ -5,20 +5,22 @@ local _c={
     ct=Color3.fromRGB(14,10,11),rw=Color3.fromRGB(14,8,8),
     rh=Color3.fromRGB(18,10,10),sb=Color3.fromRGB(18,10,12),
     bd=Color3.fromRGB(42,16,21),ac=Color3.fromRGB(122,30,44),
-    ab=Color3.fromRGB(200,72,90),tx=Color3.fromRGB(200,184,184),
+    ab=Color3.fromRGB(200,72,90),tx=Color3.fromRGB(210,194,196),
     dm=Color3.fromRGB(74,48,48),mt=Color3.fromRGB(48,28,28),
     to=Color3.fromRGB(90,21,32),tf=Color3.fromRGB(26,13,13),
     do_=Color3.fromRGB(200,72,90),df=Color3.fromRGB(58,31,31),
-    ft=Color3.fromRGB(8,5,6),ta=Color3.fromRGB(200,184,184),
+    ft=Color3.fromRGB(8,5,6),ta=Color3.fromRGB(210,194,196),
     ti=Color3.fromRGB(74,48,48),db=Color3.fromRGB(12,8,9),
     dp=Color3.fromRGB(16,10,11),ds=Color3.fromRGB(200,72,90),
     lh=Color3.fromRGB(122,30,44),ld=Color3.fromRGB(58,38,38),
+    gw=Color3.fromRGB(122,30,44),
 }
-local _l={w=580,th=34,bh=28,fh=30,rh=36,sh=24,slh=36,pd=14,ch=360,tw=30,toh=14,dr=5}
+local _l={w=460,th=28,bh=22,fh=24,rh=28,sh=20,slh=30,pd=10,ch=280,tw=26,toh=12,dr=4}
 _l.h=_l.th+_l.bh+_l.ch+_l.fh
-local _fn=Drawing.Fonts.Monospace
+local _fn=Drawing.Fonts.System
 local _fs=12
-local _fsm=10
+local _fsm=11
+local _cr=4
 local function _cl(v,a,b) return math.max(a,math.min(b,v)) end
 local function _ln(a,b,t) return a+(b-a)*t end
 local function _lc(a,b,t)
@@ -58,11 +60,13 @@ local function _twc(s,a,b,d)
     end)
 end
 local function _eo(t) return 1-(1-t)^3 end
-local function _sq(x,y,w,h,col,fi,zi,tr)
+local function _sq(x,y,w,h,col,fi,zi,tr,cr)
     local s=Drawing.new("Square")
     s.Position=Vector2.new(x,y);s.Size=Vector2.new(w,h)
     s.Color=col;s.Filled=fi~=false;s.Transparency=tr or 1
-    s.ZIndex=zi or 1;s.Visible=true;return s
+    s.ZIndex=zi or 1;s.Visible=true
+    if cr then pcall(function() s.Corner=cr end) end
+    return s
 end
 local function _ln2(x1,y1,x2,y2,col,zi,th,tr)
     local l=Drawing.new("Line")
@@ -74,8 +78,8 @@ local function _tx2(t,x,y,sz,col,zi,ce,bo,tr)
     local d=Drawing.new("Text")
     d.Text=t;d.Position=Vector2.new(x,y);d.Size=sz or _fs
     d.Color=col or _c.tx;d.Font=bo and Drawing.Fonts.SystemBold or _fn
-    d.Center=ce or false;d.Outline=false;d.Transparency=tr or 1
-    d.ZIndex=zi or 3;d.Visible=true;return d
+    d.Center=ce or false;d.Outline=true
+    d.Transparency=tr or 1;d.ZIndex=zi or 3;d.Visible=true;return d
 end
 local function _ci(x,y,r,col,fi,zi,tr)
     local c=Drawing.new("Circle")
@@ -97,13 +101,13 @@ function _f.Window(ta,tb,gn)
     local mouse=game.Players.LocalPlayer:GetMouse()
     local vpw,vph=_vp()
     local ux=math.floor((vpw-_l.w)/2)
+    local uy=math.floor((vph-_l.h)/2)
     local drag=false;local dox=0;local doy=0
-    local clk=false;local mopen=true;local mkey=0x70
+    local wc2=false;local mopen=true;local mkey=0x70
     local lkey=false;local dest=false;local ctab=nil
     local alld={};local tobjs={};local btns={}
     local trows={};local tscroll={};local opdd=nil
     local _sd=0;local clfn=nil;local iklbl=nil;local tabmap={}
-    local uis=game:GetService("UserInputService")
     pcall(function()
         mouse.WheelForward:Connect(function() _sd=_sd-1 end)
         mouse.WheelBackward:Connect(function() _sd=_sd+1 end)
@@ -111,48 +115,58 @@ function _f.Window(ta,tb,gn)
     local function mkd(d) table.insert(alld,d);return d end
     local function ch() return _l.ch end
     local function fh() return _l.th+_l.bh+ch()+_l.fh end
-    local dbg=mkd(_sq(ux,uy,_l.w,fh(),_c.bg,true,1))
-    local dbrd=mkd(_sq(ux,uy,_l.w,fh(),_c.bd,false,2))
-    local dtb=mkd(_sq(ux,uy,_l.w,_l.th,_c.tb,true,2))
+    local _gp=3
+    local glT=mkd(_sq(ux-_gp,uy-_gp,_l.w+_gp*2,_gp,_c.gw,true,0,0.15,_cr))
+    local glB=mkd(_sq(ux-_gp,uy+fh(),_l.w+_gp*2,_gp,_c.gw,true,0,0.15,_cr))
+    local glL=mkd(_sq(ux-_gp,uy,_gp,fh(),_c.gw,true,0,0.15))
+    local glR=mkd(_sq(ux+_l.w,uy,_gp,fh(),_c.gw,true,0,0.15))
+    local dbg=mkd(_sq(ux,uy,_l.w,fh(),_c.bg,true,1,1,_cr))
+    local dbrd=mkd(_sq(ux,uy,_l.w,fh(),_c.bd,false,2,1,_cr))
+    local dtb=mkd(_sq(ux,uy,_l.w,_l.th,_c.tb,true,2,1,_cr))
     local dtbl=mkd(_ln2(ux,uy+_l.th,ux+_l.w,uy+_l.th,_c.bd,3,1))
-    local dta=mkd(_tx2(ta,ux+_l.pd,uy+_l.th/2-6,13,_c.tx,4))
-    local dtb2=mkd(_tx2(tb and (" "..tb) or "",ux+_l.pd+#ta*7+4,uy+_l.th/2-6,_fsm,_c.dm,4))
-    local dgn=mkd(_tx2(gn or "",ux+_l.pd+#ta*7+4+(tb and (#tb*6+8) or 0),uy+_l.th/2-6,_fsm,_c.ac,4))
+    local dta=mkd(_tx2(ta,ux+_l.pd,uy+_l.th/2-6,13,_c.tx,4,false,true))
+    local dtb2=mkd(_tx2(tb and (" "..tb) or "",ux+_l.pd+#ta*8+2,uy+_l.th/2-6,_fsm,_c.dm,4))
+    local dgn=mkd(_tx2(gn or "",ux+_l.pd+#ta*8+2+(tb and (#tb*6+6) or 0),uy+_l.th/2-6,_fsm,_c.ac,4))
     local dodt=mkd(_ci(ux+_l.w-28,uy+_l.th/2,3,_c.ac,true,4))
     local dotx=mkd(_tx2("online",ux+_l.w-22,uy+_l.th/2-5,_fsm,_c.mt,4))
-    local dkl=mkd(_tx2("f1",ux+_l.w-56,uy+_l.th/2-5,_fsm,_c.mt,4))
+    local dkl=mkd(_tx2("f1",ux+_l.w-50,uy+_l.th/2-5,_fsm,_c.mt,4))
     local dbb=mkd(_sq(ux,uy+_l.th,_l.w,_l.bh,_c.tb,true,2))
     local dbbl=mkd(_ln2(ux,uy+_l.th+_l.bh,ux+_l.w,uy+_l.th+_l.bh,_c.bd,3,1))
     local dct=mkd(_sq(ux,uy+_l.th+_l.bh,_l.w,ch(),_c.bg,true,1))
-    local dft=mkd(_sq(ux,uy+fh()-_l.fh,_l.w,_l.fh,_c.tb,true,2))
+    local dft=mkd(_sq(ux,uy+fh()-_l.fh,_l.w,_l.fh,_c.tb,true,2,1,_cr))
     local dftl=mkd(_ln2(ux,uy+fh()-_l.fh,ux+_l.w,uy+fh()-_l.fh,_c.bd,3,1))
-    local dwl=mkd(_tx2("welcome,",ux+_l.pd,uy+fh()-_l.fh+9,_fsm,_c.dm,4))
-    local dun=mkd(_tx2("",ux+_l.pd+54,uy+fh()-_l.fh+9,_fsm,_c.ac,4))
-    local dcl=mkd(_tx2("",ux+_l.w-_l.pd-160,uy+fh()-_l.fh+9,_fsm,_c.mt,4))
+    local dwl=mkd(_tx2("welcome,",ux+_l.pd,uy+fh()-_l.fh+7,_fsm,_c.dm,4))
+    local dun=mkd(_tx2("",ux+_l.pd+50,uy+fh()-_l.fh+7,_fsm,_c.ac,4))
+    local dcl=mkd(_tx2("",ux+_l.w-_l.pd-140,uy+fh()-_l.fh+7,_fsm,_c.mt,4))
     pcall(function() dun.Text=game.Players.LocalPlayer.Name end)
-    local dscb=mkd(_sq(ux+_l.w-5,uy+_l.th+_l.bh+2,3,ch()-4,_c.bd,true,5))
-    local dsct=mkd(_sq(ux+_l.w-5,uy+_l.th+_l.bh+2,3,20,_c.ac,true,6))
+    local dscb=mkd(_sq(ux+_l.w-5,uy+_l.th+_l.bh+2,3,ch()-4,_c.bd,true,5,1,2))
+    local dsct=mkd(_sq(ux+_l.w-5,uy+_l.th+_l.bh+2,3,20,_c.ac,true,6,1,2))
     dscb.Visible=false;dsct.Visible=false
     local tabx=ux+_l.pd
     local function updpos()
-        dbg.Position=Vector2.new(ux,uy);dbg.Size=Vector2.new(_l.w,fh())
-        dbrd.Position=Vector2.new(ux,uy);dbrd.Size=Vector2.new(_l.w,fh())
-        dtb.Position=Vector2.new(ux,uy)
+        local h=fh()
+        glT.Position=Vector2.new(ux-_gp,uy-_gp);glT.Size=Vector2.new(_l.w+_gp*2,_gp)
+        glB.Position=Vector2.new(ux-_gp,uy+h);glB.Size=Vector2.new(_l.w+_gp*2,_gp)
+        glL.Position=Vector2.new(ux-_gp,uy);glL.Size=Vector2.new(_gp,h)
+        glR.Position=Vector2.new(ux+_l.w,uy);glR.Size=Vector2.new(_gp,h)
+        dbg.Position=Vector2.new(ux,uy);dbg.Size=Vector2.new(_l.w,h)
+        dbrd.Position=Vector2.new(ux,uy);dbrd.Size=Vector2.new(_l.w,h)
+        dtb.Position=Vector2.new(ux,uy);dtb.Size=Vector2.new(_l.w,_l.th)
         dtbl.From=Vector2.new(ux,uy+_l.th);dtbl.To=Vector2.new(ux+_l.w,uy+_l.th)
         dta.Position=Vector2.new(ux+_l.pd,uy+_l.th/2-6)
-        dtb2.Position=Vector2.new(ux+_l.pd+#ta*7+4,uy+_l.th/2-6)
-        dgn.Position=Vector2.new(ux+_l.pd+#ta*7+4+(tb and (#tb*6+8) or 0),uy+_l.th/2-6)
+        dtb2.Position=Vector2.new(ux+_l.pd+#ta*8+2,uy+_l.th/2-6)
+        dgn.Position=Vector2.new(ux+_l.pd+#ta*8+2+(tb and (#tb*6+6) or 0),uy+_l.th/2-6)
         dodt.Position=Vector2.new(ux+_l.w-28,uy+_l.th/2)
         dotx.Position=Vector2.new(ux+_l.w-22,uy+_l.th/2-5)
-        dkl.Position=Vector2.new(ux+_l.w-56,uy+_l.th/2-5)
-        dbb.Position=Vector2.new(ux,uy+_l.th)
+        dkl.Position=Vector2.new(ux+_l.w-50,uy+_l.th/2-5)
+        dbb.Position=Vector2.new(ux,uy+_l.th);dbb.Size=Vector2.new(_l.w,_l.bh)
         dbbl.From=Vector2.new(ux,uy+_l.th+_l.bh);dbbl.To=Vector2.new(ux+_l.w,uy+_l.th+_l.bh)
         dct.Position=Vector2.new(ux,uy+_l.th+_l.bh);dct.Size=Vector2.new(_l.w,ch())
-        dft.Position=Vector2.new(ux,uy+fh()-_l.fh)
-        dftl.From=Vector2.new(ux,uy+fh()-_l.fh);dftl.To=Vector2.new(ux+_l.w,uy+fh()-_l.fh)
-        dwl.Position=Vector2.new(ux+_l.pd,uy+fh()-_l.fh+9)
-        dun.Position=Vector2.new(ux+_l.pd+54,uy+fh()-_l.fh+9)
-        dcl.Position=Vector2.new(ux+_l.w-_l.pd-160,uy+fh()-_l.fh+9)
+        dft.Position=Vector2.new(ux,uy+h-_l.fh);dft.Size=Vector2.new(_l.w,_l.fh)
+        dftl.From=Vector2.new(ux,uy+h-_l.fh);dftl.To=Vector2.new(ux+_l.w,uy+h-_l.fh)
+        dwl.Position=Vector2.new(ux+_l.pd,uy+h-_l.fh+7)
+        dun.Position=Vector2.new(ux+_l.pd+50,uy+h-_l.fh+7)
+        dcl.Position=Vector2.new(ux+_l.w-_l.pd-140,uy+h-_l.fh+7)
         dscb.Position=Vector2.new(ux+_l.w-5,uy+_l.th+_l.bh+2)
         dscb.Size=Vector2.new(3,ch()-4)
         for _,t in ipairs(tobjs) do if t.repos then t:repos() end end
@@ -235,7 +249,7 @@ function _f.Window(ta,tb,gn)
             local lb=mkd(_tx2(string.lower(label),rx2+_l.pd,ry+_l.rh/2-6,_fs,_c.tx,5))
             local bl=mkd(_ln2(rx2,ry+_l.rh,rx2+rw2,ry+_l.rh,_c.bd,4,1))
             local tox=rx2+rw2-_l.pd-_l.tw;local toy=ry+_l.rh/2-_l.toh/2
-            local tobg=mkd(_sq(tox,toy,_l.tw,_l.toh,state and _c.to or _c.tf,true,5))
+            local tobg=mkd(_sq(tox,toy,_l.tw,_l.toh,state and _c.to or _c.tf,true,5,1,_l.toh/2))
             local dx=state and tox+_l.tw-_l.toh/2-1 or tox+_l.toh/2+1
             local dot=mkd(_ci(dx,toy+_l.toh/2,_l.dr,state and _c.do_ or _c.df,true,6))
             ay(col,_l.rh)
@@ -367,13 +381,56 @@ function _f.Window(ta,tb,gn)
             local pbg=mkd(_sq(rx2,ry+_l.rh,rw2,ph,_c.db,true,5))
             local pbd=mkd(_sq(rx2,ry+_l.rh,rw2,ph,_c.bd,false,6))
             pbg.Visible=false;pbd.Visible=false
+            local _ddtw=false
             local function showoo(s)
                 open=s;al.Text=s and "^" or "v"
-                pbg.Visible=s and name==ctab;pbd.Visible=s and name==ctab
-                for _,o in ipairs(oo) do
-                    o.bg.Visible=s and name==ctab
-                    o.lbl.Visible=s and name==ctab
-                    o.line.Visible=s and name==ctab
+                if _ddtw then _ddtw=false end
+                if s then
+                    pbg.Visible=name==ctab;pbd.Visible=name==ctab
+                    pbg.Size=Vector2.new(rw2,0);pbd.Size=Vector2.new(rw2,0)
+                    for _,o in ipairs(oo) do
+                        o.bg.Visible=false;o.lbl.Visible=false;o.line.Visible=false
+                    end
+                    _ddtw=true
+                    task.spawn(function()
+                        local t0=_tk();local dur=0.15
+                        while _ddtw do
+                            local t=_cl((_tk()-t0)/dur,0,1)
+                            local et=1-(1-t)^2
+                            local ch2=math.floor(ph*et)
+                            pbg.Size=Vector2.new(rw2,ch2);pbd.Size=Vector2.new(rw2,ch2)
+                            for _,o in ipairs(oo) do
+                                local oy2=(o.idx-1)*oph
+                                local vis=oy2+oph<=ch2 and name==ctab
+                                o.bg.Visible=vis;o.lbl.Visible=vis;o.line.Visible=vis
+                            end
+                            if t>=1 then _ddtw=false;break end
+                            task.wait(0.016)
+                        end
+                    end)
+                else
+                    _ddtw=true
+                    task.spawn(function()
+                        local t0=_tk();local dur=0.12
+                        while _ddtw do
+                            local t=_cl((_tk()-t0)/dur,0,1)
+                            local et=t^2
+                            local ch2=math.floor(ph*(1-et))
+                            pbg.Size=Vector2.new(rw2,ch2);pbd.Size=Vector2.new(rw2,ch2)
+                            for _,o in ipairs(oo) do
+                                local oy2=(o.idx-1)*oph
+                                local vis=oy2+oph<=ch2 and name==ctab
+                                o.bg.Visible=vis;o.lbl.Visible=vis;o.line.Visible=vis
+                            end
+                            if t>=1 then break end
+                            task.wait(0.016)
+                        end
+                        _ddtw=false
+                        pbg.Visible=false;pbd.Visible=false
+                        for _,o in ipairs(oo) do
+                            o.bg.Visible=false;o.lbl.Visible=false;o.line.Visible=false
+                        end
+                    end)
                 end
             end
             local b={tab=name,visible=name==ctab,_d={bg,lb,vl,al,bl,pbg,pbd},_oo=oo}
@@ -497,74 +554,72 @@ function _f.Window(ta,tb,gn)
         dest=true
         for _,d in ipairs(alld) do pcall(function() d:Remove() end) end
     end
-    pcall(function()
-        uis.InputBegan:Connect(function(inp,_gp)
-            if inp.UserInputType==Enum.UserInputType.MouseButton1 then
-                if not mopen then return end
-                clk=true
-                local mx=mouse.X;local my=mouse.Y
-                local itb=mx>=ux and mx<=ux+_l.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh
-                if itb then
-                    local ht=false
-                    for _,t in ipairs(tobjs) do
-                        if mx>=t.x and mx<=t.x+t.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh then
-                            switchtab(t.name);ht=true;break
-                        end
-                    end
-                    if not ht then drag=true;dox=mx-ux;doy=my-uy end
-                elseif my>=uy and my<=uy+_l.th then
-                    drag=true;dox=mx-ux;doy=my-uy
-                end
-                if my>=uy+_l.th+_l.bh and my<uy+fh()-_l.fh then
-                    for _,b in ipairs(btns) do
-                        if b.tab==ctab and b._click then pcall(b._click,b,mx,my) end
-                    end
-                end
-            elseif inp.UserInputType==Enum.UserInputType.Keyboard then
-                local kc=inp.KeyCode.Value
-                if lkey then
-                    if kc and kc~=1 and kc~=2 then
-                        mkey=kc;dkl.Text=string.lower(_kname(kc))
-                        if iklbl then iklbl._d[2].Text="menu key: "..string.lower(_kname(kc)) end
-                        lkey=false
-                    end
-                elseif kc==mkey then
-                    mopen=not mopen
-                    if not mopen then
-                        for _,d in ipairs(alld) do d.Visible=false end
-                    else
-                        updpos()
-                        for _,b in ipairs(btns) do
-                            if b.tab==ctab and b.reposition then b:reposition() end
-                        end
-                    end
-                end
-            end
-        end)
-        uis.InputEnded:Connect(function(inp,_gp)
-            if inp.UserInputType==Enum.UserInputType.MouseButton1 then
-                clk=false;drag=false
-                for _,b in ipairs(btns) do
-                    if b._drag then b.dragging=false end
-                end
-            end
-        end)
-    end)
+    local _gt0=_tk()
     task.spawn(function()
         while not dest do
             task.wait(0.016)
-            if not mopen then task.wait(0.1) end
-            if mopen then
+            local mkp=false
+            pcall(function() mkp=iskeypressed(mkey) end)
+            if mkp and not lkey then
+                mopen=not mopen;task.wait(0.15)
+                if not mopen then
+                    for _,d in ipairs(alld) do d.Visible=false end
+                else
+                    updpos()
+                    for _,b in ipairs(btns) do
+                        if b.tab==ctab and b.reposition then b:reposition() end
+                    end
+                end
+            elseif not mopen then
+                for _,d in ipairs(alld) do d.Visible=false end
+            else
+                local gtr=0.08+0.07*math.sin((_tk()-_gt0)*2.2)
+                glT.Transparency=gtr;glB.Transparency=gtr
+                glL.Transparency=gtr;glR.Transparency=gtr
                 local mx=mouse.X;local my=mouse.Y
+                local clk=false
+                pcall(function() clk=ismouse1pressed() end)
+                local jclk=clk and not wc2
                 if clfn then pcall(function() dcl.Text=clfn() end) end
+                if lkey then
+                    for k=0x08,0xDD do
+                        local p=false
+                        pcall(function() p=iskeypressed(k) end)
+                        if p and k~=0x01 and k~=0x02 then
+                            mkey=k;dkl.Text=string.lower(_kname(k))
+                            if iklbl then iklbl._d[2].Text="menu key: "..string.lower(_kname(k)) end
+                            lkey=false;break
+                        end
+                    end
+                end
+                if jclk then
+                    local itb=mx>=ux and mx<=ux+_l.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh
+                    if itb then
+                        local ht=false
+                        for _,t in ipairs(tobjs) do
+                            if mx>=t.x and mx<=t.x+t.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh then
+                                switchtab(t.name);ht=true;break
+                            end
+                        end
+                        if not ht then drag=true;dox=mx-ux;doy=my-uy end
+                    elseif my>=uy and my<=uy+_l.th then
+                        drag=true;dox=mx-ux;doy=my-uy
+                    end
+                    if my>=uy+_l.th+_l.bh and my<uy+fh()-_l.fh then
+                        for _,b in ipairs(btns) do
+                            if b.tab==ctab and b._click then pcall(b._click,mx,my) end
+                        end
+                    end
+                end
+                if not clk then drag=false end
                 if drag and clk then
                     local vw2,vh2=_vp()
                     ux=_cl(mx-dox,0,vw2-_l.w);uy=_cl(my-doy,0,vh2-fh());updpos()
                 end
                 for _,b in ipairs(btns) do
                     if b.tab==ctab then
-                        if b._hover then pcall(b._hover,b,mx,my) end
-                        if b._drag and clk then pcall(b._drag,b,mx,my,clk) end
+                        if b._hover then pcall(b._hover,mx,my) end
+                        if b._drag then pcall(b._drag,mx,my,clk) end
                     end
                 end
                 if _sd~=0 and my>=uy+_l.th+_l.bh and my<uy+fh()-_l.fh then
@@ -582,6 +637,7 @@ function _f.Window(ta,tb,gn)
                         dsct.Position=Vector2.new(ux+_l.w-5,uy+_l.th+_l.bh+2+fr*(sbh-th2))
                     else dscb.Visible=false;dsct.Visible=false end
                 end
+                wc2=clk
             end
         end
     end)
