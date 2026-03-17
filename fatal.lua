@@ -142,7 +142,7 @@ function _f.Window(ta,tb,gn)
     local dscb=mkd(_sq(ux+_l.w-5,uy+_l.th+_l.bh+2,3,ch()-4,_c.bd,true,5,1,2))
     local dsct=mkd(_sq(ux+_l.w-5,uy+_l.th+_l.bh+2,3,20,_c.ac,true,6,1,2))
     dscb.Visible=false;dsct.Visible=false
-    local tabx=ux+_l.pd
+    local tabx=_l.pd
     local function updpos()
         local h=fh()
         glT.Position=Vector2.new(ux-_gp,uy-_gp);glT.Size=Vector2.new(_l.w+_gp*2,_gp)
@@ -188,19 +188,23 @@ function _f.Window(ta,tb,gn)
     local function gettab(name)
         if tabmap[name] then return tabmap[name] end
         local tw2=60
-        local tl=mkd(_ln2(tabx,uy+_l.th+_l.bh-1,tabx+tw2,uy+_l.th+_l.bh-1,_c.ac,4,2))
-        local tlbl=mkd(_tx2(string.lower(name),tabx+tw2/2,uy+_l.th+_l.bh/2-5,_fsm,_c.ti,5,true))
+        local tl=mkd(_ln2(ux+tabx,uy+_l.th+_l.bh-1,ux+tabx+tw2,uy+_l.th+_l.bh-1,_c.ac,4,2))
+        local tlbl=mkd(_tx2(string.lower(name),ux+tabx+tw2/2,uy+_l.th+_l.bh/2-5,_fsm,_c.ti,5,true))
         tl.Visible=false
         local tobj={name=name,active=false,lbl=tlbl,line=tl,w=tw2,x=tabx}
         function tobj:recolor()
             self.lbl.Color=self.active and _c.ta or _c.ti
             self.line.Visible=self.active
         end
-        function tobj:repos() end
+        function tobj:repos()
+            self.lbl.Position=Vector2.new(ux+self.x+self.w/2,uy+_l.th+_l.bh/2-5)
+            self.line.From=Vector2.new(ux+self.x,uy+_l.th+_l.bh-1)
+            self.line.To=Vector2.new(ux+self.x+self.w,uy+_l.th+_l.bh-1)
+        end
         tabx=tabx+tw2+2
         table.insert(tobjs,tobj)
         tscroll[name]=0;trows[name]=0
-        local cly={uy+_l.th+_l.bh};local cry={uy+_l.th+_l.bh}
+        local cly={0};local cry={0}
         local two=false;local csp=math.floor(_l.w/2)
         local api={}
         local function ny(col) return two and col=="R" and cry[1] or cly[1] end
@@ -209,7 +213,7 @@ function _f.Window(ta,tb,gn)
             else cly[1]=cly[1]+h end
             trows[name]=(trows[name] or 0)+h
         end
-        local function rx(col) return two and col=="R" and ux+csp or ux end
+        local function rx(col) return two and col=="R" and csp or 0 end
         local function rw(col) return two and csp or _l.w end
         function api:TwoColumn()
             two=true
@@ -225,19 +229,19 @@ function _f.Window(ta,tb,gn)
         end
         function api:Div(label,col)
             col=col or "L";local ry=ny(col);local rw2=rw(col);local rx2=rx(col)
-            local bg=mkd(_sq(rx2,ry,rw2,_l.sh,_c.sb,true,3))
-            local lb=mkd(_tx2(string.lower(label or ""),rx2+_l.pd,ry+_l.sh/2-5,_fsm,_c.ac,5))
-            local bl=mkd(_ln2(rx2,ry+_l.sh,rx2+rw2,ry+_l.sh,_c.bd,4,1))
+            local bg=mkd(_sq(ux+rx2,uy+_l.th+_l.bh+ry,rw2,_l.sh,_c.sb,true,3))
+            local lb=mkd(_tx2(string.lower(label or ""),ux+rx2+_l.pd,uy+_l.th+_l.bh+ry+_l.sh/2-5,_fsm,_c.ac,5))
+            local bl=mkd(_ln2(ux+rx2,uy+_l.th+_l.bh+ry+_l.sh,ux+rx2+rw2,uy+_l.th+_l.bh+ry+_l.sh,_c.bd,4,1))
             ay(col,_l.sh)
             local b={tab=name,visible=name==ctab,_d={bg,lb,bl}}
             b.setOpacity=function(self,op)
                 for _,d in ipairs(self._d) do d.Visible=op>0.5 and self.visible end
             end
             b.reposition=function(self)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                bg.Position=Vector2.new(rx2,a);lb.Position=Vector2.new(rx2+_l.pd,a+_l.sh/2-5)
-                bl.From=Vector2.new(rx2,a+_l.sh);bl.To=Vector2.new(rx2+rw2,a+_l.sh)
-                local iv=a>=uy+_l.th+_l.bh-2 and a<uy+_l.th+_l.bh+ch()
+                local sc=tscroll[name] or 0;local ct=uy+_l.th+_l.bh;local ax=ux+rx2;local a=ct+ry-sc
+                bg.Position=Vector2.new(ax,a);lb.Position=Vector2.new(ax+_l.pd,a+_l.sh/2-5)
+                bl.From=Vector2.new(ax,a+_l.sh);bl.To=Vector2.new(ax+rw2,a+_l.sh)
+                local iv=a>=ct-2 and a<ct+ch()
                 for _,d in ipairs(self._d) do d.Visible=self.visible and iv end
             end
             b:setOpacity(b.visible and 1 or 0);table.insert(btns,b)
@@ -256,7 +260,8 @@ function _f.Window(ta,tb,gn)
             local b={tab=name,visible=name==ctab,state=state,_d={bg,lb,bl,tobg,dot}}
             function b:setState(s)
                 self.state=s;tobg.Color=s and _c.to or _c.tf
-                local tx3=s and tox+_l.tw-_l.toh/2-1 or tox+_l.toh/2+1
+                local atx=ux+rx2+rw2-_l.pd-_l.tw
+                local tx3=s and atx+_l.tw-_l.toh/2-1 or atx+_l.toh/2+1
                 _tw(function(v) dot.Position=Vector2.new(v,dot.Position.Y) end,dot.Position.X,tx3,0.12,_eo)
                 _twc(function(c) dot.Color=c end,dot.Color,s and _c.do_ or _c.df,0.12)
                 if callback then pcall(callback,s) end
@@ -265,24 +270,24 @@ function _f.Window(ta,tb,gn)
                 for _,d in ipairs(self._d) do d.Visible=op>0.5 and self.visible end
             end
             b.reposition=function(self)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                local ty2=a+_l.rh/2-_l.toh/2;local tx4=rx2+rw2-_l.pd-_l.tw
-                bg.Position=Vector2.new(rx2,a);lb.Position=Vector2.new(rx2+_l.pd,a+_l.rh/2-6)
-                bl.From=Vector2.new(rx2,a+_l.rh);bl.To=Vector2.new(rx2+rw2,a+_l.rh)
+                local sc=tscroll[name] or 0;local ct=uy+_l.th+_l.bh;local ax=ux+rx2;local a=ct+ry-sc
+                local ty2=a+_l.rh/2-_l.toh/2;local tx4=ax+rw2-_l.pd-_l.tw
+                bg.Position=Vector2.new(ax,a);lb.Position=Vector2.new(ax+_l.pd,a+_l.rh/2-6)
+                bl.From=Vector2.new(ax,a+_l.rh);bl.To=Vector2.new(ax+rw2,a+_l.rh)
                 tobg.Position=Vector2.new(tx4,ty2)
                 dot.Position=Vector2.new(self.state and tx4+_l.tw-_l.toh/2-1 or tx4+_l.toh/2+1,ty2+_l.toh/2)
-                local iv=a>=uy+_l.th+_l.bh-2 and a<uy+_l.th+_l.bh+ch()
+                local iv=a>=ct-2 and a<ct+ch()
                 for _,d in ipairs(self._d) do d.Visible=self.visible and iv end
             end
             b._click=function(mx,my)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                if mx>=rx2 and mx<=rx2+rw2 and my>=a and my<=a+_l.rh then
-                    if mx>=rx2+rw2-_l.pd-_l.tw-8 then b:setState(not b.state) end
+                local sc=tscroll[name] or 0;local ax=ux+rx2;local a=uy+_l.th+_l.bh+ry-sc
+                if mx>=ax and mx<=ax+rw2 and my>=a and my<=a+_l.rh then
+                    if mx>=ax+rw2-_l.pd-_l.tw-8 then b:setState(not b.state) end
                 end
             end
             b._hover=function(mx,my)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                bg.Color=(mx>=rx2 and mx<=rx2+rw2 and my>=a and my<=a+_l.rh) and _c.rh or _c.rw
+                local sc=tscroll[name] or 0;local ax=ux+rx2;local a=uy+_l.th+_l.bh+ry-sc
+                bg.Color=(mx>=ax and mx<=ax+rw2 and my>=a and my<=a+_l.rh) and _c.rh or _c.rw
             end
             b:setOpacity(b.visible and 1 or 0);table.insert(btns,b);return b
         end
@@ -302,19 +307,19 @@ function _f.Window(ta,tb,gn)
                 for _,d in ipairs(self._d) do d.Visible=op>0.5 and self.visible end
             end
             b.reposition=function(self)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                local ty2=a+_l.slh-10;local tx2=rx2+_l.pd
-                bg.Position=Vector2.new(rx2,a);lb.Position=Vector2.new(rx2+_l.pd,a+8)
-                bl.From=Vector2.new(rx2,a+_l.slh);bl.To=Vector2.new(rx2+rw2,a+_l.slh)
+                local sc=tscroll[name] or 0;local ct=uy+_l.th+_l.bh;local ax=ux+rx2;local a=ct+ry-sc
+                local ty2=a+_l.slh-10;local tx2=ax+_l.pd
+                bg.Position=Vector2.new(ax,a);lb.Position=Vector2.new(ax+_l.pd,a+8)
+                bl.From=Vector2.new(ax,a+_l.slh);bl.To=Vector2.new(ax+rw2,a+_l.slh)
                 tr.From=Vector2.new(tx2,ty2);tr.To=Vector2.new(tx2+trw,ty2)
                 local f=(self.value-minv)/(maxv-minv)
                 hdl.Position=Vector2.new(tx2+f*trw,ty2)
-                local iv=a>=uy+_l.th+_l.bh-2 and a<uy+_l.th+_l.bh+ch()
+                local iv=a>=ct-2 and a<ct+ch()
                 for _,d in ipairs(self._d) do d.Visible=self.visible and iv end
             end
             b._drag=function(mx,my,clk)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                local ty2=a+_l.slh-10;local tx2=rx2+_l.pd
+                local ax=ux+rx2;local a=uy+_l.th+_l.bh+ry
+                local ty2=a+_l.slh-10;local tx2=ax+_l.pd
                 if not clk then b.dragging=false;return end
                 if not b.dragging then
                     if mx>=tx2-8 and mx<=tx2+trw+8 and my>=ty2-8 and my<=ty2+8 then b.dragging=true end
@@ -341,21 +346,21 @@ function _f.Window(ta,tb,gn)
                 for _,d in ipairs(self._d) do d.Visible=op>0.5 and self.visible end
             end
             b.reposition=function(self)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                bg.Position=Vector2.new(rx2,a);lb.Position=Vector2.new(rx2+rw2/2,a+_l.rh/2-6)
-                bl.From=Vector2.new(rx2,a+_l.rh);bl.To=Vector2.new(rx2+rw2,a+_l.rh)
+                local sc=tscroll[name] or 0;local ax=ux+rx2;local a=uy+_l.th+_l.bh+ry-sc
+                bg.Position=Vector2.new(ax,a);lb.Position=Vector2.new(ax+rw2/2,a+_l.rh/2-6)
+                bl.From=Vector2.new(ax,a+_l.rh);bl.To=Vector2.new(ax+rw2,a+_l.rh)
                 local iv=a>=uy+_l.th+_l.bh-2 and a<uy+_l.th+_l.bh+ch()
                 for _,d in ipairs(self._d) do d.Visible=self.visible and iv end
             end
             b._click=function(mx,my)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                if mx>=rx2 and mx<=rx2+rw2 and my>=a and my<=a+_l.rh then
+                local sc=tscroll[name] or 0;local ax=ux+rx2;local a=uy+_l.th+_l.bh+ry-sc
+                if mx>=ax and mx<=ax+rw2 and my>=a and my<=a+_l.rh then
                     if callback then pcall(callback) end
                 end
             end
             b._hover=function(mx,my)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                bg.Color=(mx>=rx2 and mx<=rx2+rw2 and my>=a and my<=a+_l.rh) and _c.rh or b._bc
+                local sc=tscroll[name] or 0;local ax=ux+rx2;local a=uy+_l.th+_l.bh+ry-sc
+                bg.Color=(mx>=ax and mx<=ax+rw2 and my>=a and my<=a+_l.rh) and _c.rh or b._bc
             end
             b:setOpacity(b.visible and 1 or 0);table.insert(btns,b);return b
         end
@@ -455,18 +460,18 @@ function _f.Window(ta,tb,gn)
                 if not s then showoo(false) end
             end
             b.reposition=function(self)
-                local sc=tscroll[name] or 0;local a=ry-sc
-                bg.Position=Vector2.new(rx2,a);lb.Position=Vector2.new(rx2+_l.pd,a+_l.rh/2-6)
-                vl.Position=Vector2.new(rx2+rw2-_l.pd-#string.lower(sval)*6,a+_l.rh/2-6)
-                al.Position=Vector2.new(rx2+rw2-_l.pd,a+_l.rh/2-6)
-                bl.From=Vector2.new(rx2,a+_l.rh);bl.To=Vector2.new(rx2+rw2,a+_l.rh)
-                pbg.Position=Vector2.new(rx2,a+_l.rh);pbd.Position=Vector2.new(rx2,a+_l.rh)
+                local sc=tscroll[name] or 0;local ct=uy+_l.th+_l.bh;local ax=ux+rx2;local a=ct+ry-sc
+                bg.Position=Vector2.new(ax,a);lb.Position=Vector2.new(ax+_l.pd,a+_l.rh/2-6)
+                vl.Position=Vector2.new(ax+rw2-_l.pd-#string.lower(sval)*6,a+_l.rh/2-6)
+                al.Position=Vector2.new(ax+rw2-_l.pd,a+_l.rh/2-6)
+                bl.From=Vector2.new(ax,a+_l.rh);bl.To=Vector2.new(ax+rw2,a+_l.rh)
+                pbg.Position=Vector2.new(ax,a+_l.rh);pbd.Position=Vector2.new(ax,a+_l.rh)
                 for i,o in ipairs(oo) do
                     local oy=a+_l.rh+(i-1)*oph
-                    o.bg.Position=Vector2.new(rx2,oy);o.lbl.Position=Vector2.new(rx2+_l.pd+8,oy+oph/2-6)
-                    o.line.From=Vector2.new(rx2,oy+oph);o.line.To=Vector2.new(rx2+rw2,oy+oph)
+                    o.bg.Position=Vector2.new(ax,oy);o.lbl.Position=Vector2.new(ax+_l.pd+8,oy+oph/2-6)
+                    o.line.From=Vector2.new(ax,oy+oph);o.line.To=Vector2.new(ax+rw2,oy+oph)
                 end
-                local iv=a>=uy+_l.th+_l.bh-2 and a<uy+_l.th+_l.bh+ch()
+                local iv=a>=ct-2 and a<ct+ch()
                 for _,d in ipairs(self._d) do d.Visible=self.visible and iv end
                 if open then
                     pbg.Visible=self.visible;pbd.Visible=self.visible
@@ -477,8 +482,8 @@ function _f.Window(ta,tb,gn)
             end
             b._click=function(mx,my)
                 if not b.visible then return end
-                local sc=tscroll[name] or 0;local a=ry-sc
-                if mx>=rx2 and mx<=rx2+rw2 and my>=a and my<=a+_l.rh then
+                local sc=tscroll[name] or 0;local ax=ux+rx2;local a=uy+_l.th+_l.bh+ry-sc
+                if mx>=ax and mx<=ax+rw2 and my>=a and my<=a+_l.rh then
                     if open then showoo(false)
                     else
                         if opdd and opdd~=b then pcall(function() opdd:_closeDD() end) end
@@ -489,7 +494,7 @@ function _f.Window(ta,tb,gn)
                 if open then
                     for _,o in ipairs(oo) do
                         local oy=a+_l.rh+(o.idx-1)*oph
-                        if mx>=rx2 and mx<=rx2+rw2 and my>=oy and my<=oy+oph then
+                        if mx>=ax and mx<=ax+rw2 and my>=oy and my<=oy+oph then
                             sidx=o.idx;sval=o.val;vl.Text=string.lower(sval)
                             for _,o2 in ipairs(oo) do
                                 o2.lbl.Color=o2.idx==sidx and _c.ds or _c.dm
@@ -520,10 +525,10 @@ function _f.Window(ta,tb,gn)
                     for _,d in ipairs(self._d) do d.Visible=op>0.5 and self.visible end
                 end
                 b.reposition=function(self)
-                    local sc=tscroll[name] or 0;local a=ry2-sc
-                    bg.Position=Vector2.new(rx2,a);lb.Position=Vector2.new(rx2+_l.pd,a+_l.rh/2-6)
-                    bl.From=Vector2.new(rx2,a+_l.rh);bl.To=Vector2.new(rx2+rw2,a+_l.rh)
-                    local iv=a>=uy+_l.th+_l.bh-2 and a<uy+_l.th+_l.bh+ch()
+                    local sc=tscroll[name] or 0;local ct=uy+_l.th+_l.bh;local ax=ux+rx2;local a=ct+ry2-sc
+                    bg.Position=Vector2.new(ax,a);lb.Position=Vector2.new(ax+_l.pd,a+_l.rh/2-6)
+                    bl.From=Vector2.new(ax,a+_l.rh);bl.To=Vector2.new(ax+rw2,a+_l.rh)
+                    local iv=a>=ct-2 and a<ct+ch()
                     for _,d in ipairs(self._d) do d.Visible=self.visible and iv end
                 end
                 b:setOpacity(b.visible and 1 or 0);table.insert(btns,b)
@@ -597,7 +602,7 @@ function _f.Window(ta,tb,gn)
                     if itb then
                         local ht=false
                         for _,t in ipairs(tobjs) do
-                            if mx>=t.x and mx<=t.x+t.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh then
+                            if mx>=ux+t.x and mx<=ux+t.x+t.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh then
                                 switchtab(t.name);ht=true;break
                             end
                         end
