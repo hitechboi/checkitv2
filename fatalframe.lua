@@ -78,7 +78,7 @@ local function _tx2(t,x,y,sz,col,zi,ce,bo,tr)
     local d=Drawing.new("Text")
     d.Text=t;d.Position=Vector2.new(x,y);d.Size=sz or _fs
     d.Color=col or _c.tx;d.Font=bo and Drawing.Fonts.SystemBold or _fn
-    d.Center=ce or false;d.Outline=true;d.OutlineColor=Color3.fromRGB(0,0,0)
+    d.Center=ce or false;d.Outline=true
     d.Transparency=tr or 1;d.ZIndex=zi or 3;d.Visible=true;return d
 end
 local function _ci(x,y,r,col,fi,zi,tr)
