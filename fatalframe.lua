@@ -500,26 +500,6 @@ function _f.Window(ta,tb,gn)
     task.spawn(function()
         while not dest do
             task.wait(0.016)
-            if not mopen then
-                for _,d in ipairs(alld) do d.Visible=false end
-                goto cont
-            end
-            local mx=mouse.X;local my=mouse.Y
-            local clk=false
-            pcall(function() clk=ismouse1pressed() end)
-            local jclk=clk and not wc2
-            if clfn then pcall(function() dcl.Text=clfn() end) end
-            if lkey then
-                for k=0x08,0xDD do
-                    local p=false
-                    pcall(function() p=iskeypressed(k) end)
-                    if p and k~=0x01 and k~=0x02 then
-                        mkey=k;dkl.Text=string.lower(_kname(k))
-                        if iklbl then iklbl._d[2].Text="menu key: "..string.lower(_kname(k)) end
-                        lkey=false;break
-                    end
-                end
-            end
             local mkp=false
             pcall(function() mkp=iskeypressed(mkey) end)
             if mkp and not lkey then
@@ -532,55 +512,72 @@ function _f.Window(ta,tb,gn)
                         if b.tab==ctab and b.reposition then b:reposition() end
                     end
                 end
-                goto cont
-            end
-            if jclk then
-                local itb=mx>=ux and mx<=ux+_l.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh
-                if itb then
-                    local ht=false
-                    for _,t in ipairs(tobjs) do
-                        if mx>=t.x and mx<=t.x+t.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh then
-                            switchtab(t.name);ht=true;break
+            elseif not mopen then
+                for _,d in ipairs(alld) do d.Visible=false end
+            else
+                local mx=mouse.X;local my=mouse.Y
+                local clk=false
+                pcall(function() clk=ismouse1pressed() end)
+                local jclk=clk and not wc2
+                if clfn then pcall(function() dcl.Text=clfn() end) end
+                if lkey then
+                    for k=0x08,0xDD do
+                        local p=false
+                        pcall(function() p=iskeypressed(k) end)
+                        if p and k~=0x01 and k~=0x02 then
+                            mkey=k;dkl.Text=string.lower(_kname(k))
+                            if iklbl then iklbl._d[2].Text="menu key: "..string.lower(_kname(k)) end
+                            lkey=false;break
                         end
                     end
-                    if not ht then drag=true;dox=mx-ux;doy=my-uy end
-                elseif my>=uy and my<=uy+_l.th then
-                    drag=true;dox=mx-ux;doy=my-uy
                 end
-                if my>=uy+_l.th+_l.bh and my<uy+fh()-_l.fh then
-                    for _,b in ipairs(btns) do
-                        if b.tab==ctab and b._click then pcall(b._click,mx,my) end
+                if jclk then
+                    local itb=mx>=ux and mx<=ux+_l.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh
+                    if itb then
+                        local ht=false
+                        for _,t in ipairs(tobjs) do
+                            if mx>=t.x and mx<=t.x+t.w and my>=uy+_l.th and my<=uy+_l.th+_l.bh then
+                                switchtab(t.name);ht=true;break
+                            end
+                        end
+                        if not ht then drag=true;dox=mx-ux;doy=my-uy end
+                    elseif my>=uy and my<=uy+_l.th then
+                        drag=true;dox=mx-ux;doy=my-uy
+                    end
+                    if my>=uy+_l.th+_l.bh and my<uy+fh()-_l.fh then
+                        for _,b in ipairs(btns) do
+                            if b.tab==ctab and b._click then pcall(b._click,mx,my) end
+                        end
                     end
                 end
-            end
-            if not clk then drag=false end
-            if drag and clk then
-                local vw2,vh2=_vp()
-                ux=_cl(mx-dox,0,vw2-_l.w);uy=_cl(my-doy,0,vh2-fh());updpos()
-            end
-            for _,b in ipairs(btns) do
-                if b.tab==ctab then
-                    if b._hover then pcall(b._hover,mx,my) end
-                    if b._drag then pcall(b._drag,mx,my,clk) end
+                if not clk then drag=false end
+                if drag and clk then
+                    local vw2,vh2=_vp()
+                    ux=_cl(mx-dox,0,vw2-_l.w);uy=_cl(my-doy,0,vh2-fh());updpos()
                 end
-            end
-            if _sd~=0 and my>=uy+_l.th+_l.bh and my<uy+fh()-_l.fh then
-                local msc=math.max(0,(trows[ctab] or 0)-ch()+8)
-                tscroll[ctab]=_cl((tscroll[ctab] or 0)+_sd*18,0,msc);_sd=0
                 for _,b in ipairs(btns) do
-                    if b.tab==ctab and b.reposition then b:reposition() end
+                    if b.tab==ctab then
+                        if b._hover then pcall(b._hover,mx,my) end
+                        if b._drag then pcall(b._drag,mx,my,clk) end
+                    end
                 end
-                local msc2=math.max(0,(trows[ctab] or 0)-ch()+8)
-                if msc2>0 then
-                    dscb.Visible=true;dsct.Visible=true
-                    local sbh=ch()-4;local fr=(tscroll[ctab] or 0)/msc2
-                    local th2=math.max(20,(ch()/(trows[ctab] or ch()))*sbh)
-                    dsct.Size=Vector2.new(3,th2)
-                    dsct.Position=Vector2.new(ux+_l.w-5,uy+_l.th+_l.bh+2+fr*(sbh-th2))
-                else dscb.Visible=false;dsct.Visible=false end
+                if _sd~=0 and my>=uy+_l.th+_l.bh and my<uy+fh()-_l.fh then
+                    local msc=math.max(0,(trows[ctab] or 0)-ch()+8)
+                    tscroll[ctab]=_cl((tscroll[ctab] or 0)+_sd*18,0,msc);_sd=0
+                    for _,b in ipairs(btns) do
+                        if b.tab==ctab and b.reposition then b:reposition() end
+                    end
+                    local msc2=math.max(0,(trows[ctab] or 0)-ch()+8)
+                    if msc2>0 then
+                        dscb.Visible=true;dsct.Visible=true
+                        local sbh=ch()-4;local fr=(tscroll[ctab] or 0)/msc2
+                        local th2=math.max(20,(ch()/(trows[ctab] or ch()))*sbh)
+                        dsct.Size=Vector2.new(3,th2)
+                        dsct.Position=Vector2.new(ux+_l.w-5,uy+_l.th+_l.bh+2+fr*(sbh-th2))
+                    else dscb.Visible=false;dsct.Visible=false end
+                end
+                wc2=clk
             end
-            wc2=clk
-            ::cont::
         end
     end)
     return win
