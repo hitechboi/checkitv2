@@ -55,6 +55,7 @@ local state={
 	wh=300,
 	activeTab=nil,tabs={},
 	menuKeyLabel="INSERT",
+	menuKeyCode=Enum.KeyCode.Insert,
 	tCbs={},sCbs={},
 	rebinding=false,rebindTarget=nil,
 	built=false,
@@ -92,6 +93,9 @@ end
 local function wTx(s,x,y,col,sz,ctr,zi)
 	return newObj(objs,"Text",{Text=s,Position=V2(x,y),Color=col,Size=sz or FS,Font=FNT,Center=ctr or false,Outline=false,Transparency=1,ZIndex=zi or 2,Visible=state.visible})
 end
+local function wCi(x,y,r,col,filled,zi)
+	return newObj(objs,"Circle",{Position=V2(x,y),Radius=r,Color=col,Transparency=1,Filled=filled~=false,Thickness=1,NumSides=24,ZIndex=zi or 1,Visible=state.visible})
+end
 local function tSq(x,y,w,h,col,filled,zi)
 	return newObj(actObjs,"Square",{Position=V2(x,y),Size=V2(w,h),Color=col,Transparency=1,Filled=filled~=false,ZIndex=zi or 3,Visible=state.visible})
 end
@@ -123,12 +127,19 @@ local function lObj(typ,props)
 end
 
 local function showLoader()
+	local wh=calcWH()
+	state.wh=wh
 	local wx,wy=state.wx,state.wy
 	local cx=wx+math.floor(WW/2)
-	local cy=wy+math.floor(state.wh/2)
-	-- window-sized bg (matches main UI bounds)
-	lObj("Square",{Position=V2(wx,wy),Size=V2(WW,state.wh),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
-	lObj("Square",{Position=V2(wx,wy),Size=V2(WW,state.wh),Color=C.BORDER,Filled=false,Transparency=1,ZIndex=51,Visible=true})
+	local cy=wy+math.floor(wh/2)
+	-- rounded pill bg matching menu size
+	local r=8
+	lObj("Square",{Position=V2(wx+r,wy),Size=V2(WW-r*2,wh),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
+	lObj("Square",{Position=V2(wx,wy+r),Size=V2(WW,wh-r*2),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
+	lObj("Circle",{Position=V2(wx+r,wy+r),Radius=r,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
+	lObj("Circle",{Position=V2(wx+WW-r,wy+r),Radius=r,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
+	lObj("Circle",{Position=V2(wx+r,wy+wh-r),Radius=r,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
+	lObj("Circle",{Position=V2(wx+WW-r,wy+wh-r),Radius=r,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
 	-- text objects start below center (will slide up)
 	local slideOff=20
 	local t1=lObj("Text",{Text="Check",Position=V2(cx-80,cy-10+slideOff),Color=C.WHITE,Size=28,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
@@ -145,14 +156,13 @@ local function showLoader()
 	local barFill=lObj("Square",{Position=V2(barX,barY),Size=V2(0,2),Color=C.ACCENT,Filled=true,Transparency=0,ZIndex=53,Visible=true})
 	-- status text
 	local statusTx=lObj("Text",{Text="initializing modules_",Position=V2(cx,cy+46),Color=C.GRAY,Size=10,Font=FNT,Center=true,Outline=false,Transparency=0,ZIndex=52,Visible=true})
-	-- animate: slide-up + fade-in text, progress bar, blink cursor
+	-- animate
 	task.spawn(function()
 		local t0=tick()
 		-- phase 1: slide up + fade in (0.4s)
 		local slideDur=0.4
 		while tick()-t0<slideDur do
 			local p=clamp((tick()-t0)/slideDur,0,1)
-			-- ease out cubic
 			local ep=1-(1-p)*(1-p)*(1-p)
 			local yOff=math.floor(slideOff*(1-ep))
 			pcall(function()
@@ -170,7 +180,6 @@ local function showLoader()
 		local barStart=tick()
 		local barDur=1.4
 		local blink=true
-		-- fade in bar + status
 		pcall(function()barFill.Transparency=1 end)
 		pcall(function()statusTx.Transparency=1 end)
 		while tick()-barStart<barDur do
@@ -190,11 +199,20 @@ local function showLoader()
 		for i=10,0,-1 do
 			local a=i/10
 			for _,o in ipairs(loaderObjs)do pcall(function()o.Transparency=a end)end
-			task.wait(0.04)
+			task.wait(0.03)
 		end
 		for _,o in ipairs(loaderObjs)do pcall(function()o:Remove()end)end
 		table.clear(loaderObjs)
 		state.loaderDone=true
+		-- fade in menu
+		state.visible=true
+		for i=0,10 do
+			local a=i/10
+			for _,o in ipairs(objs)do pcall(function()o.Transparency=1-a end)end
+			for _,o in ipairs(tabObjs)do pcall(function()o.Transparency=1-a end)end
+			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=1-a end)end
+			task.wait(0.03)
+		end
 	end)
 end
 
@@ -281,56 +299,15 @@ applyTheme=function(name)
 	else stopConfetti() end
 end
 
--- Rounded rect using triangle fans at corners instead of circles
--- This avoids stray circle artefacts outside pill bounds
-local function pillFill(fn,x,y,w,h,col,zi)
-	local r=6
-	-- center cross
-	fn(x+r,y,w-r*2,h,col,true,zi)
-	fn(x,y+r,w,h-r*2,col,true,zi)
-	-- corners via triangles (4 tris per corner, fan)
-	local corners={{x+r,y+r},{x+w-r,y+r},{x+r,y+h-r},{x+w-r,y+h-r}}
-	local function fan(cx,cy,sx,sy)
-		for i=0,3 do
-			local a0=math.pi/2*i
-			local a1=math.pi/2*(i+1)
-			-- only draw the quadrant facing the corner
-			local qx=cx<=x+w/2 and -1 or 1
-			local qy=cy<=y+h/2 and -1 or 1
-			local a=math.atan2(qy,qx)-math.pi/4
-			if i==0 then
-				newObj(actObjs,"Triangle",{
-					PointA=V2(cx,cy),
-					PointB=V2(cx+r*math.cos(a),cy+r*math.sin(a)),
-					PointC=V2(cx+r*math.cos(a+math.pi/2),cy+r*math.sin(a+math.pi/2)),
-					Color=col,Transparency=1,Filled=true,ZIndex=zi or 3,Visible=state.visible
-				})
-			end
-		end
-	end
-	-- just use small filled squares at corners — triangles have precision issues
-	-- corner fill squares
-	fn(x,y,r,r,col,true,zi) -- tl
-	fn(x+w-r,y,r,r,col,true,zi) -- tr
-	fn(x,y+h-r,r,r,col,true,zi) -- bl
-	fn(x+w-r,y+h-r,r,r,col,true,zi) -- br
-end
-
--- Simple approach: use overlapping squares (no circles at all)
--- pill = big rect + 2 smaller rects that form cross, corners are just bg color squares
-local function drawPillFill(sqFn,x,y,w,h,col,zi)
+-- Rounded pill: cross rects + filled circles at corners
+local function drawPillFill(sqFn,ciFn,x,y,w,h,col,zi)
 	local r=8
 	sqFn(x+r,y,w-r*2,h,col,true,zi)
 	sqFn(x,y+r,w,h-r*2,col,true,zi)
-	-- corner fill squares for rounded look
-	sqFn(x+1,y+3,r-1,r-3,col,true,zi)
-	sqFn(x+3,y+1,r-3,r-1,col,true,zi)
-	sqFn(x+w-r,y+3,r-1,r-3,col,true,zi)
-	sqFn(x+w-r+2,y+1,r-3,r-1,col,true,zi)
-	sqFn(x+1,y+h-r,r-1,r-3,col,true,zi)
-	sqFn(x+3,y+h-r+2,r-3,r-1,col,true,zi)
-	sqFn(x+w-r,y+h-r,r-1,r-3,col,true,zi)
-	sqFn(x+w-r+2,y+h-r+2,r-3,r-1,col,true,zi)
+	ciFn(x+r,y+r,r,col,true,zi)
+	ciFn(x+w-r,y+r,r,col,true,zi)
+	ciFn(x+r,y+h-r,r,col,true,zi)
+	ciFn(x+w-r,y+h-r,r,col,true,zi)
 end
 
 local function drawPillBorder(lnFn,x,y,w,h,col,zi)
@@ -339,16 +316,11 @@ local function drawPillBorder(lnFn,x,y,w,h,col,zi)
 	lnFn(x+r,y+h,x+w-r,y+h,col,1,zi)
 	lnFn(x,y+r,x,y+h-r,col,1,zi)
 	lnFn(x+w,y+r,x+w,y+h-r,col,1,zi)
-	-- corner diagonals
-	lnFn(x,y+r,x+r,y,col,1,zi)
-	lnFn(x+w-r,y,x+w,y+r,col,1,zi)
-	lnFn(x,y+h-r,x+r,y+h,col,1,zi)
-	lnFn(x+w-r,y+h,x+w,y+h-r,col,1,zi)
 end
 
-local function wPillFill(x,y,w,h,col,zi)drawPillFill(wSq,x,y,w,h,col,zi)end
+local function wPillFill(x,y,w,h,col,zi)drawPillFill(wSq,wCi,x,y,w,h,col,zi)end
 local function wPillBorder(x,y,w,h,col,zi)drawPillBorder(wLn,x,y,w,h,col,zi)end
-local function tPillFill(x,y,w,h,col,zi)drawPillFill(tSq,x,y,w,h,col,zi)end
+local function tPillFill(x,y,w,h,col,zi)drawPillFill(tSq,tCi,x,y,w,h,col,zi)end
 local function tPillBorder(x,y,w,h,col,zi)drawPillBorder(tLn,x,y,w,h,col,zi)end
 
 local function pill(x,y,w,h,zi)
@@ -362,23 +334,18 @@ local function secLbl(x,y,w,txt,zi)
 	tLn(x,y+18,x+w,y+18,C.DIV,1,(zi or 5)-1)
 end
 
--- Toggle: pill-shaped using cross rect approach, dot is circle
+-- Toggle: pill-shaped with circle end caps for smooth rounding
 local function togDraw(x,y,on,zi)
 	local z=zi or 6
 	local col=on and C.ON or C.OFF
-	-- pill body via cross rects (w=32 h=16, r=8)
+	-- pill body: center rect + 2 circle end caps (w=32 h=16, r=8)
 	local r=8
 	local bg1=tSq(x+r,y,32-r*2,16,col,true,z)
 	local bg2=tSq(x,y+r,32,16-r*2,col,true,z)
-	-- border lines
-	tLn(x+r,y,x+32-r,y,C.BORDER,1,z+1)
-	tLn(x+r,y+16,x+32-r,y+16,C.BORDER,1,z+1)
-	tLn(x,y+r,x,y+16-r,C.BORDER,1,z+1)
-	tLn(x+32,y+r,x+32,y+16-r,C.BORDER,1,z+1)
-	tLn(x,y+r,x+r,y,C.BORDER,1,z+1)
-	tLn(x+32-r,y,x+32,y+r,C.BORDER,1,z+1)
-	tLn(x,y+16-r,x+r,y+16,C.BORDER,1,z+1)
-	tLn(x+32-r,y+16,x+32,y+16-r,C.BORDER,1,z+1)
+	tCi(x+r,y+r,r,col,true,z)
+	tCi(x+32-r,y+r,r,col,true,z)
+	tCi(x+r,y+16-r,r,col,true,z)
+	tCi(x+32-r,y+16-r,r,col,true,z)
 	-- dot
 	local dot=tCi(x+(on and 24 or 8),y+8,6,on and C.ONDOT or C.OFFDOT,true,z+2)
 	return bg1,bg2,dot
@@ -676,8 +643,21 @@ local function renderCol(colX,colW,items,startY)
 		elseif f.type=="debug"then
 			local dx=colX+PAD+4
 			local dy=cur+8
-			tCi(dx+3,dy+3,3,C.ACCENT,true,5)
-			tTx(f.text or "session active",dx+14,dy-2,C.GRAY,FSX,false,5)
+			local hbDot=tCi(dx+3,dy+3,3,C.ACCENT,true,5)
+			local dtxt=f.text or "session active"
+			tTx(dtxt,dx+14,dy-2,C.GRAY,FSX,false,5)
+			tTx("v2.0",dx+14+#dtxt*7+6,dy-2,C.ACCENT,FSX,false,5)
+			-- heartbeat pulsing dot
+			task.spawn(function()
+				while hbDot and state.visible and state.built do
+					-- pulse: grow to 5, shrink to 3, pause
+					for _,r in ipairs({4,5,4,3,4,5,4,3})do
+						pcall(function()hbDot.Radius=r end)
+						task.wait(0.12)
+					end
+					task.wait(0.6)
+				end
+			end)
 			cur=cur+DTH
 		else
 			local ph=0
@@ -690,9 +670,7 @@ local function renderCol(colX,colW,items,startY)
 	end
 end
 
-local function renderTab(tab)
-	clearAct()
-	if not tab or not state.built then return end
+local function renderTabContent(tab)
 	if tab.name=="settings"then renderSettings();return end
 	local wx,wy=state.wx,state.wy
 	local cy=wy+TH+TAH+6
@@ -703,6 +681,27 @@ local function renderTab(tab)
 	end
 	renderCol(wx,CW,left,cy)
 	renderCol(wx+CW,WW-CW,right,cy)
+end
+
+local function renderTab(tab)
+	if not tab or not state.built then clearAct();return end
+	-- fade out old content
+	if #actObjs>0 then
+		for i=8,0,-1 do
+			local a=i/8
+			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=a end)end
+			task.wait(0.012)
+		end
+	end
+	clearAct()
+	renderTabContent(tab)
+	-- fade in new content
+	for _,o in ipairs(actObjs)do pcall(function()o.Transparency=0 end)end
+	for i=0,8 do
+		local a=i/8
+		for _,o in ipairs(actObjs)do pcall(function()o.Transparency=a end)end
+		task.wait(0.012)
+	end
 end
 
 local function fullRebuild()
@@ -775,15 +774,27 @@ local function doClick(mx,my)
 			return
 		elseif el.type=="rebind" and inside(mx,my,el.x,el.y,el.w,el.h)then
 			state.rebinding=true;state.rebindTarget=el
-			pcall(function()el.rt.Text="...";el.rt.Color=C.ACCENT end)
-			pcall(function()el.kd.Text="...";el.kd.Color=C.ACCENT end)
-			pcall(function()win.kTx.Text="..."end)
+			state._rebindAnim=true
+			pcall(function()el.rt.Text=".";el.rt.Color=C.ACCENT end)
+			pcall(function()el.kd.Text=".";el.kd.Color=C.ACCENT end)
+			pcall(function()win.kTx.Text="."end)
+			task.spawn(function()
+				local dots={".","..",". . ."}
+				local di=1
+				while state._rebindAnim and state.rebinding do
+					di=di%3+1
+					local d=dots[di]
+					pcall(function()if state.rebindTarget then state.rebindTarget.rt.Text=d end end)
+					pcall(function()if state.rebindTarget then state.rebindTarget.kd.Text=d end end)
+					pcall(function()win.kTx.Text=d end)
+					task.wait(0.4)
+				end
+			end)
 			return
 		elseif el.type=="dropdown" and el.optEls then
 			for _,opt in ipairs(el.optEls)do
 				if inside(mx,my,opt.x,opt.y,opt.w,opt.h) and opt.name~=el.selected then
 					el.selected=opt.name
-					-- update item data so rebuild uses new selection
 					for _,tab in ipairs(state.tabs)do
 						for _,it in ipairs(tab.items or{})do
 							if it.type=="dropdown" and it.id==el.id then it.selected=opt.name end
@@ -839,8 +850,16 @@ end
 UIS.InputBegan:Connect(function(inp,gp)
 	if gp then return end
 	if state.rebinding then
-		local kn=tostring(inp.KeyCode):gsub("Enum%.KeyCode%.","")
-		if kn=="Unknown"then kn=tostring(inp.UserInputType):gsub("Enum%.UserInputType%.","")end
+		local kc=inp.KeyCode
+		local kn=tostring(kc):gsub("Enum%.KeyCode%.","")
+		if kn=="Unknown" then
+			kn=tostring(inp.UserInputType):gsub("Enum%.UserInputType%.","")
+			state.menuKeyCode=nil
+			state.menuKeyType=inp.UserInputType
+		else
+			state.menuKeyCode=kc
+			state.menuKeyType=nil
+		end
 		state.menuKeyLabel=kn
 		pcall(function()win.kTx.Text=kn end)
 		if state.rebindTarget then
@@ -852,9 +871,16 @@ UIS.InputBegan:Connect(function(inp,gp)
 			end)
 		end
 		state.rebinding=false;state.rebindTarget=nil
+		if state._rebindAnim then state._rebindAnim=false end
 		return
 	end
-	if inp.KeyCode==Enum.KeyCode.Insert then
+	local match=false
+	if state.menuKeyCode then
+		match=(inp.KeyCode==state.menuKeyCode)
+	elseif state.menuKeyType then
+		match=(inp.UserInputType==state.menuKeyType)
+	end
+	if match then
 		state.visible=not state.visible
 		setVis(state.visible)
 	end
@@ -900,10 +926,7 @@ spawn(function()
 					doDrag(mx)
 				end
 			elseif not m1 then
-				if wasDragging then
-					wasDragging=false
-					fullRebuild()
-				end
+				wasDragging=false
 				pressed=false
 				state.dragging=false
 				dSlider=nil
