@@ -218,15 +218,6 @@ local function showLoader()
 		for _,o in ipairs(loaderObjs)do pcall(function()o:Remove()end)end
 		table.clear(loaderObjs)
 		state.loaderDone=true
-		-- fade in menu
-		state.visible=true
-		for i=0,10 do
-			local a=i/10
-			for _,o in ipairs(objs)do pcall(function()o.Transparency=1-a end)end
-			for _,o in ipairs(tabObjs)do pcall(function()o.Transparency=1-a end)end
-			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=1-a end)end
-			task.wait(0.03)
-		end
 	end)
 end
 
@@ -236,7 +227,6 @@ local function hideLoader()
 	state.loaderDone=false
 end
 
--- ── CONFETTI PARTICLE ENGINE ──
 local confettiObjs={}
 local confettiActive=false
 local CONFETTI_COLORS={
@@ -719,6 +709,7 @@ local function renderTab(tab)
 end
 
 local function fullRebuild()
+	if not state.loaderDone then return end
 	buildWindow()
 	buildTabs()
 	renderTab(state.activeTab)
@@ -1038,6 +1029,18 @@ function lib:Window()
 	task.spawn(function()
 		while not state.loaderDone do task.wait(0.05) end
 		fullRebuild()
+		-- hide everything first (Transparency 0 = invisible in Drawing API)
+		for _,o in ipairs(objs)do pcall(function()o.Transparency=0 end)end
+		for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=0 end end)end
+		for _,o in ipairs(actObjs)do pcall(function()o.Transparency=0 end)end
+		-- fade in: 0→1 (invisible→visible)
+		for i=1,10 do
+			local a=i/10
+			for _,o in ipairs(objs)do pcall(function()o.Transparency=a end)end
+			for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=a end end)end
+			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=a end)end
+			task.wait(0.03)
+		end
 	end)
 	return w
 end
