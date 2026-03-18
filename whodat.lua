@@ -1,3 +1,4 @@
+print("[lib] step 1: services")
 local UIS=game:GetService("UserInputService")
 local Players=game:GetService("Players")
 local lp=Players.LocalPlayer
@@ -32,6 +33,7 @@ local THEMES={
 }
 local THEME_NAMES={"midnight","emerald","crimson","confetti"}
 
+print("[lib] step 2: font")
 local FNT=Drawing.Fonts.Monospace
 pcall(function()FNT=Drawing.Fonts.Plex end)
 local FS=16
@@ -421,7 +423,7 @@ local function calcWH()
 		local left,right={},{}
 		for _,it in ipairs(tab.items or{})do
 			if it.col==2 then table.insert(right,it)
-			else table.insert(left,it) end
+			else table.insert(left,it)end
 		end
 		local function colH(citems)
 			local h=0
@@ -431,7 +433,7 @@ local function calcWH()
 				elseif f.type=="debug" then h=h+DTH
 				else
 					local ph=0
-					for _,it in ipairs(grp)do ph=ph+itemH(it) end
+					for _,it in ipairs(grp)do ph=ph+itemH(it)end
 					h=h+ph+8
 				end
 			end
@@ -1028,27 +1030,31 @@ function lib:Window()
 		return t
 	end
 	task.spawn(function()
-		-- wait for user script to finish adding tabs/items
-		task.wait(0.1)
-		-- compute actual menu height before showing loader
-		state.wh=calcWH()
-		showLoader()
-		-- wait for loader animation to finish
-		while not state.loaderDone do task.wait(0.05) end
-		-- build the menu
-		fullRebuild()
-		-- hide everything first (Transparency 0 = invisible in Drawing API)
-		for _,o in ipairs(objs)do pcall(function()o.Transparency=0 end)end
-		for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=0 end end)end
-		for _,o in ipairs(actObjs)do pcall(function()o.Transparency=0 end)end
-		-- fade in: 0→1 (invisible→visible)
-		for i=1,10 do
-			local a=i/10
-			for _,o in ipairs(objs)do pcall(function()o.Transparency=a end)end
-			for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=a end end)end
-			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=a end)end
-			task.wait(0.03)
-		end
+		local ok,err=pcall(function()
+			print("[lib] spawn: waiting for tabs...")
+			task.wait(0.1)
+			print("[lib] spawn: tabs="..tostring(#state.tabs).." computing height...")
+			state.wh=calcWH()
+			print("[lib] spawn: wh="..tostring(state.wh).." running loader...")
+			showLoader()
+			print("[lib] spawn: loader done="..tostring(state.loaderDone))
+			while not state.loaderDone do task.wait(0.05) end
+			print("[lib] spawn: building menu...")
+			fullRebuild()
+			print("[lib] spawn: built, fading in...")
+			for _,o in ipairs(objs)do pcall(function()o.Transparency=0 end)end
+			for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=0 end end)end
+			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=0 end)end
+			for i=1,10 do
+				local a=i/10
+				for _,o in ipairs(objs)do pcall(function()o.Transparency=a end)end
+				for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=a end end)end
+				for _,o in ipairs(actObjs)do pcall(function()o.Transparency=a end)end
+				task.wait(0.03)
+			end
+			print("[lib] spawn: UI visible!")
+		end)
+		if not ok then warn("[lib] ERROR in spawn: "..tostring(err)) end
 	end)
 	return w
 end
@@ -1063,4 +1069,6 @@ function lib:Destroy()
 	table.clear(objs);table.clear(tabObjs);table.clear(actObjs);table.clear(loaderObjs);table.clear(confettiObjs)
 end
 
+print("[lib] step 3: setting _G.lib")
 _G.lib=lib
+print("[lib] ready")
