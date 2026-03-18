@@ -24,6 +24,14 @@ local C={
 	MINIBAR=Color3.fromRGB(11,13,22),
 }
 
+local THEMES={
+	midnight={ACCENT=Color3.fromRGB(70,120,255),SIDEBAR=Color3.fromRGB(12,15,27),CONTENT=Color3.fromRGB(11,13,23),TOPBAR=Color3.fromRGB(7,9,17),BORDER=Color3.fromRGB(30,40,72),ROWBG=Color3.fromRGB(14,18,33),TABSEL=Color3.fromRGB(20,35,85),WHITE=Color3.fromRGB(215,220,240),GRAY=Color3.fromRGB(100,112,145),DIMGRAY=Color3.fromRGB(28,33,52),ON=Color3.fromRGB(45,85,195),OFF=Color3.fromRGB(20,24,42),ONDOT=Color3.fromRGB(175,198,255),OFFDOT=Color3.fromRGB(55,65,95),DIV=Color3.fromRGB(22,27,48),MINIBAR=Color3.fromRGB(11,13,22)},
+	emerald={ACCENT=Color3.fromRGB(50,205,120),SIDEBAR=Color3.fromRGB(10,20,15),CONTENT=Color3.fromRGB(8,18,12),TOPBAR=Color3.fromRGB(5,12,8),BORDER=Color3.fromRGB(25,60,40),ROWBG=Color3.fromRGB(12,24,18),TABSEL=Color3.fromRGB(15,50,35),WHITE=Color3.fromRGB(210,240,220),GRAY=Color3.fromRGB(90,130,110),DIMGRAY=Color3.fromRGB(20,40,30),ON=Color3.fromRGB(30,140,80),OFF=Color3.fromRGB(15,30,22),ONDOT=Color3.fromRGB(150,240,180),OFFDOT=Color3.fromRGB(45,80,60),DIV=Color3.fromRGB(18,36,26),MINIBAR=Color3.fromRGB(8,16,11)},
+	crimson={ACCENT=Color3.fromRGB(220,60,80),SIDEBAR=Color3.fromRGB(20,10,12),CONTENT=Color3.fromRGB(18,8,10),TOPBAR=Color3.fromRGB(12,5,7),BORDER=Color3.fromRGB(60,25,30),ROWBG=Color3.fromRGB(24,12,15),TABSEL=Color3.fromRGB(50,18,25),WHITE=Color3.fromRGB(240,215,220),GRAY=Color3.fromRGB(130,95,100),DIMGRAY=Color3.fromRGB(40,22,26),ON=Color3.fromRGB(160,40,55),OFF=Color3.fromRGB(30,15,18),ONDOT=Color3.fromRGB(255,170,180),OFFDOT=Color3.fromRGB(80,50,55),DIV=Color3.fromRGB(36,18,22),MINIBAR=Color3.fromRGB(16,7,9)},
+	confetti={ACCENT=Color3.fromRGB(255,100,200),SIDEBAR=Color3.fromRGB(15,10,20),CONTENT=Color3.fromRGB(12,8,18),TOPBAR=Color3.fromRGB(8,5,14),BORDER=Color3.fromRGB(50,30,65),ROWBG=Color3.fromRGB(18,12,26),TABSEL=Color3.fromRGB(40,20,60),WHITE=Color3.fromRGB(240,220,250),GRAY=Color3.fromRGB(120,100,140),DIMGRAY=Color3.fromRGB(32,22,42),ON=Color3.fromRGB(180,50,140),OFF=Color3.fromRGB(25,15,35),ONDOT=Color3.fromRGB(255,180,230),OFFDOT=Color3.fromRGB(70,50,85),DIV=Color3.fromRGB(28,18,38),MINIBAR=Color3.fromRGB(10,7,16)},
+}
+local THEME_NAMES={"midnight","emerald","crimson","confetti"}
+
 local FNT=Drawing.Fonts.Monospace
 local FS=16
 local FSS=14
@@ -37,6 +45,7 @@ local CW=330
 local WW=660
 
 local objs,tabObjs,actObjs,elements,win={},{},{},{},{}
+local loaderObjs={}
 
 local state={
 	visible=true,dragging=false,
@@ -49,7 +58,17 @@ local state={
 	tCbs={},sCbs={},
 	rebinding=false,rebindTarget=nil,
 	built=false,
+	loaderDone=false,
+	destroyConfirm=false,
+	currentTheme="midnight",
 }
+
+local function applyTheme(name)
+	local t=THEMES[name]
+	if not t then return end
+	for k,v in pairs(t) do C[k]=v end
+	state.currentTheme=name
+end
 
 local function clamp(v,a,b)return math.max(a,math.min(b,v))end
 local function inside(x,y,rx,ry,rw,rh)return x>=rx and x<=rx+rw and y>=ry and y<=ry+rh end
@@ -93,6 +112,149 @@ local function tbLn(x1,y1,x2,y2,col,thick,zi)
 end
 local function tbTx(s,x,y,col,sz,ctr,zi)
 	return newObj(tabObjs,"Text",{Text=s,Position=V2(x,y),Color=col,Size=sz or FS,Font=FNT,Center=ctr or false,Outline=false,Transparency=1,ZIndex=zi or 4,Visible=state.visible})
+end
+
+-- ── LOADER ──
+local function lObj(typ,props)
+	local o=Drawing.new(typ)
+	for k,v in pairs(props)do o[k]=v end
+	table.insert(loaderObjs,o)
+	return o
+end
+
+local function showLoader()
+	local cx=math.floor(SX/2)
+	local cy=math.floor(SY/2)
+	-- fullscreen bg
+	lObj("Square",{Position=V2(0,0),Size=V2(SX,SY),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
+	-- "Check · It · v2"
+	lObj("Text",{Text="Check",Position=V2(cx-80,cy-30),Color=C.WHITE,Size=28,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
+	lObj("Text",{Text=".",Position=V2(cx-18,cy-30),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
+	lObj("Text",{Text="It",Position=V2(cx-4,cy-30),Color=C.ACCENT,Size=28,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
+	lObj("Text",{Text=".",Position=V2(cx+28,cy-30),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
+	lObj("Text",{Text="v2",Position=V2(cx+42,cy-22),Color=C.GRAY,Size=14,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
+	-- progress bar bg
+	local barW=220
+	local barX=cx-barW/2
+	local barY=cy+10
+	lObj("Square",{Position=V2(barX,barY),Size=V2(barW,2),Color=C.DIMGRAY,Filled=true,Transparency=1,ZIndex=51,Visible=true})
+	-- progress bar fill (animated via coroutine)
+	local barFill=lObj("Square",{Position=V2(barX,barY),Size=V2(0,2),Color=C.ACCENT,Filled=true,Transparency=1,ZIndex=52,Visible=true})
+	-- status text
+	local statusTx=lObj("Text",{Text="initializing modules_",Position=V2(cx,cy+26),Color=C.GRAY,Size=10,Font=FNT,Center=true,Outline=false,Transparency=1,ZIndex=51,Visible=true})
+	-- animate bar + blink cursor
+	task.spawn(function()
+		local t0=tick()
+		local dur=1.8
+		local blink=true
+		while tick()-t0<dur do
+			local pct=clamp((tick()-t0)/dur,0,1)
+			-- ease: cubic bezier approximation
+			local ep=pct<0.3 and pct/0.3*0.45 or pct<0.6 and 0.45+(pct-0.3)/0.3*0.27 or pct<0.85 and 0.72+(pct-0.6)/0.25*0.18 or 0.9+(pct-0.85)/0.15*0.1
+			pcall(function()barFill.Size=V2(math.floor(barW*ep),2)end)
+			-- blink cursor every 0.5s
+			local nb=math.floor((tick()-t0)/0.5)%2==0
+			if nb~=blink then
+				blink=nb
+				pcall(function()statusTx.Text=blink and "initializing modules_" or "initializing modules "end)
+			end
+			task.wait(0.016)
+		end
+		pcall(function()barFill.Size=V2(barW,2)end)
+		task.wait(0.3)
+		-- fade out loader
+		for i=10,0,-1 do
+			local a=i/10
+			for _,o in ipairs(loaderObjs)do pcall(function()o.Transparency=a end)end
+			task.wait(0.04)
+		end
+		for _,o in ipairs(loaderObjs)do pcall(function()o:Remove()end)end
+		table.clear(loaderObjs)
+		state.loaderDone=true
+	end)
+end
+
+local function hideLoader()
+	for _,o in ipairs(loaderObjs)do pcall(function()o:Remove()end)end
+	table.clear(loaderObjs)
+	state.loaderDone=false
+end
+
+-- ── CONFETTI PARTICLE ENGINE ──
+local confettiObjs={}
+local confettiActive=false
+local CONFETTI_COLORS={
+	Color3.fromRGB(255,100,200),Color3.fromRGB(100,220,255),
+	Color3.fromRGB(255,220,80),Color3.fromRGB(120,255,140),
+	Color3.fromRGB(200,140,255),Color3.fromRGB(255,140,100),
+}
+
+local function startConfetti()
+	if confettiActive then return end
+	confettiActive=true
+	task.spawn(function()
+		local particles={}
+		while confettiActive and state.currentTheme=="confetti" do
+			-- spawn a new particle every few frames
+			if #particles<40 then
+				local px=state.wx+math.random(0,WW)
+				local py=state.wy-math.random(5,15)
+				local col=CONFETTI_COLORS[math.random(1,#CONFETTI_COLORS)]
+				local sz=math.random(2,5)
+				local o=Drawing.new("Square")
+				o.Position=V2(px,py)
+				o.Size=V2(sz,sz)
+				o.Color=col
+				o.Filled=true
+				o.Transparency=1
+				o.ZIndex=1
+				o.Visible=state.visible
+				table.insert(confettiObjs,o)
+				table.insert(particles,{obj=o,x=px,y=py,vx=(math.random()-0.5)*1.5,vy=math.random()*1.5+0.5,life=0,maxLife=math.random(40,90)})
+			end
+			-- update particles
+			local i=1
+			while i<=#particles do
+				local p=particles[i]
+				p.life=p.life+1
+				p.x=p.x+p.vx
+				p.y=p.y+p.vy
+				local alpha=1-p.life/p.maxLife
+				if alpha<=0 or p.life>=p.maxLife then
+					pcall(function()p.obj:Remove()end)
+					for j,co in ipairs(confettiObjs)do
+						if co==p.obj then table.remove(confettiObjs,j);break end
+					end
+					table.remove(particles,i)
+				else
+					pcall(function()
+						p.obj.Position=V2(p.x,p.y)
+						p.obj.Transparency=alpha
+						p.obj.Visible=state.visible
+					end)
+					i=i+1
+				end
+			end
+			task.wait(0.03)
+		end
+		-- cleanup remaining
+		for _,p in ipairs(particles)do pcall(function()p.obj:Remove()end)end
+		for _,o in ipairs(confettiObjs)do pcall(function()o:Remove()end)end
+		table.clear(confettiObjs)
+		confettiActive=false
+	end)
+end
+
+local function stopConfetti()
+	confettiActive=false
+end
+
+-- hook into applyTheme to auto-start/stop confetti
+local _origApplyTheme=applyTheme
+applyTheme=function(name)
+	_origApplyTheme(name)
+	if name=="confetti" then startConfetti()
+	else stopConfetti() end
 end
 
 -- Rounded rect using triangle fans at corners instead of circles
@@ -200,17 +362,32 @@ local function sliderDraw(x,y,w,val,mn,mx,zi)
 	return fill,knob
 end
 
+local DDH=26
+local DTH=30
+local PTH=30
+
+local function itemH(it)
+	if it.type=="slider" then return SRH
+	elseif it.type=="dropdown" then return DDH*(1+#(it.options or{})) + PTH
+	elseif it.type=="debug" then return DTH
+	elseif it.type=="profiletag" then return PTH
+	else return RH end
+end
+
 local function calcWH()
 	local maxH=0
 	for _,tab in ipairs(state.tabs)do
 		local lH,rH,lP,rP=0,0,0,0
 		for _,it in ipairs(tab.items or{})do
 			local c=it.col or 1
-			local rh=it.type=="slider" and SRH or RH
+			local rh=itemH(it)
 			if it.type=="section"then
 				if c==2 then if rP>0 then rH=rH+rP+8;rP=0 end;rH=rH+22
 				else if lP>0 then lH=lH+lP+8;lP=0 end;lH=lH+22 end
-			elseif it.type=="toggle" or it.type=="slider"then
+			elseif it.type=="debug"then
+				if c==2 then if rP>0 then rH=rH+rP+8;rP=0 end;rH=rH+rh
+				else if lP>0 then lH=lH+lP+8;lP=0 end;lH=lH+rh end
+			elseif it.type=="toggle" or it.type=="slider" or it.type=="dropdown" or it.type=="profiletag"then
 				if c==2 then rP=rP+rh else lP=lP+rh end
 			end
 		end
@@ -293,6 +470,7 @@ local function renderSettings()
 	local cy=wy+TH+TAH+8
 	local sx=wx+PAD
 	local sw=WW-PAD*2
+	-- keybinds section
 	secLbl(sx,cy,sw,"keybinds",5)
 	local ky=cy+22
 	pill(sx,ky,sw,46,4)
@@ -306,7 +484,31 @@ local function renderSettings()
 	tSq(rbx,ky+12,46,22,C.BORDER,false,7)
 	local rbt=tTx("rebind",rbx+23,ky+14,C.GRAY,FSX,true,8)
 	table.insert(elements,{type="rebind",x=rbx,y=ky+12,w=46,h=22,kd=kbt,rt=rbt})
-	local dy=ky+58
+	-- keybind hint
+	tTx("click rebind then press any key to change the menu toggle",sx+PAD,ky+48,C.GRAY,10,false,5)
+	-- themes section
+	local ty=ky+68
+	secLbl(sx,ty,sw,"themes",5)
+	local tpy=ty+22
+	local thH=DDH*#THEME_NAMES+6
+	pill(sx,tpy,sw,thH,4)
+	local tiy=tpy+3
+	local thOptEls={}
+	for ti,tn in ipairs(THEME_NAMES)do
+		local isSel=(tn==state.currentTheme)
+		local tbg=tSq(sx+4,tiy,sw-8,DDH,isSel and C.TABSEL or C.CONTENT,true,5)
+		if ti<#THEME_NAMES then divln(sx+4,tiy+DDH,sw-8,6)end
+		-- color swatch circle
+		local swCol=THEMES[tn] and THEMES[tn].ACCENT or C.ACCENT
+		tCi(sx+PAD+12,tiy+DDH/2,5,swCol,true,7)
+		local ttx=tTx(tn,sx+PAD+26,tiy+6,isSel and C.ONDOT or C.GRAY,FSX,false,7)
+		if isSel then tTx("active",sx+sw-60,tiy+6,C.ACCENT,FSX,false,7)end
+		table.insert(thOptEls,{bg=tbg,tx=ttx,name=tn,x=sx+4,y=tiy,w=sw-8,h=DDH})
+		tiy=tiy+DDH
+	end
+	table.insert(elements,{type="theme",optEls=thOptEls,x=sx,y=tpy,w=sw,h=thH})
+	-- danger zone section
+	local dy=tpy+thH+10
 	secLbl(sx,dy,sw,"danger zone",5)
 	local dby=dy+22
 	pill(sx,dby,sw,44,4)
@@ -314,8 +516,8 @@ local function renderSettings()
 	tTx("unloads the menu permanently",sx+PAD+4,dby+22,C.GRAY,FSX,false,6)
 	tSq(sx+sw-72,dby+10,64,24,Color3.fromRGB(40,10,10),true,6)
 	tSq(sx+sw-72,dby+10,64,24,Color3.fromRGB(72,22,22),false,7)
-	tTx("destroy",sx+sw-40,dby+15,Color3.fromRGB(220,80,80),FSX,true,8)
-	table.insert(elements,{type="destroy",x=sx+sw-72,y=dby+10,w=64,h=24})
+	local dtxt=tTx("destroy",sx+sw-40,dby+15,Color3.fromRGB(220,80,80),FSX,true,8)
+	table.insert(elements,{type="destroy",x=sx+sw-72,y=dby+10,w=64,h=24,txt=dtxt})
 end
 
 local function renderCol(colX,colW,items,startY)
@@ -327,7 +529,7 @@ local function renderCol(colX,colW,items,startY)
 	local function flush()
 		if #pItems==0 then return end
 		local ph=0
-		for _,it in ipairs(pItems)do ph=ph+(it.type=="slider" and SRH or RH)end
+		for _,it in ipairs(pItems)do ph=ph+itemH(it) end
 		local px=colX+PAD
 		local pw=innerW
 		local iy=pStart
@@ -336,6 +538,10 @@ local function renderCol(colX,colW,items,startY)
 				tSq(px,iy,pw,RH,C.ROWBG,true,5)
 				divln(px,iy+RH,pw,6)
 				tTx(trunc(it.label,maxChars),px+PAD+4,iy+7,C.WHITE,FSX,false,7)
+				-- optional row-value text (like "v" next to toggle)
+				if it.rowvalue then
+					tTx(it.rowvalue,px+pw-52,iy+8,C.GRAY,FSX,false,7)
+				end
 				local bg1,bg2,dot=togDraw(px+pw-42,iy+7,it.value,7)
 				table.insert(elements,{
 					type="toggle",x=px+pw-42,y=iy+7,w=32,h=16,
@@ -362,12 +568,42 @@ local function renderCol(colX,colW,items,startY)
 				})
 				if it.callback then state.sCbs[it.id]=it.callback end
 				iy=iy+SRH
+			elseif it.type=="dropdown"then
+				-- preset header row
+				tSq(px,iy,pw,DDH,C.ROWBG,true,5)
+				divln(px,iy+DDH,pw,6)
+				tTx(it.label or "preset",px+PAD+4,iy+6,C.WHITE,FSX,false,7)
+				local selName=it.selected or (it.options and it.options[1]) or ""
+				local valTx=tTx("v "..selName,px+pw-PAD-4,iy+6,C.ACCENT,FSX,false,7)
+				iy=iy+DDH
+				-- dropdown option rows
+				local optEls={}
+				for oi,opt in ipairs(it.options or{})do
+					local isSel=(opt==selName)
+					local obg=tSq(px,iy,pw,DDH,isSel and C.TABSEL or C.CONTENT,true,5)
+					divln(px,iy+DDH,pw,6)
+					local otx=tTx(opt,px+PAD+4,iy+6,isSel and C.ONDOT or C.GRAY,FSX,false,7)
+					table.insert(optEls,{bg=obg,tx=otx,name=opt,x=px,y=iy,w=pw,h=DDH})
+					iy=iy+DDH
+				end
+				-- profile tag row
+				tSq(px,iy,pw,PTH,C.CONTENT,true,5)
+				divln(px,iy+PTH,pw,6)
+				tSq(px+PAD,iy+5,#selName*8+16,20,C.DIMGRAY,true,6)
+				tSq(px+PAD,iy+5,#selName*8+16,20,C.BORDER,false,7)
+				local tagTx=tTx(selName,px+PAD+8,iy+8,C.ACCENT,FSX,false,8)
+				iy=iy+PTH
+				table.insert(elements,{
+					type="dropdown",id=it.id,
+					x=px,y=pStart,w=pw,h=iy-pStart,
+					valTx=valTx,tagTx=tagTx,
+					options=it.options,selected=selName,
+					optEls=optEls,callback=it.callback
+				})
 			end
 		end
-		-- pill drawn AFTER content so it covers row edges
 		tPillFill(px,pStart,pw,ph,C.CONTENT,4)
 		tPillBorder(px,pStart,pw,ph,C.BORDER,5)
-		-- redraw content on top of pill
 		cur=pStart+ph+8
 		table.clear(pItems)
 		pStart=nil
@@ -378,7 +614,15 @@ local function renderCol(colX,colW,items,startY)
 			flush()
 			secLbl(colX,cur,colW,it.label,5)
 			cur=cur+22
-		elseif it.type=="toggle" or it.type=="slider"then
+		elseif it.type=="debug"then
+			flush()
+			-- debug row: pulsing dot + text (standalone, not inside pill)
+			local dx=colX+PAD+4
+			local dy=cur+8
+			tCi(dx+3,dy+3,3,C.ACCENT,true,5)
+			tTx(it.text or "session active",dx+14,dy-2,C.GRAY,FSX,false,5)
+			cur=cur+DTH
+		elseif it.type=="toggle" or it.type=="slider" or it.type=="dropdown"then
 			if not pStart then pStart=cur end
 			table.insert(pItems,it)
 		end
@@ -432,6 +676,11 @@ local function nudgeAll(dx,dy)
 		el.x=el.x+dx;el.y=el.y+dy
 		if el.slx then el.slx=el.slx+dx end
 		if el.ky then el.ky=el.ky+dy end
+		if el.optEls then
+			for _,opt in ipairs(el.optEls)do
+				opt.x=opt.x+dx;opt.y=opt.y+dy
+			end
+		end
 	end
 end
 
@@ -470,7 +719,45 @@ local function doClick(mx,my)
 			pcall(function()el.kd.Text="...";el.kd.Color=C.ACCENT end)
 			pcall(function()win.kTx.Text="..."end)
 			return
+		elseif el.type=="dropdown" and el.optEls then
+			for _,opt in ipairs(el.optEls)do
+				if inside(mx,my,opt.x,opt.y,opt.w,opt.h) and opt.name~=el.selected then
+					el.selected=opt.name
+					-- update item data so rebuild uses new selection
+					for _,tab in ipairs(state.tabs)do
+						for _,it in ipairs(tab.items or{})do
+							if it.type=="dropdown" and it.id==el.id then it.selected=opt.name end
+						end
+					end
+					if el.callback then pcall(el.callback,opt.name)end
+					renderTab(state.activeTab)
+					return
+				end
+			end
+		elseif el.type=="theme" and el.optEls then
+			for _,opt in ipairs(el.optEls)do
+				if inside(mx,my,opt.x,opt.y,opt.w,opt.h) and opt.name~=state.currentTheme then
+					applyTheme(opt.name)
+					fullRebuild()
+					return
+				end
+			end
 		elseif el.type=="destroy" and inside(mx,my,el.x,el.y,el.w,el.h)then
+			if not state.destroyConfirm then
+				state.destroyConfirm=true
+				pcall(function()el.txt.Text="confirm?"end)
+				pcall(function()el.txt.Color=Color3.fromRGB(255,120,120)end)
+				task.spawn(function()
+					task.wait(2)
+					if state.destroyConfirm then
+						state.destroyConfirm=false
+						pcall(function()el.txt.Text="destroy"end)
+						pcall(function()el.txt.Color=Color3.fromRGB(220,80,80)end)
+					end
+				end)
+				return
+			end
+			state.destroyConfirm=false
 			for _,o in ipairs(objs)do pcall(function()o:Remove()end)end
 			for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o:Remove()end end)end
 			for _,o in ipairs(actObjs)do pcall(function()o:Remove()end)end
@@ -609,19 +896,55 @@ function lib:Window()
 				end
 				return ctrl
 			end
+			function s:Dropdown(opts)
+				local id=opts.id or opts.label
+				local sel=opts.default or (opts.options and opts.options[1]) or ""
+				table.insert(tab.items,{type="dropdown",label=opts.label,options=opts.options or{},selected=sel,id=id,callback=opts.callback,col=opts.col or 1})
+				if state.activeTab and state.activeTab.name==tab.name then fullRebuild()end
+				local ctrl={}
+				function ctrl:Set(v)
+					for _,el in ipairs(elements)do
+						if el.type=="dropdown" and el.id==id then
+							el.selected=v
+							for _,t2 in ipairs(state.tabs)do
+								for _,it in ipairs(t2.items or{})do
+									if it.type=="dropdown" and it.id==id then it.selected=v end
+								end
+							end
+							renderTab(state.activeTab)
+						end
+					end
+				end
+				return ctrl
+			end
+			function s:DebugRow(opts)
+				table.insert(tab.items,{type="debug",text=opts.text or "session active",col=opts.col or 1})
+				if state.activeTab and state.activeTab.name==tab.name then fullRebuild()end
+			end
 			return s
+		end
+		function t:SettingsTab()
+			state.activeTab={name="settings",items={}}
+			buildTabs();renderTab(state.activeTab)
 		end
 		return t
 	end
-	fullRebuild()
+	showLoader()
+	task.spawn(function()
+		while not state.loaderDone do task.wait(0.05) end
+		fullRebuild()
+	end)
 	return w
 end
 
 function lib:Destroy()
+	stopConfetti()
 	for _,o in ipairs(objs)do pcall(function()o:Remove()end)end
 	for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o:Remove()end end)end
 	for _,o in ipairs(actObjs)do pcall(function()o:Remove()end)end
-	table.clear(objs);table.clear(tabObjs);table.clear(actObjs)
+	for _,o in ipairs(loaderObjs)do pcall(function()o:Remove()end)end
+	for _,o in ipairs(confettiObjs)do pcall(function()o:Remove()end)end
+	table.clear(objs);table.clear(tabObjs);table.clear(actObjs);table.clear(loaderObjs);table.clear(confettiObjs)
 end
 
 _G.lib=lib
