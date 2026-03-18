@@ -123,37 +123,61 @@ local function lObj(typ,props)
 end
 
 local function showLoader()
-	local cx=math.floor(SX/2)
-	local cy=math.floor(SY/2)
-	-- fullscreen bg
-	lObj("Square",{Position=V2(0,0),Size=V2(SX,SY),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
-	-- "Check · It · v2"
-	lObj("Text",{Text="Check",Position=V2(cx-80,cy-30),Color=C.WHITE,Size=28,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
-	lObj("Text",{Text=".",Position=V2(cx-18,cy-30),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
-	lObj("Text",{Text="It",Position=V2(cx-4,cy-30),Color=C.ACCENT,Size=28,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
-	lObj("Text",{Text=".",Position=V2(cx+28,cy-30),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
-	lObj("Text",{Text="v2",Position=V2(cx+42,cy-22),Color=C.GRAY,Size=14,Font=FNT,Center=false,Outline=false,Transparency=1,ZIndex=51,Visible=true})
-	-- progress bar bg
-	local barW=220
+	local wx,wy=state.wx,state.wy
+	local cx=wx+math.floor(WW/2)
+	local cy=wy+math.floor(state.wh/2)
+	-- window-sized bg (matches main UI bounds)
+	lObj("Square",{Position=V2(wx,wy),Size=V2(WW,state.wh),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
+	lObj("Square",{Position=V2(wx,wy),Size=V2(WW,state.wh),Color=C.BORDER,Filled=false,Transparency=1,ZIndex=51,Visible=true})
+	-- text objects start below center (will slide up)
+	local slideOff=20
+	local t1=lObj("Text",{Text="Check",Position=V2(cx-80,cy-10+slideOff),Color=C.WHITE,Size=28,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+	local t2=lObj("Text",{Text=".",Position=V2(cx-18,cy-10+slideOff),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+	local t3=lObj("Text",{Text="It",Position=V2(cx-4,cy-10+slideOff),Color=C.ACCENT,Size=28,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+	local t4=lObj("Text",{Text=".",Position=V2(cx+28,cy-10+slideOff),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+	local t5=lObj("Text",{Text="v2",Position=V2(cx+42,cy-2+slideOff),Color=C.GRAY,Size=14,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+	local textObjs={t1,t2,t3,t4,t5}
+	-- progress bar
+	local barW=math.min(220,WW-60)
 	local barX=cx-barW/2
-	local barY=cy+10
-	lObj("Square",{Position=V2(barX,barY),Size=V2(barW,2),Color=C.DIMGRAY,Filled=true,Transparency=1,ZIndex=51,Visible=true})
-	-- progress bar fill (animated via coroutine)
-	local barFill=lObj("Square",{Position=V2(barX,barY),Size=V2(0,2),Color=C.ACCENT,Filled=true,Transparency=1,ZIndex=52,Visible=true})
+	local barY=cy+30
+	lObj("Square",{Position=V2(barX,barY),Size=V2(barW,2),Color=C.DIMGRAY,Filled=true,Transparency=0,ZIndex=52,Visible=true})
+	local barFill=lObj("Square",{Position=V2(barX,barY),Size=V2(0,2),Color=C.ACCENT,Filled=true,Transparency=0,ZIndex=53,Visible=true})
 	-- status text
-	local statusTx=lObj("Text",{Text="initializing modules_",Position=V2(cx,cy+26),Color=C.GRAY,Size=10,Font=FNT,Center=true,Outline=false,Transparency=1,ZIndex=51,Visible=true})
-	-- animate bar + blink cursor
+	local statusTx=lObj("Text",{Text="initializing modules_",Position=V2(cx,cy+46),Color=C.GRAY,Size=10,Font=FNT,Center=true,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+	-- animate: slide-up + fade-in text, progress bar, blink cursor
 	task.spawn(function()
 		local t0=tick()
-		local dur=1.8
+		-- phase 1: slide up + fade in (0.4s)
+		local slideDur=0.4
+		while tick()-t0<slideDur do
+			local p=clamp((tick()-t0)/slideDur,0,1)
+			-- ease out cubic
+			local ep=1-(1-p)*(1-p)*(1-p)
+			local yOff=math.floor(slideOff*(1-ep))
+			pcall(function()
+				t1.Position=V2(cx-80,cy-10+yOff)
+				t2.Position=V2(cx-18,cy-10+yOff)
+				t3.Position=V2(cx-4,cy-10+yOff)
+				t4.Position=V2(cx+28,cy-10+yOff)
+				t5.Position=V2(cx+42,cy-2+yOff)
+			end)
+			for _,tx in ipairs(textObjs)do pcall(function()tx.Transparency=ep end)end
+			task.wait(0.016)
+		end
+		for _,tx in ipairs(textObjs)do pcall(function()tx.Transparency=1 end)end
+		-- phase 2: progress bar fill (1.4s)
+		local barStart=tick()
+		local barDur=1.4
 		local blink=true
-		while tick()-t0<dur do
-			local pct=clamp((tick()-t0)/dur,0,1)
-			-- ease: cubic bezier approximation
+		-- fade in bar + status
+		pcall(function()barFill.Transparency=1 end)
+		pcall(function()statusTx.Transparency=1 end)
+		while tick()-barStart<barDur do
+			local pct=clamp((tick()-barStart)/barDur,0,1)
 			local ep=pct<0.3 and pct/0.3*0.45 or pct<0.6 and 0.45+(pct-0.3)/0.3*0.27 or pct<0.85 and 0.72+(pct-0.6)/0.25*0.18 or 0.9+(pct-0.85)/0.15*0.1
 			pcall(function()barFill.Size=V2(math.floor(barW*ep),2)end)
-			-- blink cursor every 0.5s
-			local nb=math.floor((tick()-t0)/0.5)%2==0
+			local nb=math.floor((tick()-barStart)/0.5)%2==0
 			if nb~=blink then
 				blink=nb
 				pcall(function()statusTx.Text=blink and "initializing modules_" or "initializing modules "end)
@@ -295,13 +319,22 @@ end
 -- Simple approach: use overlapping squares (no circles at all)
 -- pill = big rect + 2 smaller rects that form cross, corners are just bg color squares
 local function drawPillFill(sqFn,x,y,w,h,col,zi)
-	local r=5
+	local r=8
 	sqFn(x+r,y,w-r*2,h,col,true,zi)
 	sqFn(x,y+r,w,h-r*2,col,true,zi)
+	-- corner fill squares for rounded look
+	sqFn(x+1,y+3,r-1,r-3,col,true,zi)
+	sqFn(x+3,y+1,r-3,r-1,col,true,zi)
+	sqFn(x+w-r,y+3,r-1,r-3,col,true,zi)
+	sqFn(x+w-r+2,y+1,r-3,r-1,col,true,zi)
+	sqFn(x+1,y+h-r,r-1,r-3,col,true,zi)
+	sqFn(x+3,y+h-r+2,r-3,r-1,col,true,zi)
+	sqFn(x+w-r,y+h-r,r-1,r-3,col,true,zi)
+	sqFn(x+w-r+2,y+h-r+2,r-3,r-1,col,true,zi)
 end
 
 local function drawPillBorder(lnFn,x,y,w,h,col,zi)
-	local r=5
+	local r=8
 	lnFn(x+r,y,x+w-r,y,col,1,zi)
 	lnFn(x+r,y+h,x+w-r,y+h,col,1,zi)
 	lnFn(x,y+r,x,y+h-r,col,1,zi)
@@ -374,26 +407,64 @@ local function itemH(it)
 	else return RH end
 end
 
+local function groupItems(items)
+	local groups={}
+	local i=1
+	while i<=#items do
+		local it=items[i]
+		if it.type=="section" or it.type=="debug" then
+			table.insert(groups,{it})
+			i=i+1
+		elseif it.type=="dropdown" then
+			table.insert(groups,{it})
+			i=i+1
+		elseif it.type=="slider" then
+			table.insert(groups,{it})
+			i=i+1
+		elseif it.type=="toggle" then
+			if i+1<=#items and items[i+1].type=="slider" then
+				table.insert(groups,{items[i],items[i+1]})
+				i=i+2
+			else
+				local grp={items[i]}
+				i=i+1
+				while i<=#items and items[i].type=="toggle" do
+					if i+1<=#items and items[i+1].type=="slider" then break end
+					table.insert(grp,items[i])
+					i=i+1
+				end
+				table.insert(groups,grp)
+			end
+		else
+			i=i+1
+		end
+	end
+	return groups
+end
+
 local function calcWH()
 	local maxH=0
 	for _,tab in ipairs(state.tabs)do
-		local lH,rH,lP,rP=0,0,0,0
+		local left,right={},{}
 		for _,it in ipairs(tab.items or{})do
-			local c=it.col or 1
-			local rh=itemH(it)
-			if it.type=="section"then
-				if c==2 then if rP>0 then rH=rH+rP+8;rP=0 end;rH=rH+22
-				else if lP>0 then lH=lH+lP+8;lP=0 end;lH=lH+22 end
-			elseif it.type=="debug"then
-				if c==2 then if rP>0 then rH=rH+rP+8;rP=0 end;rH=rH+rh
-				else if lP>0 then lH=lH+lP+8;lP=0 end;lH=lH+rh end
-			elseif it.type=="toggle" or it.type=="slider" or it.type=="dropdown" or it.type=="profiletag"then
-				if c==2 then rP=rP+rh else lP=lP+rh end
-			end
+			if it.col==2 then table.insert(right,it)
+			else table.insert(left,it) end
 		end
-		if lP>0 then lH=lH+lP+8 end
-		if rP>0 then rH=rH+rP+8 end
-		local h=math.max(lH,rH)+16
+		local function colH(citems)
+			local h=0
+			for _,grp in ipairs(groupItems(citems))do
+				local f=grp[1]
+				if f.type=="section" then h=h+22
+				elseif f.type=="debug" then h=h+DTH
+				else
+					local ph=0
+					for _,it in ipairs(grp)do ph=ph+itemH(it) end
+					h=h+ph+8
+				end
+			end
+			return h
+		end
+		local h=math.max(colH(left),colH(right))+16
 		if h>maxH then maxH=h end
 	end
 	return math.max(200,maxH)+TH+TAH+10
@@ -522,23 +593,17 @@ end
 
 local function renderCol(colX,colW,items,startY)
 	local cur=startY
-	local pItems,pStart={},nil
 	local innerW=colW-PAD*2
 	local maxChars=math.floor((innerW-PAD*2-46)/8)
+	local px=colX+PAD
+	local pw=innerW
 
-	local function flush()
-		if #pItems==0 then return end
-		local ph=0
-		for _,it in ipairs(pItems)do ph=ph+itemH(it) end
-		local px=colX+PAD
-		local pw=innerW
-		local iy=pStart
-		for _,it in ipairs(pItems)do
+	local function drawItems(pitems,iy)
+		for _,it in ipairs(pitems)do
 			if it.type=="toggle"then
 				tSq(px,iy,pw,RH,C.ROWBG,true,5)
 				divln(px,iy+RH,pw,6)
 				tTx(trunc(it.label,maxChars),px+PAD+4,iy+7,C.WHITE,FSX,false,7)
-				-- optional row-value text (like "v" next to toggle)
 				if it.rowvalue then
 					tTx(it.rowvalue,px+pw-52,iy+8,C.GRAY,FSX,false,7)
 				end
@@ -569,16 +634,15 @@ local function renderCol(colX,colW,items,startY)
 				if it.callback then state.sCbs[it.id]=it.callback end
 				iy=iy+SRH
 			elseif it.type=="dropdown"then
-				-- preset header row
+				local ddStart=iy
 				tSq(px,iy,pw,DDH,C.ROWBG,true,5)
 				divln(px,iy+DDH,pw,6)
 				tTx(it.label or "preset",px+PAD+4,iy+6,C.WHITE,FSX,false,7)
 				local selName=it.selected or (it.options and it.options[1]) or ""
 				local valTx=tTx("v "..selName,px+pw-PAD-4,iy+6,C.ACCENT,FSX,false,7)
 				iy=iy+DDH
-				-- dropdown option rows
 				local optEls={}
-				for oi,opt in ipairs(it.options or{})do
+				for _,opt in ipairs(it.options or{})do
 					local isSel=(opt==selName)
 					local obg=tSq(px,iy,pw,DDH,isSel and C.TABSEL or C.CONTENT,true,5)
 					divln(px,iy+DDH,pw,6)
@@ -586,7 +650,6 @@ local function renderCol(colX,colW,items,startY)
 					table.insert(optEls,{bg=obg,tx=otx,name=opt,x=px,y=iy,w=pw,h=DDH})
 					iy=iy+DDH
 				end
-				-- profile tag row
 				tSq(px,iy,pw,PTH,C.CONTENT,true,5)
 				divln(px,iy+PTH,pw,6)
 				tSq(px+PAD,iy+5,#selName*8+16,20,C.DIMGRAY,true,6)
@@ -595,39 +658,36 @@ local function renderCol(colX,colW,items,startY)
 				iy=iy+PTH
 				table.insert(elements,{
 					type="dropdown",id=it.id,
-					x=px,y=pStart,w=pw,h=iy-pStart,
+					x=px,y=ddStart,w=pw,h=iy-ddStart,
 					valTx=valTx,tagTx=tagTx,
 					options=it.options,selected=selName,
 					optEls=optEls,callback=it.callback
 				})
 			end
 		end
-		tPillFill(px,pStart,pw,ph,C.CONTENT,4)
-		tPillBorder(px,pStart,pw,ph,C.BORDER,5)
-		cur=pStart+ph+8
-		table.clear(pItems)
-		pStart=nil
 	end
 
-	for _,it in ipairs(items)do
-		if it.type=="section"then
-			flush()
-			secLbl(colX,cur,colW,it.label,5)
+	local groups=groupItems(items)
+	for _,grp in ipairs(groups)do
+		local f=grp[1]
+		if f.type=="section"then
+			secLbl(colX,cur,colW,f.label,5)
 			cur=cur+22
-		elseif it.type=="debug"then
-			flush()
-			-- debug row: pulsing dot + text (standalone, not inside pill)
+		elseif f.type=="debug"then
 			local dx=colX+PAD+4
 			local dy=cur+8
 			tCi(dx+3,dy+3,3,C.ACCENT,true,5)
-			tTx(it.text or "session active",dx+14,dy-2,C.GRAY,FSX,false,5)
+			tTx(f.text or "session active",dx+14,dy-2,C.GRAY,FSX,false,5)
 			cur=cur+DTH
-		elseif it.type=="toggle" or it.type=="slider" or it.type=="dropdown"then
-			if not pStart then pStart=cur end
-			table.insert(pItems,it)
+		else
+			local ph=0
+			for _,it in ipairs(grp)do ph=ph+itemH(it)end
+			tPillFill(px,cur,pw,ph,C.CONTENT,4)
+			tPillBorder(px,cur,pw,ph,C.BORDER,5)
+			drawItems(grp,cur)
+			cur=cur+ph+8
 		end
 	end
-	flush()
 end
 
 local function renderTab(tab)
@@ -801,45 +861,53 @@ UIS.InputBegan:Connect(function(inp,gp)
 end)
 
 spawn(function()
+	local wasDragging=false
 	while true do
 		task.wait(0.016)
-		if not state.visible then continue end
-		local mx,my=mouse.X,mouse.Y
-		local m1=ismouse1pressed()
-		if m1 and not pressed then
-			pressed=true
-			local wx,wy=state.wx,state.wy
-			if inside(mx,my,wx,wy,WW,TH) and not inside(mx,my,wx+WW-160,wy,160,TH)then
-				state.dragging=true
-				state.dragox=mx
-				state.dragoy=my
-			elseif inside(mx,my,wx,wy,WW,state.wh)then
-				local fs=false
-				for _,el in ipairs(elements)do
-					if el.type=="slider" and inside(mx,my,el.x,el.y,el.w,el.h)then
-						dSlider=el;fs=true;break
-					end
-				end
-				if not fs then doClick(mx,my)end
-			end
-		elseif m1 and pressed then
-			if state.dragging then
-				local dx=mx-state.dragox
-				local dy=my-state.dragoy
-				if dx~=0 or dy~=0 then
-					state.wx=state.wx+dx
-					state.wy=state.wy+dy
+		if state.visible then
+			local mx,my=mouse.X,mouse.Y
+			local m1=ismouse1pressed()
+			if m1 and not pressed then
+				pressed=true
+				local wx,wy=state.wx,state.wy
+				if inside(mx,my,wx,wy,WW,TH) and not inside(mx,my,wx+WW-160,wy,160,TH)then
+					state.dragging=true
+					wasDragging=false
 					state.dragox=mx
 					state.dragoy=my
-					nudgeAll(dx,dy)
+				elseif inside(mx,my,wx,wy,WW,state.wh)then
+					local fs=false
+					for _,el in ipairs(elements)do
+						if el.type=="slider" and inside(mx,my,el.x,el.y,el.w,el.h)then
+							dSlider=el;fs=true;break
+						end
+					end
+					if not fs then doClick(mx,my)end
 				end
-			elseif dSlider then
-				doDrag(mx)
+			elseif m1 and pressed then
+				if state.dragging then
+					local dx=mx-state.dragox
+					local dy=my-state.dragoy
+					if dx~=0 or dy~=0 then
+						state.wx=state.wx+dx
+						state.wy=state.wy+dy
+						state.dragox=mx
+						state.dragoy=my
+						wasDragging=true
+						nudgeAll(dx,dy)
+					end
+				elseif dSlider then
+					doDrag(mx)
+				end
+			elseif not m1 then
+				if wasDragging then
+					wasDragging=false
+					fullRebuild()
+				end
+				pressed=false
+				state.dragging=false
+				dSlider=nil
 			end
-		elseif not m1 then
-			pressed=false
-			state.dragging=false
-			dSlider=nil
 		end
 	end
 end)
