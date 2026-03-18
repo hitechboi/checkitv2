@@ -127,8 +127,7 @@ local function lObj(typ,props)
 end
 
 local function showLoader()
-	local wh=calcWH()
-	state.wh=wh
+	local wh=state.wh or 300
 	local wx,wy=state.wx,state.wy
 	local cx=wx+math.floor(WW/2)
 	local cy=wy+math.floor(wh/2)
@@ -140,14 +139,20 @@ local function showLoader()
 	lObj("Circle",{Position=V2(wx+WW-r,wy+r),Radius=r,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
 	lObj("Circle",{Position=V2(wx+r,wy+wh-r),Radius=r,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
 	lObj("Circle",{Position=V2(wx+WW-r,wy+wh-r),Radius=r,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
-	-- text objects start below center (will slide up)
+	-- each text element: {obj, baseX, baseY, delay}
 	local slideOff=20
-	local t1=lObj("Text",{Text="Check",Position=V2(cx-80,cy-10+slideOff),Color=C.WHITE,Size=28,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
-	local t2=lObj("Text",{Text=".",Position=V2(cx-18,cy-10+slideOff),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
-	local t3=lObj("Text",{Text="It",Position=V2(cx-4,cy-10+slideOff),Color=C.ACCENT,Size=28,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
-	local t4=lObj("Text",{Text=".",Position=V2(cx+28,cy-10+slideOff),Color=C.BORDER,Size=20,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
-	local t5=lObj("Text",{Text="v2",Position=V2(cx+42,cy-2+slideOff),Color=C.GRAY,Size=14,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
-	local textObjs={t1,t2,t3,t4,t5}
+	local parts={
+		{txt="Check", col=C.WHITE,  sz=28, bx=cx-80, by=cy-10, delay=0},
+		{txt=".",     col=C.BORDER, sz=20, bx=cx-18, by=cy-10, delay=0.08},
+		{txt="It",    col=C.ACCENT, sz=28, bx=cx-4,  by=cy-10, delay=0.16},
+		{txt=".",     col=C.BORDER, sz=20, bx=cx+28, by=cy-10, delay=0.24},
+		{txt="v2",    col=C.GRAY,   sz=14, bx=cx+42, by=cy-2,  delay=0.32},
+	}
+	local textObjs={}
+	for _,p in ipairs(parts)do
+		local o=lObj("Text",{Text=p.txt,Position=V2(p.bx,p.by+slideOff),Color=p.col,Size=p.sz,Font=FNT,Center=false,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+		table.insert(textObjs,{obj=o,bx=p.bx,by=p.by,delay=p.delay})
+	end
 	-- progress bar
 	local barW=math.min(220,WW-60)
 	local barX=cx-barW/2
@@ -159,23 +164,32 @@ local function showLoader()
 	-- animate
 	task.spawn(function()
 		local t0=tick()
-		-- phase 1: slide up + fade in (0.4s)
-		local slideDur=0.4
-		while tick()-t0<slideDur do
-			local p=clamp((tick()-t0)/slideDur,0,1)
-			local ep=1-(1-p)*(1-p)*(1-p)
-			local yOff=math.floor(slideOff*(1-ep))
-			pcall(function()
-				t1.Position=V2(cx-80,cy-10+yOff)
-				t2.Position=V2(cx-18,cy-10+yOff)
-				t3.Position=V2(cx-4,cy-10+yOff)
-				t4.Position=V2(cx+28,cy-10+yOff)
-				t5.Position=V2(cx+42,cy-2+yOff)
-			end)
-			for _,tx in ipairs(textObjs)do pcall(function()tx.Transparency=ep end)end
+		local slideDur=0.35
+		local totalTextDur=slideDur+0.32
+		-- phase 1: staggered slide up + fade in per word
+		while tick()-t0<totalTextDur+slideDur do
+			local elapsed=tick()-t0
+			for _,te in ipairs(textObjs)do
+				local t=elapsed-te.delay
+				if t<0 then
+					pcall(function()te.obj.Transparency=0 end)
+				elseif t<slideDur then
+					local p=clamp(t/slideDur,0,1)
+					local ep=1-(1-p)*(1-p)*(1-p)
+					local yOff=math.floor(slideOff*(1-ep))
+					pcall(function()te.obj.Position=V2(te.bx,te.by+yOff)end)
+					pcall(function()te.obj.Transparency=ep end)
+				else
+					pcall(function()te.obj.Position=V2(te.bx,te.by)end)
+					pcall(function()te.obj.Transparency=1 end)
+				end
+			end
 			task.wait(0.016)
 		end
-		for _,tx in ipairs(textObjs)do pcall(function()tx.Transparency=1 end)end
+		for _,te in ipairs(textObjs)do
+			pcall(function()te.obj.Position=V2(te.bx,te.by)end)
+			pcall(function()te.obj.Transparency=1 end)
+		end
 		-- phase 2: progress bar fill (1.4s)
 		local barStart=tick()
 		local barDur=1.4
