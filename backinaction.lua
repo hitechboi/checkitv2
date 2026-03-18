@@ -32,7 +32,7 @@ local THEMES={
 }
 local THEME_NAMES={"midnight","emerald","crimson","confetti"}
 
-local FNT=Drawing.Fonts.Monospace
+local FNT=Drawing.Fonts.Plex
 local FS=16
 local FSS=14
 local FSX=13
@@ -157,76 +157,70 @@ local function showLoader()
 	local barW=math.min(220,WW-60)
 	local barX=cx-barW/2
 	local barY=cy+30
-	lObj("Square",{Position=V2(barX,barY),Size=V2(barW,2),Color=C.DIMGRAY,Filled=true,Transparency=0,ZIndex=52,Visible=true})
+	local barTrack=lObj("Square",{Position=V2(barX,barY),Size=V2(barW,2),Color=C.DIMGRAY,Filled=true,Transparency=1,ZIndex=52,Visible=true})
 	local barFill=lObj("Square",{Position=V2(barX,barY),Size=V2(0,2),Color=C.ACCENT,Filled=true,Transparency=0,ZIndex=53,Visible=true})
 	-- status text
 	local statusTx=lObj("Text",{Text="initializing modules_",Position=V2(cx,cy+46),Color=C.GRAY,Size=10,Font=FNT,Center=true,Outline=false,Transparency=0,ZIndex=52,Visible=true})
-	-- animate
+	-- animate (pcall-wrapped so loaderDone is always set)
 	task.spawn(function()
-		local t0=tick()
-		local slideDur=0.35
-		local totalTextDur=slideDur+0.32
-		-- phase 1: staggered slide up + fade in per word
-		while tick()-t0<totalTextDur+slideDur do
-			local elapsed=tick()-t0
-			for _,te in ipairs(textObjs)do
-				local t=elapsed-te.delay
-				if t<0 then
-					pcall(function()te.obj.Transparency=0 end)
-				elseif t<slideDur then
-					local p=clamp(t/slideDur,0,1)
-					local ep=1-(1-p)*(1-p)*(1-p)
-					local yOff=math.floor(slideOff*(1-ep))
-					pcall(function()te.obj.Position=V2(te.bx,te.by+yOff)end)
-					pcall(function()te.obj.Transparency=ep end)
-				else
-					pcall(function()te.obj.Position=V2(te.bx,te.by)end)
-					pcall(function()te.obj.Transparency=1 end)
+		pcall(function()
+			local t0=tick()
+			local slideDur=0.35
+			local totalTextDur=slideDur+0.32
+			-- phase 1: staggered slide up + fade in per word
+			while tick()-t0<totalTextDur+slideDur do
+				local elapsed=tick()-t0
+				for _,te in ipairs(textObjs)do
+					local t=elapsed-te.delay
+					if t<0 then
+						pcall(function()te.obj.Transparency=0 end)
+					elseif t<slideDur then
+						local p=clamp(t/slideDur,0,1)
+						local ep=1-(1-p)*(1-p)*(1-p)
+						local yOff=math.floor(slideOff*(1-ep))
+						pcall(function()te.obj.Position=V2(te.bx,te.by+yOff)end)
+						pcall(function()te.obj.Transparency=ep end)
+					else
+						pcall(function()te.obj.Position=V2(te.bx,te.by)end)
+						pcall(function()te.obj.Transparency=1 end)
+					end
 				end
+				task.wait(0.016)
 			end
-			task.wait(0.016)
-		end
-		for _,te in ipairs(textObjs)do
-			pcall(function()te.obj.Position=V2(te.bx,te.by)end)
-			pcall(function()te.obj.Transparency=1 end)
-		end
-		-- phase 2: progress bar fill (1.4s)
-		local barStart=tick()
-		local barDur=1.4
-		local blink=true
-		pcall(function()barFill.Transparency=1 end)
-		pcall(function()statusTx.Transparency=1 end)
-		while tick()-barStart<barDur do
-			local pct=clamp((tick()-barStart)/barDur,0,1)
-			local ep=pct<0.3 and pct/0.3*0.45 or pct<0.6 and 0.45+(pct-0.3)/0.3*0.27 or pct<0.85 and 0.72+(pct-0.6)/0.25*0.18 or 0.9+(pct-0.85)/0.15*0.1
-			pcall(function()barFill.Size=V2(math.floor(barW*ep),2)end)
-			local nb=math.floor((tick()-barStart)/0.5)%2==0
-			if nb~=blink then
-				blink=nb
-				pcall(function()statusTx.Text=blink and "initializing modules_" or "initializing modules "end)
+			for _,te in ipairs(textObjs)do
+				pcall(function()te.obj.Position=V2(te.bx,te.by)end)
+				pcall(function()te.obj.Transparency=1 end)
 			end
-			task.wait(0.016)
-		end
-		pcall(function()barFill.Size=V2(barW,2)end)
-		task.wait(0.3)
-		-- fade out loader
-		for i=10,0,-1 do
-			local a=i/10
-			for _,o in ipairs(loaderObjs)do pcall(function()o.Transparency=a end)end
-			task.wait(0.03)
-		end
+			-- phase 2: progress bar fill (1.4s)
+			local barStart=tick()
+			local barDur=1.4
+			local blink=true
+			pcall(function()barFill.Transparency=1 end)
+			pcall(function()statusTx.Transparency=1 end)
+			while tick()-barStart<barDur do
+				local pct=clamp((tick()-barStart)/barDur,0,1)
+				local ep=pct<0.3 and pct/0.3*0.45 or pct<0.6 and 0.45+(pct-0.3)/0.3*0.27 or pct<0.85 and 0.72+(pct-0.6)/0.25*0.18 or 0.9+(pct-0.85)/0.15*0.1
+				pcall(function()barFill.Size=V2(math.floor(barW*ep),2)end)
+				local nb=math.floor((tick()-barStart)/0.5)%2==0
+				if nb~=blink then
+					blink=nb
+					pcall(function()statusTx.Text=blink and "initializing modules_" or "initializing modules "end)
+				end
+				task.wait(0.016)
+			end
+			pcall(function()barFill.Size=V2(barW,2)end)
+			task.wait(0.3)
+			-- fade out loader
+			for i=10,0,-1 do
+				local a=i/10
+				for _,o in ipairs(loaderObjs)do pcall(function()o.Transparency=a end)end
+				task.wait(0.03)
+			end
+		end)
+		-- always cleanup and signal done, even if animation errored
 		for _,o in ipairs(loaderObjs)do pcall(function()o:Remove()end)end
 		table.clear(loaderObjs)
 		state.loaderDone=true
-		-- fade in menu
-		state.visible=true
-		for i=0,10 do
-			local a=i/10
-			for _,o in ipairs(objs)do pcall(function()o.Transparency=1-a end)end
-			for _,o in ipairs(tabObjs)do pcall(function()o.Transparency=1-a end)end
-			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=1-a end)end
-			task.wait(0.03)
-		end
 	end)
 end
 
@@ -236,7 +230,6 @@ local function hideLoader()
 	state.loaderDone=false
 end
 
--- ── CONFETTI PARTICLE ENGINE ──
 local confettiObjs={}
 local confettiActive=false
 local CONFETTI_COLORS={
@@ -719,6 +712,7 @@ local function renderTab(tab)
 end
 
 local function fullRebuild()
+	if not state.loaderDone then return end
 	buildWindow()
 	buildTabs()
 	renderTab(state.activeTab)
@@ -1034,10 +1028,28 @@ function lib:Window()
 		end
 		return t
 	end
-	showLoader()
 	task.spawn(function()
+		-- wait for user script to finish adding tabs/items
+		task.wait(0.1)
+		-- compute actual menu height before showing loader
+		state.wh=calcWH()
+		showLoader()
+		-- wait for loader animation to finish
 		while not state.loaderDone do task.wait(0.05) end
+		-- build the menu
 		fullRebuild()
+		-- hide everything first (Transparency 0 = invisible in Drawing API)
+		for _,o in ipairs(objs)do pcall(function()o.Transparency=0 end)end
+		for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=0 end end)end
+		for _,o in ipairs(actObjs)do pcall(function()o.Transparency=0 end)end
+		-- fade in: 0→1 (invisible→visible)
+		for i=1,10 do
+			local a=i/10
+			for _,o in ipairs(objs)do pcall(function()o.Transparency=a end)end
+			for _,o in ipairs(tabObjs)do pcall(function()if o.Remove then o.Transparency=a end end)end
+			for _,o in ipairs(actObjs)do pcall(function()o.Transparency=a end)end
+			task.wait(0.03)
+		end
 	end)
 	return w
 end
