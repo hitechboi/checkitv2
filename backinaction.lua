@@ -2,7 +2,6 @@ local UIS=game:GetService("UserInputService")
 local Players=game:GetService("Players")
 local lp=Players.LocalPlayer
 local mouse=lp:GetMouse()
-local sw,sh=Drawing.new("Text"),Drawing.new("Text")
 local function scr()local c=workspace.CurrentCamera;return c.ViewportSize.X,c.ViewportSize.Y end
 local SX,SY=scr()
 
@@ -625,4 +624,4 @@ function lib:Destroy()
 end
 
 setmetatable(lib,{__call=function(self,...)return self end})
-return lib
+_G.lib=lib
