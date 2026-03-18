@@ -64,66 +64,59 @@ local function mkObj(pool,t,p)
 	return o
 end
 
-local function D(t,p)return mkObj(objects,t,p)end
-local function tD(t,p)return mkObj(activeTabObjs,t,p)end
-local function tbD(t,p)return mkObj(tabObjs,t,p)end
+local function wSq(x,y,w,h,col,filled,zi)return mkObj(objects,"Square",{Position=Vector2.new(x,y),Size=Vector2.new(w,h),Color=col,Transparency=1,Filled=filled~=false,ZIndex=zi or 1,Visible=state.visible})end
+local function wLn(x1,y1,x2,y2,col,thick,zi)return mkObj(objects,"Line",{From=Vector2.new(x1,y1),To=Vector2.new(x2,y2),Color=col,Thickness=thick or 1,Transparency=1,ZIndex=zi or 1,Visible=state.visible})end
+local function wTx(str,x,y,col,sz,ctr,zi)return mkObj(objects,"Text",{Text=str,Position=Vector2.new(x,y),Color=col,Size=sz or FS,Font=FONT,Center=ctr or false,Outline=false,Transparency=1,ZIndex=zi or 2,Visible=state.visible})end
+local function wCi(x,y,r,col,filled,zi)return mkObj(objects,"Circle",{Position=Vector2.new(x,y),Radius=r,Color=col,Transparency=1,Filled=filled~=false,Thickness=1,NumSides=16,ZIndex=zi or 1,Visible=state.visible})end
 
-local function sq(pool,x,y,w,h,col,filled,zi)
-	return pool("Square",{Position=Vector2.new(x,y),Size=Vector2.new(w,h),Color=col,Transparency=1,Filled=filled~=false,ZIndex=zi or 1,Visible=state.visible})
-end
-local function ln(pool,x1,y1,x2,y2,col,thick,zi)
-	return pool("Line",{From=Vector2.new(x1,y1),To=Vector2.new(x2,y2),Color=col,Thickness=thick or 1,Transparency=1,ZIndex=zi or 1,Visible=state.visible})
-end
-local function tx(pool,str,x,y,col,sz,ctr,zi)
-	return pool("Text",{Text=str,Position=Vector2.new(x,y),Color=col,Size=sz or FS,Font=FONT,Center=ctr or false,Outline=false,Transparency=1,ZIndex=zi or 2,Visible=state.visible})
-end
-local function ci(pool,x,y,r,col,filled,zi)
-	return pool("Circle",{Position=Vector2.new(x,y),Radius=r,Color=col,Transparency=1,Filled=filled~=false,Thickness=1,NumSides=16,ZIndex=zi or 1,Visible=state.visible})
-end
+local function tSq(x,y,w,h,col,filled,zi)return mkObj(activeTabObjs,"Square",{Position=Vector2.new(x,y),Size=Vector2.new(w,h),Color=col,Transparency=1,Filled=filled~=false,ZIndex=zi or 1,Visible=state.visible})end
+local function tLn(x1,y1,x2,y2,col,thick,zi)return mkObj(activeTabObjs,"Line",{From=Vector2.new(x1,y1),To=Vector2.new(x2,y2),Color=col,Thickness=thick or 1,Transparency=1,ZIndex=zi or 1,Visible=state.visible})end
+local function tTx(str,x,y,col,sz,ctr,zi)return mkObj(activeTabObjs,"Text",{Text=str,Position=Vector2.new(x,y),Color=col,Size=sz or FS,Font=FONT,Center=ctr or false,Outline=false,Transparency=1,ZIndex=zi or 2,Visible=state.visible})end
+local function tCi(x,y,r,col,filled,zi)return mkObj(activeTabObjs,"Circle",{Position=Vector2.new(x,y),Radius=r,Color=col,Transparency=1,Filled=filled~=false,Thickness=1,NumSides=16,ZIndex=zi or 1,Visible=state.visible})end
 
-local wSq=function(...)return sq(D,...)end
-local wLn=function(...)return ln(D,...)end
-local wTx=function(...)return tx(D,...)end
-local tSq=function(...)return sq(tD,...)end
-local tLn=function(...)return ln(tD,...)end
-local tTx=function(...)return tx(tD,...)end
-local tCi=function(...)return ci(tD,...)end
-local tbSq=function(...)return sq(tbD,...)end
-local tbLn=function(...)return ln(tbD,...)end
-local tbTx=function(...)return tx(tbD,...)end
-
-local function roundRect(pool,sqFn,ciFn,lnFn,x,y,w,h,col,filled,zi)
-	local r=CR
-	sqFn(pool,x+r,y,w-r*2,h,col,filled,zi)
-	sqFn(pool,x,y+r,w,h-r*2,col,filled,zi)
-	if filled~=false then
-		ciFn(pool,x+r,y+r,r,col,true,zi)
-		ciFn(pool,x+w-r,y+r,r,col,true,zi)
-		ciFn(pool,x+r,y+h-r,r,col,true,zi)
-		ciFn(pool,x+w-r,y+h-r,r,col,true,zi)
-	else
-		lnFn(pool,x+r,y,x+w-r,y,col,1,zi)
-		lnFn(pool,x+r,y+h,x+w-r,y+h,col,1,zi)
-		lnFn(pool,x,y+r,x,y+h-r,col,1,zi)
-		lnFn(pool,x+w,y+r,x+w,y+h-r,col,1,zi)
-		ciFn(pool,x+r,y+r,r,col,false,zi)
-		ciFn(pool,x+w-r,y+r,r,col,false,zi)
-		ciFn(pool,x+r,y+h-r,r,col,false,zi)
-		ciFn(pool,x+w-r,y+h-r,r,col,false,zi)
-	end
-end
+local function tbSq(x,y,w,h,col,filled,zi)return mkObj(tabObjs,"Square",{Position=Vector2.new(x,y),Size=Vector2.new(w,h),Color=col,Transparency=1,Filled=filled~=false,ZIndex=zi or 1,Visible=state.visible})end
+local function tbLn(x1,y1,x2,y2,col,thick,zi)return mkObj(tabObjs,"Line",{From=Vector2.new(x1,y1),To=Vector2.new(x2,y2),Color=col,Thickness=thick or 1,Transparency=1,ZIndex=zi or 1,Visible=state.visible})end
+local function tbTx(str,x,y,col,sz,ctr,zi)return mkObj(tabObjs,"Text",{Text=str,Position=Vector2.new(x,y),Color=col,Size=sz or FS,Font=FONT,Center=ctr or false,Outline=false,Transparency=1,ZIndex=zi or 2,Visible=state.visible})end
 
 local function tRoundFill(x,y,w,h,col,zi)
-	roundRect(tD,tSq,tCi,tLn,x,y,w,h,col,true,zi)
+	local r=CR
+	tSq(x+r,y,w-r*2,h,col,true,zi)
+	tSq(x,y+r,w,h-r*2,col,true,zi)
+	tCi(x+r,y+r,r,col,true,zi)
+	tCi(x+w-r,y+r,r,col,true,zi)
+	tCi(x+r,y+h-r,r,col,true,zi)
+	tCi(x+w-r,y+h-r,r,col,true,zi)
 end
 local function tRoundBorder(x,y,w,h,col,zi)
-	roundRect(tD,tSq,tCi,tLn,x,y,w,h,col,false,zi)
+	local r=CR
+	tLn(x+r,y,x+w-r,y,col,1,zi)
+	tLn(x+r,y+h,x+w-r,y+h,col,1,zi)
+	tLn(x,y+r,x,y+h-r,col,1,zi)
+	tLn(x+w,y+r,x+w,y+h-r,col,1,zi)
+	tCi(x+r,y+r,r,col,false,zi)
+	tCi(x+w-r,y+r,r,col,false,zi)
+	tCi(x+r,y+h-r,r,col,false,zi)
+	tCi(x+w-r,y+h-r,r,col,false,zi)
 end
 local function wRoundFill(x,y,w,h,col,zi)
-	roundRect(D,wSq,function(...)return ci(D,...)end,wLn,x,y,w,h,col,true,zi)
+	local r=CR
+	wSq(x+r,y,w-r*2,h,col,true,zi)
+	wSq(x,y+r,w,h-r*2,col,true,zi)
+	wCi(x+r,y+r,r,col,true,zi)
+	wCi(x+w-r,y+r,r,col,true,zi)
+	wCi(x+r,y+h-r,r,col,true,zi)
+	wCi(x+w-r,y+h-r,r,col,true,zi)
 end
 local function wRoundBorder(x,y,w,h,col,zi)
-	roundRect(D,wSq,function(...)return ci(D,...)end,wLn,x,y,w,h,col,false,zi)
+	local r=CR
+	wLn(x+r,y,x+w-r,y,col,1,zi)
+	wLn(x+r,y+h,x+w-r,y+h,col,1,zi)
+	wLn(x,y+r,x,y+h-r,col,1,zi)
+	wLn(x+w,y+r,x+w,y+h-r,col,1,zi)
+	wCi(x+r,y+r,r,col,false,zi)
+	wCi(x+w-r,y+r,r,col,false,zi)
+	wCi(x+r,y+h-r,r,col,false,zi)
+	wCi(x+w-r,y+h-r,r,col,false,zi)
 end
 
 local function pill(x,y,w,h,zi)
