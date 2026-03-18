@@ -32,7 +32,8 @@ local THEMES={
 }
 local THEME_NAMES={"midnight","emerald","crimson","confetti"}
 
-local FNT=Drawing.Fonts.Plex or Drawing.Fonts.Monospace
+local FNT=Drawing.Fonts.Monospace
+pcall(function()FNT=Drawing.Fonts.Plex end)
 local FS=16
 local FSS=14
 local FSX=13
