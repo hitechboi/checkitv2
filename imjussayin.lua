@@ -1617,6 +1617,7 @@ local function _dck(mx,my)
 		if to._c and _ins(mx,my,to._c.x,to._c.y,to._c.w,to._c.h)then
 			local n=to._c.name
 			local oldName=state.activeTab and state.activeTab.name or ""
+			if n==oldName then return end
 			local allNames={}
 			for _,t in ipairs(state.tabs)do table.insert(allNames,t.name)end
 			for _,sn in ipairs({"info","updatelogs","settings"})do table.insert(allNames,sn)end
@@ -1805,8 +1806,8 @@ function lib:Window()
 		if #state.tabs==1 then state.activeTab=tab end
 		_frb()
 		local t={}
-		function t:Section(label)
-			table.insert(tab.items,{type="section",label=label})
+		function t:Section(label,col)
+			table.insert(tab.items,{type="section",label=label,col=col or 1})
 			local s={}
 			function s:Toggle(opts)
 				local id=opts.id or opts.label
