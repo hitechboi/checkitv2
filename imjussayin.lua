@@ -694,38 +694,26 @@ local function _bts()
 	_ctb()
 	if not state.built then return end
 	local wx,wy=state.wx,state.wy
-	local tx=wx+PAD
 	local ty=wy+TH+2
 	local names={}
 	for _,t in ipairs(state.tabs)do table.insert(names,t.name)end
 	local sysTabs={"info","updatelogs","settings"}
 	for _,sn in ipairs(sysTabs)do table.insert(names,sn)end
-	local totalW=0
-	for _,name in ipairs(names)do totalW=totalW+math.max(66,#name*CHW+20)+2 end
-	totalW=totalW-2
+	local n=#names
 	local availW=WW-PAD*2
-	local useRight=totalW>availW
-	local rightPos={}
-	if useRight then
-		local rx2=wx+WW-PAD
-		for ri=#sysTabs,1,-1 do
-			local rn=sysTabs[ri]
-			local rtw=math.max(66,#rn*CHW+20)
-			rx2=rx2-rtw;rightPos[rn]=rx2;rx2=rx2-2
-		end
-	end
-	local userCount=#names-#sysTabs
+	local gap=2
+	local totalGap=gap*(n-1)
+	local tw=math.floor((availW-totalGap)/n)
+	local leftover=availW-totalGap-tw*n
+	local tx=wx+PAD
 	for i,name in ipairs(names)do
-		local tw=math.max(66,#name*CHW+20)
+		local ew=tw+(i<=leftover and 1 or 0)
 		local isA=state.activeTab and state.activeTab.name==name
-		local bx
-		if useRight and rightPos[name] then bx=rightPos[name]
-		else bx=tx end
-		_tbpf(bx,ty,tw,TAH-2,isA and C.ts or C.tb,3,6)
-		if isA then _tbln(bx+6,ty+TAH-2,bx+tw-6,ty+TAH-2,C.a,2,4)end
-		_tbtb(name,bx+tw/2,ty+4,isA and C.w or C.g,FSX,true,5)
-		table.insert(_tbo,{_c={x=bx,y=ty,w=tw,h=TAH-2,name=name}})
-		if not(useRight and rightPos[name]) then tx=tx+tw+2 end
+		_tbpf(tx,ty,ew,TAH-2,isA and C.ts or C.tb,3,6)
+		if isA then _tbln(tx+6,ty+TAH-2,tx+ew-6,ty+TAH-2,C.a,2,4)end
+		_tbtb(name,tx+ew/2,ty+4,isA and C.w or C.g,FSX,true,5)
+		table.insert(_tbo,{_c={x=tx,y=ty,w=ew,h=TAH-2,name=name}})
+		tx=tx+ew+gap
 	end
 end
 
