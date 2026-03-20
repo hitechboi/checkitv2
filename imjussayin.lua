@@ -25,11 +25,11 @@ local C={
 }
 
 local _thm={
-	midnight={a=Color3.fromRGB(70,120,255),sb=Color3.fromRGB(12,15,27),ct=Color3.fromRGB(11,13,23),tb=Color3.fromRGB(7,9,17),bd=Color3.fromRGB(30,40,72),rb=Color3.fromRGB(14,18,33),ts=Color3.fromRGB(20,35,85),w=Color3.fromRGB(215,220,240),g=Color3.fromRGB(100,112,145),dg=Color3.fromRGB(28,33,52),on=Color3.fromRGB(45,85,195),of=Color3.fromRGB(20,24,42),od=Color3.fromRGB(175,198,255),fd=Color3.fromRGB(55,65,95),dv=Color3.fromRGB(22,27,48),mb=Color3.fromRGB(11,13,22)},
+	["check it"]={a=Color3.fromRGB(70,120,255),sb=Color3.fromRGB(12,15,27),ct=Color3.fromRGB(11,13,23),tb=Color3.fromRGB(7,9,17),bd=Color3.fromRGB(30,40,72),rb=Color3.fromRGB(14,18,33),ts=Color3.fromRGB(20,35,85),w=Color3.fromRGB(215,220,240),g=Color3.fromRGB(100,112,145),dg=Color3.fromRGB(28,33,52),on=Color3.fromRGB(45,85,195),of=Color3.fromRGB(20,24,42),od=Color3.fromRGB(175,198,255),fd=Color3.fromRGB(55,65,95),dv=Color3.fromRGB(22,27,48),mb=Color3.fromRGB(11,13,22)},
 	moon={a=Color3.fromRGB(255,170,190),sb=Color3.fromRGB(35,35,40),ct=Color3.fromRGB(32,32,37),tb=Color3.fromRGB(28,28,33),bd=Color3.fromRGB(55,55,65),rb=Color3.fromRGB(38,38,44),ts=Color3.fromRGB(55,45,55),w=Color3.fromRGB(230,230,235),g=Color3.fromRGB(130,130,140),dg=Color3.fromRGB(45,45,52),on=Color3.fromRGB(180,120,140),of=Color3.fromRGB(38,38,44),od=Color3.fromRGB(255,200,215),fd=Color3.fromRGB(80,80,90),dv=Color3.fromRGB(48,48,55),mb=Color3.fromRGB(30,30,35)},
 	confetti={a=Color3.fromRGB(255,210,60),sb=Color3.fromRGB(12,15,27),ct=Color3.fromRGB(11,13,23),tb=Color3.fromRGB(7,9,17),bd=Color3.fromRGB(30,40,72),rb=Color3.fromRGB(14,18,33),ts=Color3.fromRGB(40,35,15),w=Color3.fromRGB(215,220,240),g=Color3.fromRGB(100,112,145),dg=Color3.fromRGB(28,33,52),on=Color3.fromRGB(180,155,30),of=Color3.fromRGB(20,24,42),od=Color3.fromRGB(255,230,140),fd=Color3.fromRGB(55,65,95),dv=Color3.fromRGB(22,27,48),mb=Color3.fromRGB(11,13,22)},
 }
-local _thn={"midnight","moon","confetti"}
+local _thn={"check it","moon","confetti"}
 local FNT=Drawing.Fonts.Monospace
 pcall(function()FNT=Drawing.Fonts.System end)
 local FNTB=FNT
@@ -576,7 +576,7 @@ local function _cwh()
 		if h>maxH then maxH=h end
 	end
 	local raw=math.max(200,maxH)+TH+TAH+10
-	local maxScreen=math.floor(_sy*0.75)
+	local maxScreen=math.floor(_sy*0.6)
 	return math.min(raw,maxScreen)
 end
 
@@ -792,7 +792,7 @@ local _ulg={
 			"System/SystemBold font, bigger text",
 			"loading screen scale-up animation",
 			"title worm wave + It glow effect",
-			"theme switcher (midnight/moon/confetti)",
+			"theme switcher (check it/moon/confetti)",
 			"rounded pill sections with dividers",
 			"smooth slide dropdown animations",
 			"directional fade-swipe tab switching",
@@ -1016,10 +1016,16 @@ local function _rcl(colX,colW,items,startY)
 			local hbDot=_tci(dx+4,dy+10,3,C.a,true,5)
 			local dtxt=f.text or "session active"
 			_ttx(dtxt,dx+14,dy+4,C.g,FSX,false,5)
-			local nameX=dx+14+#dtxt*CHW+6
+			local nameX=dx+14+#dtxt*CHW+4
+			local gnChars={}
 			if f.gameName and f.gameName~="" then
-				_ttx(f.gameName,nameX,dy+4,C.g,10,false,5)
-				nameX=nameX+#f.gameName*6+6
+				local gn=f.gameName
+				for ci=1,#gn do
+					local ch=string.sub(gn,ci,ci)
+					local ctxt=_ttb(ch,nameX+(ci-1)*CHW,dy+4,C.a,FSX,false,5)
+					table.insert(gnChars,ctxt)
+				end
+				nameX=nameX+#gn*CHW+4
 			end
 			local avSz=20
 			local avR=avSz/2
@@ -1046,7 +1052,7 @@ local function _rcl(colX,colW,items,startY)
 						end
 					end
 				end
-				nameX=nameX+avSz+4
+				nameX=nameX+avSz+3
 			end
 			local uName="User"
 			pcall(function()uName=_lp.Name end)
@@ -1059,6 +1065,11 @@ local function _rcl(colX,colW,items,startY)
 					local r=3.5+1.5*s
 					local a=0.5+0.5*s
 					pcall(function()hbDot.Radius=r;hbDot.Transparency=a end)
+					for ci,ctxt in ipairs(gnChars)do
+						local wave=math.sin(t*3+(ci-1)*0.5)
+						local oy=dy+4+wave*2
+						pcall(function()ctxt.Position=_v2(ctxt.Position.X,oy)end)
+					end
 					task.wait(0.016)
 				end
 			end)
@@ -1121,11 +1132,16 @@ local function _rin()
 	local hbDot2=_tci(sx+8,sdy+10,3,C.a,true,5)
 	local stxt="session active"
 	_ttx(stxt,sx+18,sdy+4,C.g,FSX,false,5)
-	local snX=sx+18+#stxt*CHW+6
+	local snX=sx+18+#stxt*CHW+4
+	local gnChars2={}
 	local gn=state.gameName or ""
 	if gn~="" then
-		_ttx(gn,snX,sdy+4,C.g,10,false,5)
-		snX=snX+#gn*6+6
+		for ci=1,#gn do
+			local ch=string.sub(gn,ci,ci)
+			local ctxt=_ttb(ch,snX+(ci-1)*CHW,sdy+4,C.a,FSX,false,5)
+			table.insert(gnChars2,ctxt)
+		end
+		snX=snX+#gn*CHW+4
 	end
 	local avSz2=20
 	local avR2=avSz2/2
@@ -1150,7 +1166,7 @@ local function _rin()
 				end
 			end
 		end
-		snX=snX+avSz2+4
+		snX=snX+avSz2+3
 	end
 	local uN2="User"
 	pcall(function()uN2=_lp.Name end)
@@ -1163,6 +1179,11 @@ local function _rin()
 			local r=3.5+1.5*s
 			local a2=0.5+0.5*s
 			pcall(function()hbDot2.Radius=r;hbDot2.Transparency=a2 end)
+			for ci,ctxt in ipairs(gnChars2)do
+				local wave=math.sin(t*3+(ci-1)*0.5)
+				local oy=sdy+4+wave*2
+				pcall(function()ctxt.Position=_v2(ctxt.Position.X,oy)end)
+			end
 			task.wait(0.016)
 		end
 	end)
