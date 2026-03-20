@@ -1017,15 +1017,9 @@ local function _rcl(colX,colW,items,startY)
 			local dtxt=f.text or "session active"
 			_ttx(dtxt,dx+14,dy+4,C.g,FSX,false,5)
 			local nameX=dx+14+#dtxt*CHW+4
-			local gnChars={}
 			if f.gameName and f.gameName~="" then
-				local gn=f.gameName
-				for ci=1,#gn do
-					local ch=string.sub(gn,ci,ci)
-					local ctxt=_ttb(ch,nameX+(ci-1)*CHW,dy+4,C.a,FSX,false,5)
-					table.insert(gnChars,ctxt)
-				end
-				nameX=nameX+#gn*CHW+4
+				_ttb(f.gameName,nameX,dy+4,C.a,FSX,false,5)
+				nameX=nameX+#f.gameName*CHW+4
 			end
 			local avSz=20
 			local avR=avSz/2
@@ -1065,11 +1059,6 @@ local function _rcl(colX,colW,items,startY)
 					local r=3.5+1.5*s
 					local a=0.5+0.5*s
 					pcall(function()hbDot.Radius=r;hbDot.Transparency=a end)
-					for ci,ctxt in ipairs(gnChars)do
-						local wave=math.sin(t*3+(ci-1)*0.5)
-						local oy=dy+4+wave*2
-						pcall(function()ctxt.Position=_v2(ctxt.Position.X,oy)end)
-					end
 					task.wait(0.016)
 				end
 			end)
@@ -1133,14 +1122,9 @@ local function _rin()
 	local stxt="session active"
 	_ttx(stxt,sx+18,sdy+4,C.g,FSX,false,5)
 	local snX=sx+18+#stxt*CHW+4
-	local gnChars2={}
 	local gn=state.gameName or ""
 	if gn~="" then
-		for ci=1,#gn do
-			local ch=string.sub(gn,ci,ci)
-			local ctxt=_ttb(ch,snX+(ci-1)*CHW,sdy+4,C.a,FSX,false,5)
-			table.insert(gnChars2,ctxt)
-		end
+		_ttb(gn,snX,sdy+4,C.a,FSX,false,5)
 		snX=snX+#gn*CHW+4
 	end
 	local avSz2=20
@@ -1179,11 +1163,6 @@ local function _rin()
 			local r=3.5+1.5*s
 			local a2=0.5+0.5*s
 			pcall(function()hbDot2.Radius=r;hbDot2.Transparency=a2 end)
-			for ci,ctxt in ipairs(gnChars2)do
-				local wave=math.sin(t*3+(ci-1)*0.5)
-				local oy=sdy+4+wave*2
-				pcall(function()ctxt.Position=_v2(ctxt.Position.X,oy)end)
-			end
 			task.wait(0.016)
 		end
 	end)
