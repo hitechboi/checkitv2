@@ -535,6 +535,14 @@ local function _gri(items)
 				end
 				table.insert(groups,grp)
 			end
+		elseif it.type=="button" then
+			local grp={items[i]}
+			i=i+1
+			while i<=#items and items[i].type=="button" do
+				table.insert(grp,items[i])
+				i=i+1
+			end
+			table.insert(groups,grp)
 		else
 			i=i+1
 		end
@@ -567,7 +575,9 @@ local function _cwh()
 		local h=math.max(colH(left),colH(right))+16
 		if h>maxH then maxH=h end
 	end
-	return math.max(200,maxH)+TH+TAH+10
+	local raw=math.max(200,maxH)+TH+TAH+10
+	local maxScreen=math.floor(_sy*0.75)
+	return math.min(raw,maxScreen)
 end
 
 local function _bwn()
@@ -1007,6 +1017,10 @@ local function _rcl(colX,colW,items,startY)
 			local dtxt=f.text or "session active"
 			_ttx(dtxt,dx+14,dy+4,C.g,FSX,false,5)
 			local nameX=dx+14+#dtxt*CHW+6
+			if f.gameName and f.gameName~="" then
+				_ttx(f.gameName,nameX,dy+4,C.g,10,false,5)
+				nameX=nameX+#f.gameName*6+6
+			end
 			local avSz=20
 			local avR=avSz/2
 			if _avd and _avd.pixels then
@@ -1101,6 +1115,57 @@ local function _rin()
 	local ay=cy2+24
 	_pil(sx,ay,sw,30,4)
 	_ttx("ty guys.",sx+PAD+4,ay+8,C.w,FSX,false,6)
+	local sy2=ay+30+10
+	_slb(sx,sy2,sw,"session",5)
+	local sdy=sy2+24
+	local hbDot2=_tci(sx+8,sdy+10,3,C.a,true,5)
+	local stxt="session active"
+	_ttx(stxt,sx+18,sdy+4,C.g,FSX,false,5)
+	local snX=sx+18+#stxt*CHW+6
+	local gn=state.gameName or ""
+	if gn~="" then
+		_ttx(gn,snX,sdy+4,C.g,10,false,5)
+		snX=snX+#gn*6+6
+	end
+	local avSz2=20
+	local avR2=avSz2/2
+	if _avd and _avd.pixels then
+		local aw2=_avd.width or 64
+		local ah2=_avd.height or 64
+		local stepX2=math.floor(aw2/avSz2)
+		local stepY2=math.floor(ah2/avSz2)
+		for ay2=0,avSz2-1 do
+			local row2=_avd.pixels[ay2*stepY2+1]
+			if row2 then
+				for ax2=0,avSz2-1 do
+					local ddx2=ax2-avR2+0.5
+					local ddy2=ay2-avR2+0.5
+					if ddx2*ddx2+ddy2*ddy2<=avR2*avR2 then
+						local px3=row2[ax2*stepX2+1]
+						if px3 and px3.a and px3.a>0.1 then
+							local sq2=_tsq(snX+ax2,sdy+ay2,1,1,Color3.fromRGB(px3.r or 0,px3.g or 0,px3.b or 0),true,6)
+							pcall(function()sq2.Transparency=px3.a or 1 end)
+						end
+					end
+				end
+			end
+		end
+		snX=snX+avSz2+4
+	end
+	local uN2="User"
+	pcall(function()uN2=_lp.Name end)
+	_ttb(uN2,snX,sdy+4,C.a,FSX,false,5)
+	task.spawn(function()
+		local t0=tick()
+		while hbDot2 and state.visible and state.built and state.activeTab and state.activeTab.name=="info" do
+			local t=tick()-t0
+			local s=math.sin(t*5)
+			local r=3.5+1.5*s
+			local a2=0.5+0.5*s
+			pcall(function()hbDot2.Radius=r;hbDot2.Transparency=a2 end)
+			task.wait(0.016)
+		end
+	end)
 end
 
 local function _rtc(tab)
@@ -1836,7 +1901,7 @@ function lib:Window()
 				return ctrl
 			end
 			function s:DebugRow(opts)
-				table.insert(tab.items,{type="debug",text=opts.text or "session active",col=opts.col or 1})
+				table.insert(tab.items,{type="debug",text=opts.text or "session active",gameName=opts.gameName or "",col=opts.col or 1})
 				if state.activeTab and state.activeTab.name==tab.name then _frb()end
 			end
 			function s:Button(opts)
@@ -1851,6 +1916,9 @@ function lib:Window()
 			_bts();_rtb(state.activeTab)
 		end
 		return t
+	end
+	function w:SetGameName(gn)
+		state.gameName=gn or ""
 	end
 	function w:AddMainScriptLog(ver,date,entries)
 		for _,cat in ipairs(_ulg)do
