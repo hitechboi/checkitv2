@@ -6,28 +6,28 @@ local _cm=workspace.CurrentCamera
 local _sx,_sy=_cm.ViewportSize.X,_cm.ViewportSize.Y
 
 local C={
-	ACCENT=Color3.fromRGB(70,120,255),
-	SIDEBAR=Color3.fromRGB(12,15,27),
-	CONTENT=Color3.fromRGB(11,13,23),
-	TOPBAR=Color3.fromRGB(7,9,17),
-	BORDER=Color3.fromRGB(30,40,72),
-	ROWBG=Color3.fromRGB(14,18,33),
-	TABSEL=Color3.fromRGB(20,35,85),
-	WHITE=Color3.fromRGB(215,220,240),
-	GRAY=Color3.fromRGB(100,112,145),
-	DIMGRAY=Color3.fromRGB(28,33,52),
-	ON=Color3.fromRGB(45,85,195),
-	OFF=Color3.fromRGB(20,24,42),
-	ONDOT=Color3.fromRGB(175,198,255),
-	OFFDOT=Color3.fromRGB(55,65,95),
-	DIV=Color3.fromRGB(22,27,48),
-	MINIBAR=Color3.fromRGB(11,13,22),
+	a=Color3.fromRGB(70,120,255),
+	sb=Color3.fromRGB(12,15,27),
+	ct=Color3.fromRGB(11,13,23),
+	tb=Color3.fromRGB(7,9,17),
+	bd=Color3.fromRGB(30,40,72),
+	rb=Color3.fromRGB(14,18,33),
+	ts=Color3.fromRGB(20,35,85),
+	w=Color3.fromRGB(215,220,240),
+	g=Color3.fromRGB(100,112,145),
+	dg=Color3.fromRGB(28,33,52),
+	on=Color3.fromRGB(45,85,195),
+	of=Color3.fromRGB(20,24,42),
+	od=Color3.fromRGB(175,198,255),
+	fd=Color3.fromRGB(55,65,95),
+	dv=Color3.fromRGB(22,27,48),
+	mb=Color3.fromRGB(11,13,22),
 }
 
 local _thm={
-	midnight={ACCENT=Color3.fromRGB(70,120,255),SIDEBAR=Color3.fromRGB(12,15,27),CONTENT=Color3.fromRGB(11,13,23),TOPBAR=Color3.fromRGB(7,9,17),BORDER=Color3.fromRGB(30,40,72),ROWBG=Color3.fromRGB(14,18,33),TABSEL=Color3.fromRGB(20,35,85),WHITE=Color3.fromRGB(215,220,240),GRAY=Color3.fromRGB(100,112,145),DIMGRAY=Color3.fromRGB(28,33,52),ON=Color3.fromRGB(45,85,195),OFF=Color3.fromRGB(20,24,42),ONDOT=Color3.fromRGB(175,198,255),OFFDOT=Color3.fromRGB(55,65,95),DIV=Color3.fromRGB(22,27,48),MINIBAR=Color3.fromRGB(11,13,22)},
-	moon={ACCENT=Color3.fromRGB(255,170,190),SIDEBAR=Color3.fromRGB(35,35,40),CONTENT=Color3.fromRGB(32,32,37),TOPBAR=Color3.fromRGB(28,28,33),BORDER=Color3.fromRGB(55,55,65),ROWBG=Color3.fromRGB(38,38,44),TABSEL=Color3.fromRGB(55,45,55),WHITE=Color3.fromRGB(230,230,235),GRAY=Color3.fromRGB(130,130,140),DIMGRAY=Color3.fromRGB(45,45,52),ON=Color3.fromRGB(180,120,140),OFF=Color3.fromRGB(38,38,44),ONDOT=Color3.fromRGB(255,200,215),OFFDOT=Color3.fromRGB(80,80,90),DIV=Color3.fromRGB(48,48,55),MINIBAR=Color3.fromRGB(30,30,35)},
-	confetti={ACCENT=Color3.fromRGB(255,210,60),SIDEBAR=Color3.fromRGB(12,15,27),CONTENT=Color3.fromRGB(11,13,23),TOPBAR=Color3.fromRGB(7,9,17),BORDER=Color3.fromRGB(30,40,72),ROWBG=Color3.fromRGB(14,18,33),TABSEL=Color3.fromRGB(40,35,15),WHITE=Color3.fromRGB(215,220,240),GRAY=Color3.fromRGB(100,112,145),DIMGRAY=Color3.fromRGB(28,33,52),ON=Color3.fromRGB(180,155,30),OFF=Color3.fromRGB(20,24,42),ONDOT=Color3.fromRGB(255,230,140),OFFDOT=Color3.fromRGB(55,65,95),DIV=Color3.fromRGB(22,27,48),MINIBAR=Color3.fromRGB(11,13,22)},
+	midnight={a=Color3.fromRGB(70,120,255),sb=Color3.fromRGB(12,15,27),ct=Color3.fromRGB(11,13,23),tb=Color3.fromRGB(7,9,17),bd=Color3.fromRGB(30,40,72),rb=Color3.fromRGB(14,18,33),ts=Color3.fromRGB(20,35,85),w=Color3.fromRGB(215,220,240),g=Color3.fromRGB(100,112,145),dg=Color3.fromRGB(28,33,52),on=Color3.fromRGB(45,85,195),of=Color3.fromRGB(20,24,42),od=Color3.fromRGB(175,198,255),fd=Color3.fromRGB(55,65,95),dv=Color3.fromRGB(22,27,48),mb=Color3.fromRGB(11,13,22)},
+	moon={a=Color3.fromRGB(255,170,190),sb=Color3.fromRGB(35,35,40),ct=Color3.fromRGB(32,32,37),tb=Color3.fromRGB(28,28,33),bd=Color3.fromRGB(55,55,65),rb=Color3.fromRGB(38,38,44),ts=Color3.fromRGB(55,45,55),w=Color3.fromRGB(230,230,235),g=Color3.fromRGB(130,130,140),dg=Color3.fromRGB(45,45,52),on=Color3.fromRGB(180,120,140),of=Color3.fromRGB(38,38,44),od=Color3.fromRGB(255,200,215),fd=Color3.fromRGB(80,80,90),dv=Color3.fromRGB(48,48,55),mb=Color3.fromRGB(30,30,35)},
+	confetti={a=Color3.fromRGB(255,210,60),sb=Color3.fromRGB(12,15,27),ct=Color3.fromRGB(11,13,23),tb=Color3.fromRGB(7,9,17),bd=Color3.fromRGB(30,40,72),rb=Color3.fromRGB(14,18,33),ts=Color3.fromRGB(40,35,15),w=Color3.fromRGB(215,220,240),g=Color3.fromRGB(100,112,145),dg=Color3.fromRGB(28,33,52),on=Color3.fromRGB(180,155,30),of=Color3.fromRGB(20,24,42),od=Color3.fromRGB(255,230,140),fd=Color3.fromRGB(55,65,95),dv=Color3.fromRGB(22,27,48),mb=Color3.fromRGB(11,13,22)},
 }
 local _thn={"midnight","moon","confetti"}
 local FNT=Drawing.Fonts.Monospace
@@ -190,25 +190,25 @@ local function _shl()
 		pcall(function()brdL3.From=_v2(cx,cy2+cr);brdL3.To=_v2(cx,cy2+ch-cr)end)
 		pcall(function()brdL4.From=_v2(cx+cw,cy2+cr);brdL4.To=_v2(cx+cw,cy2+ch-cr)end)
 	end
-	local bgS1=_lob("Square",{Position=_v2(scx,scy),Size=_v2(0,0),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
-	local bgS2=_lob("Square",{Position=_v2(scx,scy),Size=_v2(0,0),Color=C.TOPBAR,Filled=true,Transparency=1,ZIndex=50,Visible=true})
-	local bgC1=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
-	local bgC2=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
-	local bgC3=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
-	local bgC4=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.TOPBAR,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
-	local brdL1=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.BORDER,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
-	local brdL2=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.BORDER,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
-	local brdL3=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.BORDER,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
-	local brdL4=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.BORDER,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
+	local bgS1=_lob("Square",{Position=_v2(scx,scy),Size=_v2(0,0),Color=C.tb,Filled=true,Transparency=1,ZIndex=50,Visible=true})
+	local bgS2=_lob("Square",{Position=_v2(scx,scy),Size=_v2(0,0),Color=C.tb,Filled=true,Transparency=1,ZIndex=50,Visible=true})
+	local bgC1=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.tb,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
+	local bgC2=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.tb,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
+	local bgC3=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.tb,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
+	local bgC4=_lob("Circle",{Position=_v2(scx,scy),Radius=1,Color=C.tb,Filled=true,Transparency=1,NumSides=24,ZIndex=50,Visible=true})
+	local brdL1=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.bd,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
+	local brdL2=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.bd,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
+	local brdL3=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.bd,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
+	local brdL4=_lob("Line",{From=_v2(scx,scy),To=_v2(scx,scy),Color=C.bd,Thickness=1,Transparency=1,ZIndex=51,Visible=true})
 	local lx=scx-math.floor(LW/2)
 	local ly=scy-math.floor(LH/2)
 	local slideOff=12
 	local parts={
-		{txt="Check", col=C.WHITE,  sz=22, bx=scx-56, by=scy-16, delay=0},
-		{txt=".",     col=C.BORDER, sz=16, bx=scx+2,  by=scy-16, delay=0.06},
-		{txt="It",    col=C.ACCENT, sz=22, bx=scx+12, by=scy-16, delay=0.12},
-		{txt=".",     col=C.BORDER, sz=16, bx=scx+34, by=scy-16, delay=0.18},
-		{txt="v2",    col=C.GRAY,   sz=12, bx=scx+46, by=scy-10, delay=0.24},
+		{txt="Check", col=C.w,  sz=22, bx=scx-56, by=scy-16, delay=0},
+		{txt=".",     col=C.bd, sz=16, bx=scx+2,  by=scy-16, delay=0.06},
+		{txt="It",    col=C.a, sz=22, bx=scx+12, by=scy-16, delay=0.12},
+		{txt=".",     col=C.bd, sz=16, bx=scx+34, by=scy-16, delay=0.18},
+		{txt="v2",    col=C.g,   sz=12, bx=scx+46, by=scy-10, delay=0.24},
 	}
 	local textObjs={}
 	for _,p in ipairs(parts)do
@@ -218,9 +218,9 @@ local function _shl()
 	local barW=180
 	local barX=scx-barW/2
 	local barY=scy+18
-	local barBg=_lob("Square",{Position=_v2(barX,barY),Size=_v2(barW,2),Color=C.DIMGRAY,Filled=true,Transparency=0,ZIndex=52,Visible=true})
-	local barFill=_lob("Square",{Position=_v2(barX,barY),Size=_v2(0,2),Color=C.ACCENT,Filled=true,Transparency=0,ZIndex=53,Visible=true})
-	local statusTx=_lob("Text",{Text="initializing modules_",Position=_v2(scx,scy+30),Color=C.GRAY,Size=11,Font=FNT,Center=true,Outline=false,Transparency=0,ZIndex=52,Visible=true})
+	local barBg=_lob("Square",{Position=_v2(barX,barY),Size=_v2(barW,2),Color=C.dg,Filled=true,Transparency=0,ZIndex=52,Visible=true})
+	local barFill=_lob("Square",{Position=_v2(barX,barY),Size=_v2(0,2),Color=C.a,Filled=true,Transparency=0,ZIndex=53,Visible=true})
+	local statusTx=_lob("Text",{Text="initializing modules_",Position=_v2(scx,scy+30),Color=C.g,Size=11,Font=FNT,Center=true,Outline=false,Transparency=0,ZIndex=52,Visible=true})
 	pcall(function()
 		local scaleDur=0.4
 		local s0=tick()
@@ -440,8 +440,8 @@ local function _tpb(x,y,w,h,col,zi,cr)_dpb(_tln,x,y,w,h,col,zi,cr)end
 local function _tbpf(x,y,w,h,col,zi,cr)_dpf(_tbsq,_tbci,x,y,w,h,col,zi,cr)end
 
 local function _pil(x,y,w,h,zi,cr)
-	_tpf(x,y,w,h,C.CONTENT,zi or 3,cr)
-	_tpb(x,y,w,h,C.BORDER,(zi or 3)+1,cr)
+	_tpf(x,y,w,h,C.ct,zi or 3,cr)
+	_tpb(x,y,w,h,C.bd,(zi or 3)+1,cr)
 end
 
 local function _rbg(x,y,w,h,col,zi,isFirst,isLast)
@@ -460,15 +460,15 @@ local function _rbg(x,y,w,h,col,zi,isFirst,isLast)
 		_tsq(x,y,w,h,col,true,zi)
 	end
 end
-local function _dvl(x,y,w,zi)_tln(x+8,y,x+w-8,y,C.DIV,1,zi or 5)end
+local function _dvl(x,y,w,zi)_tln(x+8,y,x+w-8,y,C.dv,1,zi or 5)end
 local function _slb(x,y,w,txt,zi)
-	_ttb(txt,x+PAD,y+5,C.GRAY,FSX,false,zi or 5)
-	_tln(x+8,y+18,x+w-8,y+18,C.DIV,1,(zi or 5)-1)
+	_ttb(txt,x+PAD,y+5,C.g,FSX,false,zi or 5)
+	_tln(x+8,y+18,x+w-8,y+18,C.dv,1,(zi or 5)-1)
 end
 
 local function _tgd(x,y,on,zi)
 	local z=zi or 6
-	local col=on and C.ON or C.OFF
+	local col=on and C.on or C.of
 	local r=8
 	local bg1=_tsq(x+r,y,32-r*2,16,col,true,z)
 	local bg2=_tsq(x,y+r,32,16-r*2,col,true,z)
@@ -476,7 +476,7 @@ local function _tgd(x,y,on,zi)
 	local c2=_tci(x+32-r,y+r,r,col,true,z)
 	local c3=_tci(x+r,y+16-r,r,col,true,z)
 	local c4=_tci(x+32-r,y+16-r,r,col,true,z)
-	local dot=_tci(x+(on and 24 or 8),y+8,6,on and C.ONDOT or C.OFFDOT,true,z+2)
+	local dot=_tci(x+(on and 24 or 8),y+8,6,on and C.od or C.fd,true,z+2)
 	return bg1,bg2,dot,c1,c2,c3,c4
 end
 
@@ -484,9 +484,9 @@ local function _sld(x,y,w,val,mn,mx,zi)
 	local z=zi or 6
 	local pct=_clp((val-mn)/(mx-mn),0,1)
 	local fw=math.max(2,math.floor(w*pct))
-	_tsq(x,y,w,3,C.DIMGRAY,true,z)
-	local fill=_tsq(x,y,fw,3,C.ACCENT,true,z+1)
-	local knob=_tci(x+fw,y+1,5,C.ONDOT,true,z+2)
+	_tsq(x,y,w,3,C.dg,true,z)
+	local fill=_tsq(x,y,fw,3,C.a,true,z+1)
+	local knob=_tci(x+fw,y+1,5,C.od,true,z+2)
 	return fill,knob
 end
 
@@ -501,6 +501,7 @@ local function _ith(it)
 			return DDH*(1+#(it.options or{}))
 		end
 		return DDH
+	elseif it.type=="button" then return RH
 	elseif it.type=="debug" then return DTH
 	elseif it.type=="profiletag" then return PTH
 	else return RH end
@@ -575,35 +576,35 @@ local function _bwn()
 	local wx,wy=state.wx,state.wy
 	local wh=_cwh()
 	state.wh=wh
-	_wpf(wx,wy,WW,wh,C.SIDEBAR,1)
-	_wpb(wx,wy,WW,wh,C.BORDER,2)
+	_wpf(wx,wy,WW,wh,C.sb,1)
+	_wpb(wx,wy,WW,wh,C.bd,2)
 	local tr=8
-	_wsq(wx+tr,wy,WW-tr*2,TH,C.TOPBAR,true,2)
-	_wsq(wx,wy+tr,WW,TH-tr,C.TOPBAR,true,2)
-	_wci(wx+tr,wy+tr,tr,C.TOPBAR,true,2)
-	_wci(wx+WW-tr,wy+tr,tr,C.TOPBAR,true,2)
-	win.tLine=_wln(wx,wy+TH,wx+WW,wy+TH,C.BORDER,1,3)
-	win.t1=_wtb("Check",wx+PAD+2,wy+7,C.WHITE,FS,false,4)
-	win.t2=_wtx("·",wx+PAD+64,wy+7,C.BORDER,FS,false,4)
-	win.t3=_wtb("It",wx+PAD+76,wy+7,C.ACCENT,FS,false,4)
-	win.t4=_wtx("·",wx+PAD+96,wy+7,C.BORDER,FS,false,4)
-	win.t5=_wtx("v2",wx+PAD+108,wy+10,C.GRAY,FSS,false,4)
-	win.kLbl=_wtx("menu key",wx+WW-140,wy+11,C.GRAY,FSX,false,4)
+	_wsq(wx+tr,wy,WW-tr*2,TH,C.tb,true,2)
+	_wsq(wx,wy+tr,WW,TH-tr,C.tb,true,2)
+	_wci(wx+tr,wy+tr,tr,C.tb,true,2)
+	_wci(wx+WW-tr,wy+tr,tr,C.tb,true,2)
+	win.tLine=_wln(wx,wy+TH,wx+WW,wy+TH,C.bd,1,3)
+	win.t1=_wtb("Check",wx+PAD+2,wy+7,C.w,FS,false,4)
+	win.t2=_wtx("·",wx+PAD+64,wy+7,C.bd,FS,false,4)
+	win.t3=_wtb("It",wx+PAD+76,wy+7,C.a,FS,false,4)
+	win.t4=_wtx("·",wx+PAD+96,wy+7,C.bd,FS,false,4)
+	win.t5=_wtx("v2",wx+PAD+108,wy+10,C.g,FSS,false,4)
+	win.kLbl=_wtx("menu key",wx+WW-140,wy+11,C.g,FSX,false,4)
 	local kbx=wx+WW-72
 	local kby=wy+7
 	local kbw=66
 	local kbh=18
 	local kr=5
-	_wsq(kbx+kr,kby,kbw-kr*2,kbh,C.DIMGRAY,true,3)
-	_wsq(kbx,kby+kr,kbw,kbh-kr*2,C.DIMGRAY,true,3)
-	_wci(kbx+kr,kby+kr,kr,C.DIMGRAY,true,3)
-	_wci(kbx+kbw-kr,kby+kr,kr,C.DIMGRAY,true,3)
-	_wci(kbx+kr,kby+kbh-kr,kr,C.DIMGRAY,true,3)
-	_wci(kbx+kbw-kr,kby+kbh-kr,kr,C.DIMGRAY,true,3)
-	win.kTx=_wtb(state.menuKeyLabel,kbx+kbw/2,wy+11,C.ONDOT,FSX,true,5)
-	win.tabBg=_wsq(wx,wy+TH,WW,TAH,C.TOPBAR,true,2)
-	win.tabLn=_wln(wx,wy+TH+TAH,wx+WW,wy+TH+TAH,C.BORDER,1,3)
-	win.colDiv=_wln(wx+CW,wy+TH+TAH,wx+CW,wy+wh-8,C.BORDER,1,2)
+	_wsq(kbx+kr,kby,kbw-kr*2,kbh,C.dg,true,3)
+	_wsq(kbx,kby+kr,kbw,kbh-kr*2,C.dg,true,3)
+	_wci(kbx+kr,kby+kr,kr,C.dg,true,3)
+	_wci(kbx+kbw-kr,kby+kr,kr,C.dg,true,3)
+	_wci(kbx+kr,kby+kbh-kr,kr,C.dg,true,3)
+	_wci(kbx+kbw-kr,kby+kbh-kr,kr,C.dg,true,3)
+	win.kTx=_wtb(state.menuKeyLabel,kbx+kbw/2,wy+11,C.od,FSX,true,5)
+	win.tabBg=_wsq(wx,wy+TH,WW,TAH,C.tb,true,2)
+	win.tabLn=_wln(wx,wy+TH+TAH,wx+WW,wy+TH+TAH,C.bd,1,3)
+	win.colDiv=_wln(wx+CW,wy+TH+TAH,wx+CW,wy+wh-8,C.bd,1,2)
 	state.built=true
 	if not state._titleAnim then
 		state._titleAnim=true
@@ -628,7 +629,7 @@ local function _bwn()
 					if win.t3 then
 						local g=(math.sin(t*glowSpeed)+1)/2
 						local wr,wg2,wb=215/255,220/255,240/255
-						local ar,ag,ab=C.ACCENT.R,C.ACCENT.G,C.ACCENT.B
+						local ar,ag,ab=C.a.R,C.a.G,C.a.B
 						local cr=wr+(ar-wr)*g
 						local cg=wg2+(ag-wg2)*g
 						local cb=wb+(ab-wb)*g
@@ -710,9 +711,9 @@ local function _bts()
 		local bx
 		if useRight and rightPos[name] then bx=rightPos[name]
 		else bx=tx end
-		_tbpf(bx,ty,tw,TAH-2,isA and C.TABSEL or C.TOPBAR,3,6)
-		if isA then _tbln(bx+6,ty+TAH-2,bx+tw-6,ty+TAH-2,C.ACCENT,2,4)end
-		_tbtb(name,bx+tw/2,ty+4,isA and C.WHITE or C.GRAY,FSX,true,5)
+		_tbpf(bx,ty,tw,TAH-2,isA and C.ts or C.tb,3,6)
+		if isA then _tbln(bx+6,ty+TAH-2,bx+tw-6,ty+TAH-2,C.a,2,4)end
+		_tbtb(name,bx+tw/2,ty+4,isA and C.w or C.g,FSX,true,5)
 		table.insert(_tbo,{_c={x=bx,y=ty,w=tw,h=TAH-2,name=name}})
 		if not(useRight and rightPos[name]) then tx=tx+tw+2 end
 	end
@@ -726,21 +727,21 @@ local function _rse()
 	_slb(sx,cy,sw,"keybinds",5)
 	local ky=cy+24
 	_pil(sx,ky,sw,48,4)
-	_ttb("menu key",sx+PAD+4,ky+18,C.WHITE,FSX,false,6)
+	_ttb("menu key",sx+PAD+4,ky+18,C.w,FSX,false,6)
 	local kbx=sx+sw-142
-	_tpf(kbx,ky+12,68,24,C.DIMGRAY,6,5)
-	_tpb(kbx,ky+12,68,24,C.BORDER,7,5)
-	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+17,C.ONDOT,FSX,true,8)
+	_tpf(kbx,ky+12,68,24,C.dg,6,5)
+	_tpb(kbx,ky+12,68,24,C.bd,7,5)
+	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+17,C.od,FSX,true,8)
 	local rbx=kbx+74
-	_tpf(rbx,ky+12,52,24,C.DIMGRAY,6,5)
-	_tpb(rbx,ky+12,52,24,C.BORDER,7,5)
-	local rbt=_ttb("rebind",rbx+26,ky+17,C.GRAY,FSX,true,8)
+	_tpf(rbx,ky+12,52,24,C.dg,6,5)
+	_tpb(rbx,ky+12,52,24,C.bd,7,5)
+	local rbt=_ttb("rebind",rbx+26,ky+17,C.g,FSX,true,8)
 	table.insert(_els,{type="rebind",x=rbx,y=ky+12,w=52,h=24,kd=kbt,rt=rbt})
 	local qrx=sx+PAD+4+#"menu key"*CHW+8
-	_tci(qrx+6,ky+25,7,C.BORDER,false,8)
-	_ttx("?",qrx+2,ky+18,C.GRAY,11,false,9)
+	_tci(qrx+6,ky+25,7,C.bd,false,8)
+	_ttx("?",qrx+2,ky+18,C.g,11,false,9)
 	table.insert(_els,{type="hoverTip",x=qrx-2,y=ky+15,w=16,h=20,desc="rebinds the menu key"})
-	_ttx("letters, Insert, End, or F1-F12 to rebind",sx+PAD,ky+50,C.GRAY,11,false,5)
+	_ttx("letters, Insert, End, or F1-F12 to rebind",sx+PAD,ky+50,C.g,11,false,5)
 	local ty=ky+70
 	_slb(sx,ty,sw,"themes",5)
 	local tpy=ty+24
@@ -751,13 +752,13 @@ local function _rse()
 	for ti,tn in ipairs(_thn)do
 		local isSel=(tn==state.currentTheme)
 		if isSel then
-			_tpf(sx+6,tiy+2,sw-12,DDH-4,C.TABSEL,5,6)
+			_tpf(sx+6,tiy+2,sw-12,DDH-4,C.ts,5,6)
 		end
 		if ti<#_thn then _dvl(sx+4,tiy+DDH,sw-8,6)end
-		local swCol=_thm[tn] and _thm[tn].ACCENT or C.ACCENT
+		local swCol=_thm[tn] and _thm[tn].a or C.a
 		_tci(sx+PAD+12,tiy+DDH/2,5,swCol,true,7)
-		local ttx=_ttb(tn,sx+PAD+26,tiy+7,isSel and C.ONDOT or C.GRAY,FSX,false,7)
-		if isSel then _ttx("active",sx+sw-62,tiy+7,C.ACCENT,FSX,false,7)end
+		local ttx=_ttb(tn,sx+PAD+26,tiy+7,isSel and C.od or C.g,FSX,false,7)
+		if isSel then _ttx("active",sx+sw-62,tiy+7,C.a,FSX,false,7)end
 		table.insert(thOptEls,{tx=ttx,name=tn,x=sx+4,y=tiy,w=sw-8,h=DDH})
 		tiy=tiy+DDH
 	end
@@ -766,8 +767,8 @@ local function _rse()
 	_slb(sx,dy,sw,"danger zone",5)
 	local dby=dy+24
 	_pil(sx,dby,sw,46,4)
-	_ttb("destroy menu",sx+PAD+4,dby+10,C.WHITE,FSX,false,6)
-	_ttx("unloads the menu permanently",sx+PAD+4,dby+27,C.GRAY,11,false,6)
+	_ttb("destroy menu",sx+PAD+4,dby+10,C.w,FSX,false,6)
+	_ttx("unloads the menu permanently",sx+PAD+4,dby+27,C.g,11,false,6)
 	_tpf(sx+sw-76,dby+10,68,26,Color3.fromRGB(40,10,10),6,5)
 	_tpb(sx+sw-76,dby+10,68,26,Color3.fromRGB(72,22,22),7,5)
 	local dtxt=_ttb("destroy",sx+sw-42,dby+16,Color3.fromRGB(220,80,80),FSX,true,8)
@@ -828,13 +829,13 @@ local function _rul()
 	local iy=cy-state.logScrollY
 	for _,cat in ipairs(_ulg)do
 		if iy+20>visTop and iy<visBot then
-			_ttb(cat.category,sx+PAD,iy+4,C.ACCENT,FSX,false,6)
-			_tln(sx,iy+22,sx+sw,iy+22,C.BORDER,1,5)
+			_ttb(cat.category,sx+PAD,iy+4,C.a,FSX,false,6)
+			_tln(sx,iy+22,sx+sw,iy+22,C.bd,1,5)
 		end
 		iy=iy+26
 		if #cat.logs==0 then
 			if iy+24>visTop and iy<visBot then
-				_ttx("no entries yet",sx+PAD+4,iy+6,C.GRAY,FSX,false,5)
+				_ttx("no entries yet",sx+PAD+4,iy+6,C.g,FSX,false,5)
 			end
 			iy=iy+30
 		end
@@ -852,14 +853,14 @@ local function _rul()
 					local clpB=math.min(pillY+entryH,visBot)
 					local clpH=clpB-clpY
 					if clpH>0 then
-						_tpf(sx,clpY,sw,clpH,C.CONTENT,4)
-						_tpb(sx,clpY,sw,clpH,C.BORDER,6)
+						_tpf(sx,clpY,sw,clpH,C.ct,4)
+						_tpb(sx,clpY,sw,clpH,C.bd,6)
 					end
 					local ey=pillY+4
 					for ei,entry in ipairs(log.entries)do
 						if ey+22>visTop and ey<visBot then
-							_ttx("-  "..entry,sx+PAD+4,ey+4,C.GRAY,FSX,false,7)
-							if ei<#log.entries then _tln(sx+8,ey+22,sx+sw-8,ey+22,C.DIV,1,5)end
+							_ttx("-  "..entry,sx+PAD+4,ey+4,C.g,FSX,false,7)
+							if ei<#log.entries then _tln(sx+8,ey+22,sx+sw-8,ey+22,C.dv,1,5)end
 						end
 						ey=ey+22
 					end
@@ -872,17 +873,17 @@ local function _rul()
 		local sbx=wx+WW-PAD-8
 		local sby=visTop+4
 		local sbh=visH-8
-		_ttb("^",sbx+1,sby+1,C.GRAY,11,false,9)
+		_ttb("^",sbx+1,sby+1,C.g,11,false,9)
 		table.insert(_els,{type="logScrollBtn",dir=-1,x=sbx-2,y=sby,w=12,h=14,maxScroll=maxScroll,step=50})
-		_ttb("v",sbx+1,sby+sbh-13,C.GRAY,11,false,9)
+		_ttb("v",sbx+1,sby+sbh-13,C.g,11,false,9)
 		table.insert(_els,{type="logScrollBtn",dir=1,x=sbx-2,y=sby+sbh-14,w=12,h=14,maxScroll=maxScroll,step=50})
 		local trackTop=sby+16
 		local trackH=sbh-32
-		_tsq(sbx+2,trackTop,2,trackH,C.DIMGRAY,true,8)
+		_tsq(sbx+2,trackTop,2,trackH,C.dg,true,8)
 		local thumbH=math.max(16,math.floor(trackH*visH/totalH))
 		local scrollPct=maxScroll>0 and state.logScrollY/maxScroll or 0
 		local thumbY=trackTop+math.floor((trackH-thumbH)*scrollPct)
-		_tpf(sbx,thumbY,6,thumbH,C.ACCENT,9,3)
+		_tpf(sbx,thumbY,6,thumbH,C.a,9,3)
 		table.insert(_els,{type="logScrollTrack",x=sbx-2,y=trackTop,w=10,h=trackH,trackTop=trackTop,trackH=trackH,thumbH=thumbH,maxScroll=maxScroll})
 	end
 end
@@ -900,11 +901,11 @@ local function _rcl(colX,colW,items,startY)
 			local isFirst=(idx==1)
 			local isLast=(idx==n)
 			if it.type=="toggle"then
-				_rbg(px,iy,pw,RH,C.ROWBG,5,isFirst,isLast)
+				_rbg(px,iy,pw,RH,C.rb,5,isFirst,isLast)
 				if not isLast then _dvl(px,iy+RH,pw,6) end
-				_ttb(_trc(it.label,maxChars),px+PAD+4,iy+9,C.WHITE,FSX,false,7)
+				_ttb(_trc(it.label,maxChars),px+PAD+4,iy+9,C.w,FSX,false,7)
 				if it.rowvalue then
-					_ttx(it.rowvalue,px+pw-56,iy+10,C.GRAY,FSX,false,7)
+					_ttx(it.rowvalue,px+pw-56,iy+10,C.g,FSX,false,7)
 				end
 				local bg1,bg2,dot,c1,c2,c3,c4=_tgd(px+pw-42,iy+8,it.value,7)
 				table.insert(_els,{
@@ -913,24 +914,24 @@ local function _rcl(colX,colW,items,startY)
 				})
 				if it.desc then
 					local qx=px+pw-58
-					_tci(qx+6,iy+16,7,C.BORDER,false,8)
-					_ttx("?",qx+2,iy+9,C.GRAY,11,false,9)
+					_tci(qx+6,iy+16,7,C.bd,false,8)
+					_ttx("?",qx+2,iy+9,C.g,11,false,9)
 					table.insert(_els,{type="hoverTip",x=qx-2,y=iy+6,w=16,h=20,desc=it.desc})
 				end
 				if it.callback then state.tCbs[it.id]=it.callback end
 				iy=iy+RH
 			elseif it.type=="slider"then
-				_rbg(px,iy,pw,SRH,C.MINIBAR,5,isFirst,isLast)
+				_rbg(px,iy,pw,SRH,C.mb,5,isFirst,isLast)
 				if not isLast then _dvl(px,iy+SRH,pw,6) end
 				local slx=px+PAD+4
 				local slw=pw-PAD*2-8
-				_ttb(_trc(it.label,math.floor(maxChars*0.5)),slx,iy+8,C.GRAY,FSX,false,7)
+				_ttb(_trc(it.label,math.floor(maxChars*0.5)),slx,iy+8,C.g,FSX,false,7)
 				if it.desc then
-					_ttx(it.desc,slx,iy+22,C.GRAY,10,false,7)
+					_ttx(it.desc,slx,iy+22,C.g,10,false,7)
 				end
 				local vstr=tostring(math.floor(it.value*10+0.5)/10)..(it.suffix)
 				local vw=#vstr*CHW
-				local vtx=_ttx(vstr,px+pw-PAD-vw,iy+8,C.WHITE,FSX,false,7)
+				local vtx=_ttx(vstr,px+pw-PAD-vw,iy+8,C.w,FSX,false,7)
 				local fill,knob=_sld(slx,iy+38,slw,it.value,it.min,it.max,7)
 				table.insert(_els,{
 					type="slider",
@@ -946,13 +947,13 @@ local function _rcl(colX,colW,items,startY)
 				local ddStart=iy
 				local selName=it.selected or (it.options and it.options[1]) or ""
 				local expanded=state.ddExpanded[it.id]
-				_rbg(px,iy,pw,DDH,C.ROWBG,5,isFirst,not expanded and isLast)
-				if it.label and it.label~="" then _ttb(it.label,px+PAD+4,iy+7,C.WHITE,FSX,false,7) end
+				_rbg(px,iy,pw,DDH,C.rb,5,isFirst,not expanded and isLast)
+				if it.label and it.label~="" then _ttb(it.label,px+PAD+4,iy+7,C.w,FSX,false,7) end
 				local arrowCh=expanded and "v" or ">"
 				local ddGray=Color3.fromRGB(100,112,145)
 				_ttx(arrowCh,px+pw-PAD-8,iy+8,ddGray,11,false,7)
 				local selW=#selName*CHW
-				_ttx(selName,px+pw-PAD-14-selW,iy+7,C.ACCENT,FSX,false,7)
+				_ttx(selName,px+pw-PAD-14-selW,iy+7,C.a,FSX,false,7)
 				table.insert(_els,{
 					type="ddHeader",id=it.id,
 					x=px,y=iy,w=pw,h=DDH
@@ -965,10 +966,10 @@ local function _rcl(colX,colW,items,startY)
 						local oIsLast=(oi==#(it.options or{}))
 						if isSel then
 							local cr=6
-							_tpf(px+3,iy+2,pw-6,DDH-4,C.TABSEL,5,cr)
+							_tpf(px+3,iy+2,pw-6,DDH-4,C.ts,5,cr)
 						end
 						if not oIsLast then _dvl(px,iy+DDH,pw,6) end
-						local otx=_ttb(opt,px+PAD+4,iy+7,isSel and C.ONDOT or C.GRAY,FSX,false,7)
+						local otx=_ttb(opt,px+PAD+4,iy+7,isSel and C.od or C.g,FSX,false,7)
 						table.insert(optEls,{tx=otx,name=opt,x=px,y=iy,w=pw,h=DDH})
 						iy=iy+DDH
 					end
@@ -979,6 +980,16 @@ local function _rcl(colX,colW,items,startY)
 						optEls=optEls,callback=it.callback
 					})
 				end
+			elseif it.type=="button"then
+				_rbg(px,iy,pw,RH,C.rb,5,isFirst,isLast)
+				if not isLast then _dvl(px,iy+RH,pw,6) end
+				_ttb(_trc(it.label,maxChars),px+PAD+4,iy+9,C.a,FSX,false,7)
+				_ttx(">",px+pw-PAD-8,iy+10,C.g,11,false,7)
+				table.insert(_els,{
+					type="button",x=px,y=iy,w=pw,h=RH,
+					id=it.id,label=it.label,callback=it.callback
+				})
+				iy=iy+RH
 			end
 		end
 	end
@@ -992,9 +1003,9 @@ local function _rcl(colX,colW,items,startY)
 		elseif f.type=="debug"then
 			local dx=colX+4
 			local dy=cur+4
-			local hbDot=_tci(dx+4,dy+10,3,C.ACCENT,true,5)
+			local hbDot=_tci(dx+4,dy+10,3,C.a,true,5)
 			local dtxt=f.text or "session active"
-			_ttx(dtxt,dx+14,dy+4,C.GRAY,FSX,false,5)
+			_ttx(dtxt,dx+14,dy+4,C.g,FSX,false,5)
 			local nameX=dx+14+#dtxt*CHW+6
 			local avSz=20
 			local avR=avSz/2
@@ -1025,7 +1036,7 @@ local function _rcl(colX,colW,items,startY)
 			end
 			local uName="User"
 			pcall(function()uName=_lp.Name end)
-			_ttb(uName,nameX,dy+4,C.ACCENT,FSX,false,5)
+			_ttb(uName,nameX,dy+4,C.a,FSX,false,5)
 			task.spawn(function()
 				local t0=tick()
 				while hbDot and state.visible and state.built do
@@ -1041,8 +1052,8 @@ local function _rcl(colX,colW,items,startY)
 		else
 			local ph=0
 			for _,it in ipairs(grp)do ph=ph+_ith(it)end
-			_tpf(px,cur,pw,ph,C.CONTENT,4)
-			_tpb(px,cur,pw,ph,C.BORDER,6)
+			_tpf(px,cur,pw,ph,C.ct,4)
+			_tpb(px,cur,pw,ph,C.bd,6)
 			_dit(grp,cur)
 			cur=cur+ph+8
 		end
@@ -1057,16 +1068,16 @@ local function _rin()
 	_slb(sx,cy,sw,"socials",5)
 	local iy=cy+24
 	local rows={
-		{label="discord",value="nejrio",col=C.ACCENT},
-		{label="github",value="hitechboi",col=C.ACCENT},
-		{label="roblox",value="besosme",col=C.WHITE,glow=true},
+		{label="discord",value="nejrio",col=C.a},
+		{label="github",value="hitechboi",col=C.a},
+		{label="roblox",value="besosme",col=C.w,glow=true},
 	}
 	local rh=DDH*#rows+6
 	_pil(sx,iy,sw,rh,4)
 	local ry=iy+3
 	for ri,row in ipairs(rows)do
 		if ri<#rows then _dvl(sx+4,ry+DDH,sw-8,6) end
-		_ttb(row.label,sx+PAD+4,ry+7,C.GRAY,FSX,false,7)
+		_ttb(row.label,sx+PAD+4,ry+7,C.g,FSX,false,7)
 		local vtx=_ttb(row.value,sx+sw-PAD-#row.value*CHW,ry+7,row.col,FSX,false,7)
 		if row.glow then
 			task.spawn(function()
@@ -1089,7 +1100,7 @@ local function _rin()
 	_slb(sx,cy2,sw,"Osamason - Check it <3",5)
 	local ay=cy2+24
 	_pil(sx,ay,sw,30,4)
-	_ttx("ty guys.",sx+PAD+4,ay+8,C.WHITE,FSX,false,6)
+	_ttx("ty guys.",sx+PAD+4,ay+8,C.w,FSX,false,6)
 end
 
 local function _rtc(tab)
@@ -1228,10 +1239,10 @@ local function _stp(el,mx,my)
 		local o=Drawing.new("Line");o.From=_v2(x1,y1);o.To=_v2(x2,y2);o.Color=col;o.Thickness=thick or 1;o.Transparency=0;o.ZIndex=zi;o.Visible=true
 		table.insert(_tpo,o);return o
 	end
-	_dpf(tipSq,tipCi,tx2,ty2,tw,th,C.TOPBAR,20,cr)
-	_dpb(tipLn,tx2,ty2,tw,th,C.ACCENT,21,cr)
+	_dpf(tipSq,tipCi,tx2,ty2,tw,th,C.tb,20,cr)
+	_dpb(tipLn,tx2,ty2,tw,th,C.a,21,cr)
 	local tt=Drawing.new("Text")
-	tt.Text=txt;tt.Position=_v2(tx2+8,ty2+5);tt.Color=C.WHITE;tt.Size=FSX;tt.Font=FNT;tt.Center=false;tt.Outline=false;tt.Transparency=0;tt.ZIndex=22;tt.Visible=true
+	tt.Text=txt;tt.Position=_v2(tx2+8,ty2+5);tt.Color=C.w;tt.Size=FSX;tt.Font=FNT;tt.Center=false;tt.Outline=false;tt.Transparency=0;tt.ZIndex=22;tt.Visible=true
 	table.insert(_tpo,tt)
 	_tps.visible=true;_tps.el=el;_tps.fade=0;_tps.t0=tick()
 end
@@ -1284,6 +1295,7 @@ local function _ddg(mx)
 		local vw=#vstr*CHW
 		el.vtx.Position=_v2(el.slx+el.slw+PAD-vw,el.vtx.Position.Y)
 	end)
+	for _,_tab in ipairs(state.tabs)do for _,_it in ipairs(_tab.items or{})do if _it.id==el.id and _it.type=="slider" then _it.value=val end end end
 	local cb=state.sCbs[el.id]
 	if cb then pcall(cb,val)end
 end
@@ -1292,14 +1304,14 @@ local function _dck(mx,my)
 	for _,el in ipairs(_els)do
 		if el.type=="toggle" and _ins(mx,my,el.x,el.y,el.w,el.h)then
 			el.on=not el.on
-			local col=el.on and C.ON or C.OFF
+			local col=el.on and C.on or C.of
 			pcall(function()el.bg1.Color=col end)
 			pcall(function()el.bg2.Color=col end)
 			pcall(function()el.c1.Color=col end)
 			pcall(function()el.c2.Color=col end)
 			pcall(function()el.c3.Color=col end)
 			pcall(function()el.c4.Color=col end)
-			pcall(function()el.dot.Color=el.on and C.ONDOT or C.OFFDOT end)
+			pcall(function()el.dot.Color=el.on and C.od or C.fd end)
 			local fromX=el.x+(el.on and 8 or 24)
 			local toX=el.x+(el.on and 24 or 8)
 			local tweenDot=el.dot
@@ -1316,16 +1328,22 @@ local function _dck(mx,my)
 				end
 				pcall(function()tweenDot.Position=_v2(toX,tweenY)end)
 			end)
+			for _,_tab in ipairs(state.tabs)do for _,_it in ipairs(_tab.items or{})do if _it.id==el.id and _it.type=="toggle" then _it.value=el.on end end end
 			local cb=state.tCbs[el.id]
 			if cb then pcall(cb,el.on)end
 			pcall(function()notify((el.label or el.id)..": "..(el.on and "ON" or "OFF"),"Check It v2",2)end)
 			_scc(mx,my)
 			return
+		elseif el.type=="button" and _ins(mx,my,el.x,el.y,el.w,el.h)then
+			if el.callback then pcall(el.callback)end
+			pcall(function()notify(el.label or el.id,"Check It v2",2)end)
+			_scc(mx,my)
+			return
 		elseif el.type=="rebind" and _ins(mx,my,el.x,el.y,el.w,el.h)then
 			state.rebinding=true;state.rebindTarget=el
 			state._rebindAnim=true
-			pcall(function()el.rt.Text=".";el.rt.Color=C.ACCENT end)
-			pcall(function()el.kd.Text=".";el.kd.Color=C.ACCENT end)
+			pcall(function()el.rt.Text=".";el.rt.Color=C.a end)
+			pcall(function()el.kd.Text=".";el.kd.Color=C.a end)
 			pcall(function()win.kTx.Text="."end)
 			task.spawn(function()
 				local dots={".","..",". . ."}
@@ -1573,9 +1591,9 @@ spawn(function()
 						if state.rebindTarget then
 							pcall(function()
 								state.rebindTarget.kd.Text=kn
-								state.rebindTarget.kd.Color=C.ONDOT
+								state.rebindTarget.kd.Color=C.od
 								state.rebindTarget.rt.Text="rebind"
-								state.rebindTarget.rt.Color=C.GRAY
+								state.rebindTarget.rt.Color=C.g
 							end)
 						end
 						state.rebinding=false;state.rebindTarget=nil
@@ -1735,14 +1753,14 @@ function lib:Window()
 						if el.type=="toggle" and el.id==id then
 							local wasOn=el.on
 							el.on=v
-							local col=v and C.ON or C.OFF
+							local col=v and C.on or C.of
 							pcall(function()el.bg1.Color=col end)
 							pcall(function()el.bg2.Color=col end)
 							pcall(function()el.c1.Color=col end)
 							pcall(function()el.c2.Color=col end)
 							pcall(function()el.c3.Color=col end)
 							pcall(function()el.c4.Color=col end)
-							pcall(function()el.dot.Color=v and C.ONDOT or C.OFFDOT end)
+							pcall(function()el.dot.Color=v and C.od or C.fd end)
 							if wasOn~=v then
 								local fromX=el.x+(v and 8 or 24)
 								local toX=el.x+(v and 24 or 8)
@@ -1762,9 +1780,11 @@ function lib:Window()
 							else
 								pcall(function()el.dot.Position=_v2(el.x+(v and 24 or 8),el.y+8)end)
 							end
+							for _,_t2 in ipairs(state.tabs)do for _,_it2 in ipairs(_t2.items or{})do if _it2.id==id and _it2.type=="toggle" then _it2.value=v end end end
 						end
 					end
 				end
+				ctrl.SetState=ctrl.Set
 				return ctrl
 			end
 			function s:Slider(opts)
@@ -1805,10 +1825,23 @@ function lib:Window()
 						end
 					end
 				end
+				function ctrl:SetOptions(newOpts)
+					for _,t2 in ipairs(state.tabs)do
+						for _,it in ipairs(t2.items or{})do
+							if it.type=="dropdown" and it.id==id then it.options=newOpts end
+						end
+					end
+					if state.activeTab and state.activeTab.name==tab.name then _frb()end
+				end
 				return ctrl
 			end
 			function s:DebugRow(opts)
 				table.insert(tab.items,{type="debug",text=opts.text or "session active",col=opts.col or 1})
+				if state.activeTab and state.activeTab.name==tab.name then _frb()end
+			end
+			function s:Button(opts)
+				local id=opts.id or opts.label
+				table.insert(tab.items,{type="button",label=opts.label,id=id,callback=opts.callback,col=opts.col or 1})
 				if state.activeTab and state.activeTab.name==tab.name then _frb()end
 			end
 			return s
@@ -1868,6 +1901,8 @@ function lib:Window()
 			pcall(function()notify("Welcome, "..userName,"Check It v2",3)end)
 			task.wait(0.3)
 			pcall(function()notify("thank you guys for almost 100 stars have this special theme for the time being","Check It v2",5)end)
+			task.wait(0.3)
+			pcall(function()notify("reapply the theme to see a cool effect :)","Check It v2",5)end)
 		end)
 		if not ok then warn("[lib] ERROR in spawn: "..tostring(err)) end
 	end)
@@ -1884,4 +1919,3 @@ function lib:Destroy()
 	table.clear(objs);table.clear(_tbo);table.clear(_aco);table.clear(_ldo);table.clear(_cfo)
 end
 _G.lib=lib
-
