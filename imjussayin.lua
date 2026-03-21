@@ -4,6 +4,7 @@ local _lp=_pl.LocalPlayer
 local _ms=_lp:GetMouse()
 local _cm=workspace.CurrentCamera
 local _sx,_sy=_cm.ViewportSize.X,_cm.ViewportSize.Y
+
 local C={
 	a=Color3.fromRGB(70,120,255),
 	sb=Color3.fromRGB(12,15,27),
@@ -710,7 +711,7 @@ local function _bts()
 		local isA=state.activeTab and state.activeTab.name==name
 		_tbpf(tx,ty,ew,TAH-2,isA and C.ts or C.tb,3,6)
 		if isA then _tbln(tx+6,ty+TAH-2,tx+ew-6,ty+TAH-2,C.a,2,4)end
-		_tbtb(name,tx+ew/2,ty+6,isA and C.w or C.g,FSX,true,5)
+		_tbtb(name,tx+ew/2,ty+8,isA and C.w or C.g,FSX,true,5)
 		table.insert(_tbo,{_c={x=tx,y=ty,w=ew,h=TAH-2,name=name}})
 		tx=tx+ew+gap
 	end
@@ -724,15 +725,15 @@ local function _rse()
 	_slb(sx,cy,sw,"keybinds",5)
 	local ky=cy+24
 	_pil(sx,ky,sw,48,4)
-	_ttb("menu key",sx+PAD+4,ky+20,C.w,FSX,false,6)
+	_ttb("menu key",sx+PAD+4,ky+17,C.w,FSX,false,6)
 	local kbx=sx+sw-142
 	_tpf(kbx,ky+12,68,24,C.dg,6,5)
 	_tpb(kbx,ky+12,68,24,C.bd,7,5)
-	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+21,C.od,FSX,true,8)
+	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+22,C.od,FSX,true,8)
 	local rbx=kbx+74
 	_tpf(rbx,ky+12,52,24,C.dg,6,5)
 	_tpb(rbx,ky+12,52,24,C.bd,7,5)
-	local rbt=_ttb("rebind",rbx+26,ky+19,C.g,FSX,true,8)
+	local rbt=_ttb("rebind",rbx+26,ky+21,C.g,FSX,true,8)
 	table.insert(_els,{type="rebind",x=rbx,y=ky+12,w=52,h=24,kd=kbt,rt=rbt})
 	local qrx=sx+PAD+4+#"menu key"*CHW+8
 	_tci(qrx+6,ky+25,7,C.bd,false,8)
@@ -768,7 +769,7 @@ local function _rse()
 	_ttx("unloads the menu permanently",sx+PAD+4,dby+27,C.g,11,false,6)
 	_tpf(sx+sw-76,dby+10,68,26,Color3.fromRGB(40,10,10),6,5)
 	_tpb(sx+sw-76,dby+10,68,26,Color3.fromRGB(72,22,22),7,5)
-	local dtxt=_ttb("destroy",sx+sw-42,dby+20,Color3.fromRGB(220,80,80),FSX,true,8)
+	local dtxt=_ttb("destroy",sx+sw-42,dby+21,Color3.fromRGB(220,80,80),FSX,true,8)
 	table.insert(_els,{type="destroy",x=sx+sw-76,y=dby+10,w=68,h=26,txt=dtxt})
 end
 
