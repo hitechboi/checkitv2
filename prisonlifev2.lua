@@ -286,11 +286,8 @@ locSec:Button({label="roof",id="tp_roof",col=2,callback=function()_0x32(932.23,1
 locSec:Button({label="criminal base",id="tp_crimbase",col=2,callback=function()_0x32(-936.75,94.13,2054.35)end})
 
 _0x2A:AddMainScriptLog("v1.4",os.date("%Y-%m-%d"),{
-    "gun mods: fire rate, reload, range, ammo",
-    "auto cuffs with target selector",
-    "teleport buttons for guns & locations",
-    "extras: instant fire, full auto, M9 auto",
-    "session info with game name & avatar",
+    "added checkitv2",
+    "hi :p"
 })
 
 local _0x38 = game.Players.LocalPlayer.Name
