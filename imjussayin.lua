@@ -4,6 +4,7 @@ local _lp=_pl.LocalPlayer
 local _ms=_lp:GetMouse()
 local _cm=workspace.CurrentCamera
 local _sx,_sy=_cm.ViewportSize.X,_cm.ViewportSize.Y
+
 local C={
 	a=Color3.fromRGB(70,120,255),
 	sb=Color3.fromRGB(12,15,27),
@@ -610,7 +611,7 @@ local function _bwn()
 	_wci(kbx+kbw-kr,kby+kr,kr,C.dg,true,3)
 	_wci(kbx+kr,kby+kbh-kr,kr,C.dg,true,3)
 	_wci(kbx+kbw-kr,kby+kbh-kr,kr,C.dg,true,3)
-	win.kTx=_wtb(state.menuKeyLabel,kbx+kbw/2,wy+13,C.od,FSX,true,5)
+	win.kTx=_wtb(state.menuKeyLabel,kbx+kbw/2,wy+14,C.od,FSX,true,5)
 	win.tabBg=_wsq(wx,wy+TH,WW,TAH,C.tb,true,2)
 	win.tabLn=_wln(wx,wy+TH+TAH,wx+WW,wy+TH+TAH,C.bd,1,3)
 	win.colDiv=_wln(wx+CW,wy+TH+TAH,wx+CW,wy+wh-8,C.bd,1,2)
@@ -710,7 +711,7 @@ local function _bts()
 		local isA=state.activeTab and state.activeTab.name==name
 		_tbpf(tx,ty,ew,TAH-2,isA and C.ts or C.tb,3,6)
 		if isA then _tbln(tx+6,ty+TAH-2,tx+ew-6,ty+TAH-2,C.a,2,4)end
-		_tbtb(name,tx+ew/2,ty+4,isA and C.w or C.g,FSX,true,5)
+		_tbtb(name,tx+ew/2,ty+5,isA and C.w or C.g,FSX,true,5)
 		table.insert(_tbo,{_c={x=tx,y=ty,w=ew,h=TAH-2,name=name}})
 		tx=tx+ew+gap
 	end
@@ -728,7 +729,7 @@ local function _rse()
 	local kbx=sx+sw-142
 	_tpf(kbx,ky+12,68,24,C.dg,6,5)
 	_tpb(kbx,ky+12,68,24,C.bd,7,5)
-	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+19,C.od,FSX,true,8)
+	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+20,C.od,FSX,true,8)
 	local rbx=kbx+74
 	_tpf(rbx,ky+12,52,24,C.dg,6,5)
 	_tpb(rbx,ky+12,52,24,C.bd,7,5)
@@ -768,7 +769,7 @@ local function _rse()
 	_ttx("unloads the menu permanently",sx+PAD+4,dby+27,C.g,11,false,6)
 	_tpf(sx+sw-76,dby+10,68,26,Color3.fromRGB(40,10,10),6,5)
 	_tpb(sx+sw-76,dby+10,68,26,Color3.fromRGB(72,22,22),7,5)
-	local dtxt=_ttb("destroy",sx+sw-42,dby+18,Color3.fromRGB(220,80,80),FSX,true,8)
+	local dtxt=_ttb("destroy",sx+sw-42,dby+19,Color3.fromRGB(220,80,80),FSX,true,8)
 	table.insert(_els,{type="destroy",x=sx+sw-76,y=dby+10,w=68,h=26,txt=dtxt})
 end
 
