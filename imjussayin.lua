@@ -1084,7 +1084,7 @@ local function _rin()
 		if row.glow then
 			task.spawn(function()
 				local t0=tick()
-				while vtx and state.visible and state.built and state.activeTab and state.activeTab.name=="info" do
+				while vtx and not state.destroyed and state.built and state.activeTab and state.activeTab.name=="info" do
 					local g=(math.sin((tick()-t0)*2.0)+1)/2
 					local wr,wg2,wb=215/255,220/255,240/255
 					local tr,tg2,tb=210/255,180/255,140/255
