@@ -4,7 +4,6 @@ local _lp=_pl.LocalPlayer
 local _ms=_lp:GetMouse()
 local _cm=workspace.CurrentCamera
 local _sx,_sy=_cm.ViewportSize.X,_cm.ViewportSize.Y
-
 local C={
 	a=Color3.fromRGB(70,120,255),
 	sb=Color3.fromRGB(12,15,27),
