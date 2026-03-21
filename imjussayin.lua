@@ -4,7 +4,6 @@ local _lp=_pl.LocalPlayer
 local _ms=_lp:GetMouse()
 local _cm=workspace.CurrentCamera
 local _sx,_sy=_cm.ViewportSize.X,_cm.ViewportSize.Y
-
 local C={
 	a=Color3.fromRGB(70,120,255),
 	sb=Color3.fromRGB(12,15,27),
@@ -65,7 +64,7 @@ local state={
 	rebinding=false,rebindTarget=nil,
 	built=false,
 	loaderDone=false,
-	destroyConfirm=false,
+	destroyConfirm=false,destroyed=false,
 	currentTheme="confetti",
 	ddExpanded={},
 	logScrollY=0,
@@ -594,14 +593,14 @@ local function _bwn()
 	_wci(wx+tr,wy+tr,tr,C.tb,true,2)
 	_wci(wx+WW-tr,wy+tr,tr,C.tb,true,2)
 	win.tLine=_wln(wx,wy+TH,wx+WW,wy+TH,C.bd,1,3)
-	win.t1=_wtb("Check",wx+PAD+2,wy+7,C.w,FS,false,4)
-	win.t2=_wtx("·",wx+PAD+64,wy+7,C.bd,FS,false,4)
-	win.t3=_wtb("It",wx+PAD+76,wy+7,C.a,FS,false,4)
-	win.t4=_wtx("·",wx+PAD+96,wy+7,C.bd,FS,false,4)
-	win.t5=_wtx("v2",wx+PAD+108,wy+10,C.g,FSS,false,4)
-	win.kLbl=_wtx("menu key",wx+WW-140,wy+11,C.g,FSX,false,4)
+	win.t1=_wtb("Check",wx+PAD+2,wy+9,C.w,FS,false,4)
+	win.t2=_wtx("·",wx+PAD+64,wy+9,C.bd,FS,false,4)
+	win.t3=_wtb("It",wx+PAD+76,wy+9,C.a,FS,false,4)
+	win.t4=_wtx("·",wx+PAD+96,wy+9,C.bd,FS,false,4)
+	win.t5=_wtx("v2",wx+PAD+108,wy+12,C.g,FSS,false,4)
+	win.kLbl=_wtx("menu key",wx+WW-140,wy+13,C.g,FSX,false,4)
 	local kbx=wx+WW-72
-	local kby=wy+7
+	local kby=wy+9
 	local kbw=66
 	local kbh=18
 	local kr=5
@@ -611,7 +610,7 @@ local function _bwn()
 	_wci(kbx+kbw-kr,kby+kr,kr,C.dg,true,3)
 	_wci(kbx+kr,kby+kbh-kr,kr,C.dg,true,3)
 	_wci(kbx+kbw-kr,kby+kbh-kr,kr,C.dg,true,3)
-	win.kTx=_wtb(state.menuKeyLabel,kbx+kbw/2,wy+11,C.od,FSX,true,5)
+	win.kTx=_wtb(state.menuKeyLabel,kbx+kbw/2,wy+13,C.od,FSX,true,5)
 	win.tabBg=_wsq(wx,wy+TH,WW,TAH,C.tb,true,2)
 	win.tabLn=_wln(wx,wy+TH+TAH,wx+WW,wy+TH+TAH,C.bd,1,3)
 	win.colDiv=_wln(wx+CW,wy+TH+TAH,wx+CW,wy+wh-8,C.bd,1,2)
@@ -725,15 +724,15 @@ local function _rse()
 	_slb(sx,cy,sw,"keybinds",5)
 	local ky=cy+24
 	_pil(sx,ky,sw,48,4)
-	_ttb("menu key",sx+PAD+4,ky+18,C.w,FSX,false,6)
+	_ttb("menu key",sx+PAD+4,ky+20,C.w,FSX,false,6)
 	local kbx=sx+sw-142
 	_tpf(kbx,ky+12,68,24,C.dg,6,5)
 	_tpb(kbx,ky+12,68,24,C.bd,7,5)
-	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+17,C.od,FSX,true,8)
+	local kbt=_ttb(state.menuKeyLabel,kbx+34,ky+19,C.od,FSX,true,8)
 	local rbx=kbx+74
 	_tpf(rbx,ky+12,52,24,C.dg,6,5)
 	_tpb(rbx,ky+12,52,24,C.bd,7,5)
-	local rbt=_ttb("rebind",rbx+26,ky+17,C.g,FSX,true,8)
+	local rbt=_ttb("rebind",rbx+26,ky+19,C.g,FSX,true,8)
 	table.insert(_els,{type="rebind",x=rbx,y=ky+12,w=52,h=24,kd=kbt,rt=rbt})
 	local qrx=sx+PAD+4+#"menu key"*CHW+8
 	_tci(qrx+6,ky+25,7,C.bd,false,8)
@@ -765,11 +764,11 @@ local function _rse()
 	_slb(sx,dy,sw,"danger zone",5)
 	local dby=dy+24
 	_pil(sx,dby,sw,46,4)
-	_ttb("destroy menu",sx+PAD+4,dby+10,C.w,FSX,false,6)
+	_ttb("destroy menu",sx+PAD+4,dby+12,C.w,FSX,false,6)
 	_ttx("unloads the menu permanently",sx+PAD+4,dby+27,C.g,11,false,6)
 	_tpf(sx+sw-76,dby+10,68,26,Color3.fromRGB(40,10,10),6,5)
 	_tpb(sx+sw-76,dby+10,68,26,Color3.fromRGB(72,22,22),7,5)
-	local dtxt=_ttb("destroy",sx+sw-42,dby+16,Color3.fromRGB(220,80,80),FSX,true,8)
+	local dtxt=_ttb("destroy",sx+sw-42,dby+18,Color3.fromRGB(220,80,80),FSX,true,8)
 	table.insert(_els,{type="destroy",x=sx+sw-76,y=dby+10,w=68,h=26,txt=dtxt})
 end
 
@@ -1594,9 +1593,14 @@ local function _dck(mx,my)
 				return
 			end
 			state.destroyConfirm=false
+			state.destroyed=true
 			for _,o in ipairs(objs)do pcall(function()o:Remove()end)end
 			for _,o in ipairs(_tbo)do pcall(function()if o.Remove then o:Remove()end end)end
 			for _,o in ipairs(_aco)do pcall(function()o:Remove()end)end
+			for _,o in ipairs(_ldo)do pcall(function()o:Remove()end)end
+			for _,o in ipairs(_cfo)do pcall(function()o:Remove()end)end
+			table.clear(objs);table.clear(_tbo);table.clear(_aco);table.clear(_ldo);table.clear(_cfo);table.clear(_els)
+			_G.lib=nil
 			notify("Menu destroyed","Check It v2",3)
 			return
 		end
@@ -1632,6 +1636,7 @@ spawn(function()
 	local _dscTrack=nil
 	while true do
 		task.wait(0.016)
+		if state.destroyed then break end
 		if state.rebinding then
 			for k=0x08,0xDD do
 				local kp2=false
