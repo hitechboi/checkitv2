@@ -157,7 +157,7 @@ if _0x08 then _0x06.RenderStepped:Fire(_d)end
 if _0x08 then _0x06.Heartbeat:Fire(_d)end end)
 if not _ok then _0x0F=_0x0F+1 if _0x0F>=_0x0E then _0x08=false break end else _0x0F=math.max(0,_0x0F-1)end
 if _0x08 then task.wait(0.016)end end end)
-local _0x11;do local _ok,_r=pcall(function()return loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/imjussayin.lua".."/".."?cache="..tostring(os.time())))()end);if _ok and _r then _0x11=_r elseif _G.lib then _0x11=_G.lib else pcall(function()notify("Check it","Failed to load UI library",5)end)return end end
+local _0x11;do local _ok,_r=pcall(function()return loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/imjussayin.lua".."?cache="..tostring(os.time())))()end);if _ok and _r then _0x11=_r elseif _G.lib then _0x11=_G.lib else pcall(function()notify("Check it","Failed to load UI library",5)end)return end end
 do local _cvUrl="https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/ChildVm.lua?t="..tostring(os.time())local _ok=pcall(function()loadstring(game:HttpGet(_cvUrl))()end)if _ok then local _t0=os.clock()repeat task.wait(0.05)until _G.ChildVm or (os.clock()-_t0)>12 end end
 local _0x12=game.Players.LocalPlayer.Name local _0x13="";pcall(function()if type(getgetname)=="function"then _0x13=getgetname()elseif type(getgamename)=="function"then _0x13=getgamename()end end)
 local _0x14=false local _0x15=false local _0x16=false local _0x17=false local _0x18=false local _0x19=false local _0x1A=false local _0x1B=false local _0x1C=false
