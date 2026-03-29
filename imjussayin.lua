@@ -867,6 +867,12 @@ end
 
 local _ulg={
 	{category="UI Updates",logs={
+		{ver="v2.1",date="2026-03-29",entries={
+			"Why do I  always forget to update this T_T.",
+			"Added Auto menu resize (resizes the menu to fit everything)",
+			"Check it theme is now the main theme Conffeti theme is still avaliable tho.",
+			"Added Selective dropdowns for a future update I am working on.",
+		}},
 		{ver="v2.0",date="2026-03-18",entries={
 			"new Drawing-based overlay UI library",
 			"System/SystemBold font, bigger text",
