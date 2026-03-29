@@ -102,11 +102,14 @@ local function _ath(name)
 	for k,v in pairs(t) do C[k]=v end
 	state.currentTheme=name
 end
-_ath("confetti")
+_ath("check it")
 
 local function _clp(v,a,b)return math.max(a,math.min(b,v))end
 local function _ins(x,y,rx,ry,rw,rh)return x>=rx and x<=rx+rw and y>=ry and y<=ry+rh end
 local function _trc(s,n)if #s>n then return s:sub(1,n-1).."~"end return s end
+local function _sp(o,k,v)pcall(function()o[k]=v end)end
+local function _sps(o,t)pcall(function()for k,v in pairs(t)do o[k]=v end end)end
+local function _smv(o,dv)pcall(function()if o.Position then o.Position=o.Position+dv end;if o.From then o.From=o.From+dv;o.To=o.To+dv end end)end
 
 local function _nob(pool,typ,props)
 	local o=Drawing.new(typ)
@@ -179,16 +182,16 @@ local function _shl()
 		local cx=scx-math.floor(cw/2)
 		local cy2=scy-math.floor(ch/2)
 		local cr=math.min(r,math.floor(math.min(cw,ch)/2))
-		pcall(function()bgS1.Position=_v2(cx+cr,cy2);bgS1.Size=_v2(math.max(0,cw-cr*2),ch)end)
-		pcall(function()bgS2.Position=_v2(cx,cy2+cr);bgS2.Size=_v2(cw,math.max(0,ch-cr*2))end)
-		pcall(function()bgC1.Position=_v2(cx+cr,cy2+cr);bgC1.Radius=cr end)
-		pcall(function()bgC2.Position=_v2(cx+cw-cr,cy2+cr);bgC2.Radius=cr end)
-		pcall(function()bgC3.Position=_v2(cx+cr,cy2+ch-cr);bgC3.Radius=cr end)
-		pcall(function()bgC4.Position=_v2(cx+cw-cr,cy2+ch-cr);bgC4.Radius=cr end)
-		pcall(function()brdL1.From=_v2(cx+cr,cy2);brdL1.To=_v2(cx+cw-cr,cy2)end)
-		pcall(function()brdL2.From=_v2(cx+cr,cy2+ch);brdL2.To=_v2(cx+cw-cr,cy2+ch)end)
-		pcall(function()brdL3.From=_v2(cx,cy2+cr);brdL3.To=_v2(cx,cy2+ch-cr)end)
-		pcall(function()brdL4.From=_v2(cx+cw,cy2+cr);brdL4.To=_v2(cx+cw,cy2+ch-cr)end)
+		_sps(bgS1,{Position=_v2(cx+cr,cy2),Size=_v2(math.max(0,cw-cr*2),ch)})
+		_sps(bgS2,{Position=_v2(cx,cy2+cr),Size=_v2(cw,math.max(0,ch-cr*2))})
+		_sps(bgC1,{Position=_v2(cx+cr,cy2+cr),Radius=cr})
+		_sps(bgC2,{Position=_v2(cx+cw-cr,cy2+cr),Radius=cr})
+		_sps(bgC3,{Position=_v2(cx+cr,cy2+ch-cr),Radius=cr})
+		_sps(bgC4,{Position=_v2(cx+cw-cr,cy2+ch-cr),Radius=cr})
+		_sps(brdL1,{From=_v2(cx+cr,cy2),To=_v2(cx+cw-cr,cy2)})
+		_sps(brdL2,{From=_v2(cx+cr,cy2+ch),To=_v2(cx+cw-cr,cy2+ch)})
+		_sps(brdL3,{From=_v2(cx,cy2+cr),To=_v2(cx,cy2+ch-cr)})
+		_sps(brdL4,{From=_v2(cx+cw,cy2+cr),To=_v2(cx+cw,cy2+ch-cr)})
 	end
 	local bgS1=_lob("Square",{Position=_v2(scx,scy),Size=_v2(0,0),Color=C.tb,Filled=true,Transparency=1,ZIndex=50,Visible=true})
 	local bgS2=_lob("Square",{Position=_v2(scx,scy),Size=_v2(0,0),Color=C.tb,Filled=true,Transparency=1,ZIndex=50,Visible=true})
@@ -241,46 +244,43 @@ local function _shl()
 			for _,te in ipairs(textObjs)do
 				local t=elapsed-te.delay
 				if t<0 then
-					pcall(function()te.obj.Transparency=0 end)
+					_sp(te.obj,"Transparency",0)
 				elseif t<slideDur then
 					local p2=_clp(t/slideDur,0,1)
 					local ep=1-(1-p2)*(1-p2)*(1-p2)
 					local yOff=math.floor(slideOff*(1-ep))
-					pcall(function()te.obj.Position=_v2(te.bx,te.by+yOff)end)
-					pcall(function()te.obj.Transparency=ep end)
+					_sps(te.obj,{Position=_v2(te.bx,te.by+yOff),Transparency=ep})
 				else
-					pcall(function()te.obj.Position=_v2(te.bx,te.by)end)
-					pcall(function()te.obj.Transparency=1 end)
+					_sps(te.obj,{Position=_v2(te.bx,te.by),Transparency=1})
 				end
 			end
 			task.wait(0.016)
 		end
 		for _,te in ipairs(textObjs)do
-			pcall(function()te.obj.Position=_v2(te.bx,te.by)end)
-			pcall(function()te.obj.Transparency=1 end)
+			_sps(te.obj,{Position=_v2(te.bx,te.by),Transparency=1})
 		end
 		local barStart=tick()
 		local barDur=1.2
 		local blink=true
-		pcall(function()barFill.Transparency=1 end)
-		pcall(function()barBg.Transparency=1 end)
-		pcall(function()statusTx.Transparency=1 end)
+		_sp(barFill,"Transparency",1)
+		_sp(barBg,"Transparency",1)
+		_sp(statusTx,"Transparency",1)
 		while tick()-barStart<barDur do
 			local pct=_clp((tick()-barStart)/barDur,0,1)
 			local ep=pct<0.3 and pct/0.3*0.45 or pct<0.6 and 0.45+(pct-0.3)/0.3*0.27 or pct<0.85 and 0.72+(pct-0.6)/0.25*0.18 or 0.9+(pct-0.85)/0.15*0.1
-			pcall(function()barFill.Size=_v2(math.floor(barW*ep),2)end)
+			_sp(barFill,"Size",_v2(math.floor(barW*ep),2))
 			local nb=math.floor((tick()-barStart)/0.5)%2==0
 			if nb~=blink then
 				blink=nb
-				pcall(function()statusTx.Text=blink and "initializing modules_" or "initializing modules "end)
+				_sp(statusTx,"Text",blink and "initializing modules_" or "initializing modules ")
 			end
 			task.wait(0.016)
 		end
-		pcall(function()barFill.Size=_v2(barW,2)end)
+		_sp(barFill,"Size",_v2(barW,2))
 		task.wait(0.25)
 		for i=10,0,-1 do
 			local a=i/10
-			for _,o in ipairs(_ldo)do pcall(function()o.Transparency=a end)end
+			for _,o in ipairs(_ldo)do _sp(o,"Transparency",a)end
 			task.wait(0.025)
 		end
 	end)
@@ -333,17 +333,13 @@ local function _scf()
 				p.y=p.y+p.vy
 				local alpha=1-p.life/p.maxLife
 				if alpha<=0 or p.life>=p.maxLife then
-					pcall(function()p.obj:Remove()end)
+						pcall(function()p.obj:Remove()end)
 					for j,co in ipairs(_cfo)do
 						if co==p.obj then table.remove(_cfo,j);break end
 					end
 					table.remove(particles,i)
 				else
-					pcall(function()
-						p.obj.Position=_v2(p.x,p.y)
-						p.obj.Transparency=alpha
-						p.obj.Visible=state.visible
-					end)
+					_sps(p.obj,{Position=_v2(p.x,p.y),Transparency=alpha,Visible=state.visible})
 					i=i+1
 				end
 			end
@@ -384,7 +380,7 @@ local function _scc(mx,my)
 					pcall(function()p.obj:Remove()end)
 					table.remove(parts,i)
 				else
-					pcall(function()p.obj.Position=_v2(p.x,p.y);p.obj.Transparency=alpha end)
+					_sps(p.obj,{Position=_v2(p.x,p.y),Transparency=alpha})
 					i=i+1
 				end
 			end
@@ -501,6 +497,11 @@ local function _ith(it)
 			return DDH*(1+#(it.options or{}))
 		end
 		return DDH
+	elseif it.type=="selectdropdown" then
+		if state.ddExpanded[it.id] then
+			return DDH*(1+#(it.options or{}))
+		end
+		return DDH
 	elseif it.type=="button" then return RH
 	elseif it.type=="debug" then return DTH
 	elseif it.type=="profiletag" then return PTH
@@ -515,7 +516,7 @@ local function _gri(items)
 		if it.type=="section" or it.type=="debug" then
 			table.insert(groups,{it})
 			i=i+1
-		elseif it.type=="dropdown" then
+		elseif it.type=="dropdown" or it.type=="selectdropdown" then
 			table.insert(groups,{it})
 			i=i+1
 		elseif it.type=="slider" then
@@ -550,34 +551,121 @@ local function _gri(items)
 	return groups
 end
 
-local function _cwh()
-	local maxH=0
-	for _,tab in ipairs(state.tabs)do
-		local left,right={},{}
-		for _,it in ipairs(tab.items or{})do
-			if it.col==2 then table.insert(right,it)
-			else table.insert(left,it)end
+local function _tabH(tab)
+	if not tab or not tab.items then return 0 end
+	local left,right={},{}
+	for _,it in ipairs(tab.items or{})do
+		if it.col==2 then table.insert(right,it)
+		else table.insert(left,it)end
+	end
+	local function colH(citems)
+		local h=0
+		for _,grp in ipairs(_gri(citems))do
+			local f=grp[1]
+			if f.type=="section" then h=h+22
+			elseif f.type=="debug" then h=h+DTH
+			else
+				local ph=0
+				for _,it in ipairs(grp)do ph=ph+_ith(it)end
+				h=h+ph+8
+			end
 		end
-		local function colH(citems)
-			local h=0
-			for _,grp in ipairs(_gri(citems))do
-				local f=grp[1]
-				if f.type=="section" then h=h+22
-				elseif f.type=="debug" then h=h+DTH
-				else
-					local ph=0
-					for _,it in ipairs(grp)do ph=ph+_ith(it)end
-					h=h+ph+8
+		return h
+	end
+	return math.max(colH(left),colH(right))+16
+end
+local function _cwh()
+	local at=state.activeTab
+	local h=0
+	if at and at.name=="settings" then h=290
+	elseif at and at.name=="updatelogs" then h=290
+	elseif at and at.name=="info" then h=310
+	elseif at then h=_tabH(at)
+	else for _,tab in ipairs(state.tabs)do h=math.max(h,_tabH(tab))end end
+	local raw=math.max(200,h)+TH+TAH+10
+	local maxScreen=math.floor(_sy*0.8)
+	return math.min(raw,maxScreen)
+end
+
+local function _twh(newH,skipState)
+	if newH==state.wh and not skipState then return end
+	if not skipState then state.wh=newH end
+	local wx,wy=state.wx,state.wy
+	local r=8
+	if win._fs1 then _sps(win._fs1,{Size=_v2(WW-r*2,newH)})end
+	if win._fs2 then _sps(win._fs2,{Size=_v2(WW,newH-r*2)})end
+	if win._fc3 then _sp(win._fc3,"Position",_v2(wx+r,wy+newH-r))end
+	if win._fc4 then _sp(win._fc4,"Position",_v2(wx+WW-r,wy+newH-r))end
+	if win._bBot then _sps(win._bBot,{From=_v2(wx+r,wy+newH),To=_v2(wx+WW-r,wy+newH)})end
+	if win._bL then _sp(win._bL,"To",_v2(wx,wy+newH-r))end
+	if win._bR then _sp(win._bR,"To",_v2(wx+WW,wy+newH-r))end
+	local pi2=math.pi/2
+	local seg=6
+	if win._bBR then
+		local cx,cy=wx+WW-r,wy+newH-r
+		for s=0,seg-1 do
+			local t0=pi2*s/seg;local t1=pi2*(s+1)/seg
+			local o=win._bBR[s+1]
+			if o then _sps(o,{From=_v2(cx+math.cos(t0)*r,cy+math.sin(t0)*r),To=_v2(cx+math.cos(t1)*r,cy+math.sin(t1)*r)})end
+		end
+	end
+	if win._bBL then
+		local cx,cy=wx+r,wy+newH-r
+		for s=0,seg-1 do
+			local t0=pi2+pi2*s/seg;local t1=pi2+pi2*(s+1)/seg
+			local o=win._bBL[s+1]
+			if o then _sps(o,{From=_v2(cx+math.cos(t0)*r,cy+math.sin(t0)*r),To=_v2(cx+math.cos(t1)*r,cy+math.sin(t1)*r)})end
+		end
+	end
+	if win.colDiv then pcall(function()win.colDiv.To=_v2(win.colDiv.To.X,wy+newH-8)end)end
+end
+
+local function _tweenHeight(targetH, duration)
+	if not targetH then return end
+	duration = duration or 0.15
+	local startH = state.wh
+	if startH == targetH then return end
+	local expanding = targetH > startH
+	local wy = state.wy
+	local contentTop = wy + TH + TAH
+	if expanding then
+		for _, o in ipairs(_aco) do
+			local py = nil
+			pcall(function() py = o.Position and o.Position.Y end)
+			if not py then pcall(function() py = o.From and o.From.Y end) end
+			if py and py > wy + startH - 20 then
+				pcall(function() o.Transparency = 0 end)
+			end
+		end
+	end
+	task.spawn(function()
+		local t0 = tick()
+		while tick() - t0 < duration do
+			local p = _clp((tick() - t0) / duration, 0, 1)
+			local ep = 1 - (1 - p) * (1 - p) * (1 - p)
+			local curH = math.floor(startH + (targetH - startH) * ep)
+			state.wh = curH
+			_twh(curH, true)
+			if expanding then
+				local curBot = wy + curH - 10
+				for _, o in ipairs(_aco) do
+					local py = nil
+					pcall(function() py = o.Position and o.Position.Y end)
+					if not py then pcall(function() py = o.From and o.From.Y end) end
+					if py and py > wy + startH - 20 and py <= curBot then
+						local fadeP = _clp((curBot - py) / 30, 0, 1)
+						pcall(function() o.Transparency = fadeP end)
+					end
 				end
 			end
-			return h
+			task.wait(0.016)
 		end
-		local h=math.max(colH(left),colH(right))+16
-		if h>maxH then maxH=h end
-	end
-	local raw=math.max(200,maxH)+TH+TAH+10
-	local maxScreen=math.floor(_sy*0.6)
-	return math.min(raw,maxScreen)
+		state.wh = targetH
+		_twh(targetH, true)
+		for _, o in ipairs(_aco) do
+			pcall(function() o.Transparency = 1 end)
+		end
+	end)
 end
 
 local function _bwn()
@@ -587,7 +675,11 @@ local function _bwn()
 	local wh=_cwh()
 	state.wh=wh
 	_wpf(wx,wy,WW,wh,C.sb,1)
+	win._fs1=objs[1];win._fs2=objs[2];win._fc3=objs[5];win._fc4=objs[6]
 	_wpb(wx,wy,WW,wh,C.bd,2)
+	win._bBot=objs[8];win._bL=objs[9];win._bR=objs[10]
+	win._bBR={};for i=23,28 do win._bBR[#win._bBR+1]=objs[i] end
+	win._bBL={};for i=29,34 do win._bBL[#win._bBL+1]=objs[i] end
 	local tr=8
 	_wsq(wx+tr,wy,WW-tr*2,TH,C.tb,true,2)
 	_wsq(wx,wy+tr,WW,TH-tr,C.tb,true,2)
@@ -658,19 +750,19 @@ local function _svs(v)
 	for _,o in ipairs(_tbo)do if o.Remove then table.insert(all,o)end end
 	for _,o in ipairs(_aco)do table.insert(all,o)end
 	if v then
-		for _,o in ipairs(all)do pcall(function()o.Visible=true;o.Transparency=0 end)end
+		for _,o in ipairs(all)do _sps(o,{Visible=true,Transparency=0})end
 		for i=1,10 do
 			local a=i/10
-			for _,o in ipairs(all)do pcall(function()o.Transparency=a end)end
+			for _,o in ipairs(all)do _sp(o,"Transparency",a)end
 			task.wait(0.016)
 		end
 	else
 		for i=9,0,-1 do
 			local a=i/10
-			for _,o in ipairs(all)do pcall(function()o.Transparency=a end)end
+			for _,o in ipairs(all)do _sp(o,"Transparency",a)end
 			task.wait(0.016)
 		end
-		for _,o in ipairs(all)do pcall(function()o.Visible=false end)end
+		for _,o in ipairs(all)do _sp(o,"Visible",false)end
 	end
 end
 
@@ -843,7 +935,7 @@ local function _rul()
 			local blockBot=iy+blockH
 			if blockBot>visTop and iy<visBot then
 				if iy+18>visTop and iy<visBot then
-					_slb(sx,iy,sw,log.ver.."  "..log.date,5)
+					_slb(sx,iy,sw,log.ver.."   "..log.date,5)
 				end
 				local pillY=iy+24
 				if pillY+entryH>visTop and pillY<visBot then
@@ -857,7 +949,7 @@ local function _rul()
 					local ey=pillY+4
 					for ei,entry in ipairs(log.entries)do
 						if ey+22>visTop and ey<visBot then
-							_ttx("-  "..entry,sx+PAD+4,ey+4,C.g,FSX,false,7)
+							_ttx("-   "..entry,sx+PAD+4,ey+4,C.g,FSX,false,7)
 							if ei<#log.entries then _tln(sx+8,ey+22,sx+sw-8,ey+22,C.dv,1,5)end
 						end
 						ey=ey+22
@@ -958,6 +1050,8 @@ local function _rcl(colX,colW,items,startY)
 				})
 				iy=iy+DDH
 				if expanded then
+					local optH=DDH*#(it.options or{})
+					_rbg(px,iy,pw,optH,C.rb,5,false,isLast)
 					local optEls={}
 					for oi,opt in ipairs(it.options or{})do
 						local isSel=(opt==selName)
@@ -975,6 +1069,47 @@ local function _rcl(colX,colW,items,startY)
 						type="dropdown",id=it.id,
 						x=px,y=ddStart+DDH,w=pw,h=iy-(ddStart+DDH),
 						options=it.options,selected=selName,
+						optEls=optEls,callback=it.callback
+					})
+				end
+			elseif it.type=="selectdropdown"then
+				local ddStart=iy
+				local sel=it.selected or{}
+				local expanded=state.ddExpanded[it.id]
+				_rbg(px,iy,pw,DDH,C.rb,5,isFirst,not expanded and isLast)
+				if it.label and it.label~="" then _ttb(it.label,px+PAD+4,iy+7,C.w,FSX,false,7) end
+				local headerTxt="none"
+				if #sel>0 then local p={};for _,s in ipairs(sel)do p[#p+1]=s end;headerTxt=table.concat(p,", ");if #headerTxt>20 then headerTxt=headerTxt:sub(1,19).."~" end end
+				local arrowCh=expanded and "v" or ">"
+				_ttx(arrowCh,px+pw-PAD-8,iy+8,C.g,11,false,7)
+				local htw=#headerTxt*CHW
+				_ttx(headerTxt,px+pw-PAD-14-htw,iy+7,C.a,FSX,false,7)
+				table.insert(_els,{
+					type="ddHeader",id=it.id,
+					x=px,y=iy,w=pw,h=DDH
+				})
+				iy=iy+DDH
+				if expanded then
+					local optH=DDH*#(it.options or{})
+					_rbg(px,iy,pw,optH,C.rb,5,false,isLast)
+					local optEls={}
+					for oi,opt in ipairs(it.options or{})do
+						local isSel=false
+						for _,s in ipairs(sel)do if s==opt then isSel=true;break end end
+						local oIsLast=(oi==#(it.options or{}))
+						if isSel then
+							_tpf(px+3,iy+2,pw-6,DDH-4,C.ts,5,6)
+						end
+						if not oIsLast then _dvl(px,iy+DDH,pw,6) end
+						local chk=isSel and "x " or "   "
+						local otx=_ttb(chk..opt,px+PAD+4,iy+7,isSel and C.od or C.g,FSX,false,7)
+						table.insert(optEls,{tx=otx,name=opt,x=px,y=iy,w=pw,h=DDH,checked=isSel})
+						iy=iy+DDH
+					end
+					table.insert(_els,{
+						type="selectdropdown",id=it.id,
+						x=px,y=ddStart+DDH,w=pw,h=iy-(ddStart+DDH),
+						options=it.options,selected=sel,
 						optEls=optEls,callback=it.callback
 					})
 				end
@@ -1046,7 +1181,7 @@ local function _rcl(colX,colW,items,startY)
 					local s=math.sin(t*5)
 					local r=3.5+1.5*s
 					local a=0.5+0.5*s
-					pcall(function()hbDot.Radius=r;hbDot.Transparency=a end)
+					_sps(hbDot,{Radius=r,Transparency=a})
 					task.wait(0.016)
 				end
 			end)
@@ -1091,7 +1226,7 @@ local function _rin()
 					local cr=wr+(tr-wr)*g
 					local cg=wg2+(tg2-wg2)*g
 					local cb=wb+(tb-wb)*g
-					pcall(function()vtx.Color=Color3.new(cr,cg,cb)end)
+					_sp(vtx,"Color",Color3.new(cr,cg,cb))
 					task.wait(0.016)
 				end
 			end)
@@ -1231,7 +1366,7 @@ local function _rtb(tab,skipAnim,swipeDir)
 	local t1=tick()
 	while tick()-t1<dur do
 		local p=_clp((tick()-t1)/dur,0,1)
-		local ep=1-(1-p)*(1-p)
+		local ep=1-(1-p)*(1-p)*(1-p)
 		for _,o in ipairs(_aco)do pcall(function()o.Transparency=ep end)end
 		if useSwipe then
 			local curDx=slideOff*(1-ep)
@@ -1256,11 +1391,162 @@ local function _rtb(tab,skipAnim,swipeDir)
 	end
 end
 
-local function _frb()
+local function _ped(ddId)
+	local tab=state.activeTab
+	if not tab then return end
+	local optC=0
+	for _,it in ipairs(tab.items or{})do
+		if (it.type=="dropdown" or it.type=="selectdropdown") and it.id==ddId then optC=#(it.options or{});break end
+	end
+	if optC==0 then return end
+	local slideH=DDH*optC
+	local headerBot=0
+	for _,el in ipairs(_els)do
+		if el.type=="ddHeader" and el.id==ddId then headerBot=el.y+DDH;break end
+	end
+	if headerBot==0 then return end
+	local colL,colR=state.wx+CW,state.wx+WW-PAD
+	for _,el in ipairs(_els)do
+		if el.type=="ddHeader" and el.id==ddId then colL=el.x;colR=el.x+el.w;break end
+	end
+	local function inCol(ox) return ox and ox>=colL-10 and ox<=colR+10 end
+	local tgts={}
+	for _,o in ipairs(_aco)do
+		local py,px2;pcall(function()py=o.Position and o.Position.Y;px2=o.Position and o.Position.X end)
+		if py and inCol(px2) and py>=headerBot-2 and py<headerBot+slideH+10 then
+			table.insert(tgts,{obj=o,finalY=py,type="pos",isOpt=true})
+			pcall(function()o.Position=_v2(o.Position.X,py-slideH)end)
+			pcall(function()o.Transparency=0 end)
+		elseif py and inCol(px2) and py>=headerBot+slideH+10 then
+			table.insert(tgts,{obj=o,finalY=py,type="pos",isOpt=false})
+			pcall(function()o.Position=_v2(o.Position.X,py-slideH)end)
+		else
+			local fy,fx;pcall(function()fy=o.From and o.From.Y;fx=o.From and o.From.X end)
+			if fy and inCol(fx) and fy>=headerBot-2 and fy<headerBot+slideH+10 then
+				local ty2;pcall(function()ty2=o.To.Y end)
+				table.insert(tgts,{obj=o,finalFromY=fy,finalToY=ty2,type="line",isOpt=true})
+				pcall(function()o.From=_v2(o.From.X,fy-slideH)end)
+				pcall(function()o.To=_v2(o.To.X,ty2-slideH)end)
+				pcall(function()o.Transparency=0 end)
+			elseif fy and inCol(fx) and fy>=headerBot+slideH+10 then
+				local ty2;pcall(function()ty2=o.To.Y end)
+				table.insert(tgts,{obj=o,finalFromY=fy,finalToY=ty2,type="line",isOpt=false})
+				pcall(function()o.From=_v2(o.From.X,fy-slideH)end)
+				pcall(function()o.To=_v2(o.To.X,ty2-slideH)end)
+			end
+		end
+	end
+	if #tgts==0 then return end
+	local oldWH=state.wh-slideH
+	local newWH=state.wh
+	_twh(oldWH,true)
+	task.spawn(function()
+		local dur=0.2
+		local t0=tick()
+		while tick()-t0<dur do
+			local p=_clp((tick()-t0)/dur,0,1)
+			local ep=1-(1-p)*(1-p)*(1-p)
+			for _,tg in ipairs(tgts)do
+				if tg.type=="pos"then
+					pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,(tg.finalY-slideH)+slideH*ep)end)
+				else
+					pcall(function()tg.obj.From=_v2(tg.obj.From.X,(tg.finalFromY-slideH)+slideH*ep)end)
+					pcall(function()tg.obj.To=_v2(tg.obj.To.X,(tg.finalToY-slideH)+slideH*ep)end)
+				end
+				if tg.isOpt then pcall(function()tg.obj.Transparency=ep end)end
+			end
+			local curH=math.floor(oldWH+(newWH-oldWH)*ep)
+			state.wh=curH
+			_twh(curH,true)
+			task.wait(0.016)
+		end
+		for _,tg in ipairs(tgts)do
+			if tg.type=="pos"then pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.finalY)end)
+			else pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.finalFromY);tg.obj.To=_v2(tg.obj.To.X,tg.finalToY)end)end
+			if tg.isOpt then pcall(function()tg.obj.Transparency=1 end)end
+		end
+		state.wh=newWH
+		_twh(newWH,true)
+	end)
+end
+
+local function _pcd(ddId)
+	local tab=state.activeTab
+	if not tab then return end
+	local optC=0
+	for _,it in ipairs(tab.items or{})do
+		if (it.type=="dropdown" or it.type=="selectdropdown") and it.id==ddId then optC=#(it.options or{});break end
+	end
+	if optC==0 then return end
+	local slideH=DDH*optC
+	local headerBot=0
+	for _,el in ipairs(_els)do
+		if el.type=="ddHeader" and el.id==ddId then headerBot=el.y+DDH;break end
+	end
+	if headerBot==0 then return end
+	local colL,colR=0,0
+	for _,el in ipairs(_els)do
+		if el.type=="ddHeader" and el.id==ddId then colL=el.x;colR=el.x+el.w;break end
+	end
+	if colR==0 then return end
+	local function inCol(ox) return ox and ox>=colL-10 and ox<=colR+10 end
+	local tgts={}
+	for _,o in ipairs(_aco)do
+		local py,px2;pcall(function()py=o.Position and o.Position.Y;px2=o.Position and o.Position.X end)
+		if py and inCol(px2) and py>=headerBot-2 and py<headerBot+slideH+10 then
+			table.insert(tgts,{obj=o,origY=py,type="pos",isOpt=true})
+		elseif py and inCol(px2) and py>=headerBot+slideH+10 then
+			table.insert(tgts,{obj=o,origY=py,type="pos",isOpt=false})
+		else
+			local fy,fx;pcall(function()fy=o.From and o.From.Y;fx=o.From and o.From.X end)
+			if fy and inCol(fx) and fy>=headerBot-2 and fy<headerBot+slideH+10 then
+				local ty2;pcall(function()ty2=o.To.Y end)
+				table.insert(tgts,{obj=o,origFromY=fy,origToY=ty2,type="line",isOpt=true})
+			elseif fy and inCol(fx) and fy>=headerBot+slideH+10 then
+				local ty2;pcall(function()ty2=o.To.Y end)
+				table.insert(tgts,{obj=o,origFromY=fy,origToY=ty2,type="line",isOpt=false})
+			end
+		end
+	end
+	if #tgts==0 then return end
+	local startWH=state.wh
+	local endWH=startWH-slideH
+	task.spawn(function()
+		local dur=0.2
+		local t0=tick()
+		while tick()-t0<dur do
+			local p=_clp((tick()-t0)/dur,0,1)
+			local ep=1-(1-p)*(1-p)*(1-p)
+			for _,tg in ipairs(tgts)do
+				if tg.type=="pos"then
+					pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.origY-slideH*ep)end)
+				else
+					pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.origFromY-slideH*ep)end)
+					pcall(function()tg.obj.To=_v2(tg.obj.To.X,tg.origToY-slideH*ep)end)
+				end
+				if tg.isOpt then pcall(function()tg.obj.Transparency=1-ep end)end
+			end
+			local curH=math.floor(startWH+(endWH-startWH)*ep)
+			state.wh=curH
+			_twh(curH,true)
+			task.wait(0.016)
+		end
+		state.wh=endWH
+		_twh(endWH,true)
+	end)
+end
+local function _frb(smooth)
 	if not state.loaderDone then return end
+	local oldH=state.wh
 	_bwn()
 	_bts()
 	_rtb(state.activeTab,true)
+	local newH=state.wh
+	if oldH~=newH then
+		state.wh=oldH
+		_twh(oldH,true)
+		_tweenHeight(newH,0.15)
+	end
 end
 
 local function _htp()
@@ -1358,13 +1644,8 @@ local function _dck(mx,my)
 		if el.type=="toggle" and _ins(mx,my,el.x,el.y,el.w,el.h)then
 			el.on=not el.on
 			local col=el.on and C.on or C.of
-			pcall(function()el.bg1.Color=col end)
-			pcall(function()el.bg2.Color=col end)
-			pcall(function()el.c1.Color=col end)
-			pcall(function()el.c2.Color=col end)
-			pcall(function()el.c3.Color=col end)
-			pcall(function()el.c4.Color=col end)
-			pcall(function()el.dot.Color=el.on and C.od or C.fd end)
+			for _,p in ipairs({el.bg1,el.bg2,el.c1,el.c2,el.c3,el.c4})do _sp(p,"Color",col)end
+			_sp(el.dot,"Color",el.on and C.od or C.fd)
 			local fromX=el.x+(el.on and 8 or 24)
 			local toX=el.x+(el.on and 24 or 8)
 			local tweenDot=el.dot
@@ -1374,12 +1655,11 @@ local function _dck(mx,my)
 				local t0=tick()
 				while tick()-t0<dur do
 					local p=_clp((tick()-t0)/dur,0,1)
-					local ep=1-(1-p)*(1-p)
-					local cx=fromX+(toX-fromX)*ep
-					pcall(function()tweenDot.Position=_v2(cx,tweenY)end)
+					local ep=1-(1-p)*(1-p)*(1-p)
+					_sp(tweenDot,"Position",_v2(fromX+(toX-fromX)*ep,tweenY))
 					task.wait(0.016)
 				end
-				pcall(function()tweenDot.Position=_v2(toX,tweenY)end)
+				_sp(tweenDot,"Position",_v2(toX,tweenY))
 			end)
 			for _,_tab in ipairs(state.tabs)do for _,_it in ipairs(_tab.items or{})do if _it.id==el.id and _it.type=="toggle" then _it.value=el.on end end end
 			local cb=state.tCbs[el.id]
@@ -1395,9 +1675,9 @@ local function _dck(mx,my)
 		elseif el.type=="rebind" and _ins(mx,my,el.x,el.y,el.w,el.h)then
 			state.rebinding=true;state.rebindTarget=el
 			state._rebindAnim=true
-			pcall(function()el.rt.Text=".";el.rt.Color=C.a end)
-			pcall(function()el.kd.Text=".";el.kd.Color=C.a end)
-			pcall(function()win.kTx.Text="."end)
+			_sps(el.rt,{Text=".",Color=C.a})
+			_sps(el.kd,{Text=".",Color=C.a})
+			_sp(win.kTx,"Text",".")
 			task.spawn(function()
 				local dots={".","..",". . ."}
 				local di=1
@@ -1418,69 +1698,81 @@ local function _dck(mx,my)
 			local optC=0
 			for _,tab in ipairs(state.tabs)do
 				for _,it in ipairs(tab.items or{})do
-					if it.type=="dropdown" and it.id==el.id then optC=#(it.options or{});break end
+					if (it.type=="dropdown" or it.type=="selectdropdown") and it.id==el.id then optC=#(it.options or{});break end
 				end
 				if optC>0 then break end
 			end
 			local slideH=DDH*optC
-			local function inCol(ox) return ox and ox>=colL-2 and ox<=colR+2 end
+			local function inCol(ox) return ox and ox>=colL-10 and ox<=colR+10 end
+			local oldWH=state.wh
+			local dur=0.2
 			if wasExp then
 				local tgts={}
 				for _,o in ipairs(_aco)do
 					local py,px2;pcall(function()py=o.Position and o.Position.Y;px2=o.Position and o.Position.X end)
-					if py and inCol(px2) and py>=headerBot and py<headerBot+slideH then
+					if py and inCol(px2) and py>=headerBot-2 and py<headerBot+slideH+10 then
 						table.insert(tgts,{obj=o,origY=py,type="pos",isOpt=true})
-					elseif py and inCol(px2) and py>=headerBot+slideH then
+					elseif py and inCol(px2) and py>=headerBot+slideH+10 then
 						table.insert(tgts,{obj=o,origY=py,type="pos",isOpt=false})
 					else
 						local fy,fx;pcall(function()fy=o.From and o.From.Y;fx=o.From and o.From.X end)
-						if fy and inCol(fx) and fy>=headerBot and fy<headerBot+slideH then
+						if fy and inCol(fx) and fy>=headerBot-2 and fy<headerBot+slideH+10 then
 							local ty2;pcall(function()ty2=o.To.Y end)
 							table.insert(tgts,{obj=o,origFromY=fy,origToY=ty2,type="line",isOpt=true})
-						elseif fy and inCol(fx) and fy>=headerBot+slideH then
+						elseif fy and inCol(fx) and fy>=headerBot+slideH+10 then
 							local ty2;pcall(function()ty2=o.To.Y end)
 							table.insert(tgts,{obj=o,origFromY=fy,origToY=ty2,type="line",isOpt=false})
 						end
 					end
 				end
-				local dur=0.12;local t0=tick()
-				while tick()-t0<dur do
-					local p=_clp((tick()-t0)/dur,0,1);local ep=p*p
-					for _,tg in ipairs(tgts)do
-						if tg.type=="pos"then
-							pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.origY-slideH*ep)end)
-						else
-							pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.origFromY-slideH*ep)end)
-							pcall(function()tg.obj.To=_v2(tg.obj.To.X,tg.origToY-slideH*ep)end)
-						end
-						if tg.isOpt then pcall(function()tg.obj.Transparency=1-ep end)end
-					end
-					task.wait(0.016)
-				end
 				state.ddExpanded[el.id]=false
-				_cla();_rtc(state.activeTab)
+				local targetH=oldWH-slideH
+				task.spawn(function()
+					local t0=tick()
+					while tick()-t0<dur do
+						local p=_clp((tick()-t0)/dur,0,1)
+						local ep=1-(1-p)*(1-p)*(1-p)
+						for _,tg in ipairs(tgts)do
+							if tg.type=="pos"then
+								pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.origY-slideH*ep)end)
+							else
+								pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.origFromY-slideH*ep)end)
+								pcall(function()tg.obj.To=_v2(tg.obj.To.X,tg.origToY-slideH*ep)end)
+							end
+							if tg.isOpt then pcall(function()tg.obj.Transparency=1-ep end)end
+						end
+						local curH=math.floor(oldWH-slideH*ep)
+						state.wh=curH
+						_twh(curH,true)
+						task.wait(0.016)
+					end
+					state.wh=targetH
+					_twh(targetH,true)
+					_frb()
+				end)
 			else
 				state.ddExpanded[el.id]=true
+				local newWH=_cwh()
 				_cla();_rtc(state.activeTab)
 				local tgts={}
 				for _,o in ipairs(_aco)do
 					local py,px2;pcall(function()py=o.Position and o.Position.Y;px2=o.Position and o.Position.X end)
-					if py and inCol(px2) and py>=headerBot and py<headerBot+slideH then
+					if py and inCol(px2) and py>=headerBot-2 and py<headerBot+slideH+10 then
 						table.insert(tgts,{obj=o,finalY=py,type="pos",isOpt=true})
 						pcall(function()o.Position=_v2(o.Position.X,py-slideH)end)
 						pcall(function()o.Transparency=0 end)
-					elseif py and inCol(px2) and py>=headerBot+slideH then
+					elseif py and inCol(px2) and py>=headerBot+slideH+10 then
 						table.insert(tgts,{obj=o,finalY=py,type="pos",isOpt=false})
 						pcall(function()o.Position=_v2(o.Position.X,py-slideH)end)
 					else
 						local fy,fx;pcall(function()fy=o.From and o.From.Y;fx=o.From and o.From.X end)
-						if fy and inCol(fx) and fy>=headerBot and fy<headerBot+slideH then
+						if fy and inCol(fx) and fy>=headerBot-2 and fy<headerBot+slideH+10 then
 							local ty2;pcall(function()ty2=o.To.Y end)
 							table.insert(tgts,{obj=o,finalFromY=fy,finalToY=ty2,type="line",isOpt=true})
 							pcall(function()o.From=_v2(o.From.X,fy-slideH)end)
 							pcall(function()o.To=_v2(o.To.X,ty2-slideH)end)
 							pcall(function()o.Transparency=0 end)
-						elseif fy and inCol(fx) and fy>=headerBot+slideH then
+						elseif fy and inCol(fx) and fy>=headerBot+slideH+10 then
 							local ty2;pcall(function()ty2=o.To.Y end)
 							table.insert(tgts,{obj=o,finalFromY=fy,finalToY=ty2,type="line",isOpt=false})
 							pcall(function()o.From=_v2(o.From.X,fy-slideH)end)
@@ -1488,26 +1780,33 @@ local function _dck(mx,my)
 						end
 					end
 				end
-				local dur=0.12;local t0=tick()
-				while tick()-t0<dur do
-					local p=_clp((tick()-t0)/dur,0,1)
-					local ep=1-(1-p)*(1-p)
-					for _,tg in ipairs(tgts)do
-						if tg.type=="pos"then
-							pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,(tg.finalY-slideH)+slideH*ep)end)
-						else
-							pcall(function()tg.obj.From=_v2(tg.obj.From.X,(tg.finalFromY-slideH)+slideH*ep)end)
-							pcall(function()tg.obj.To=_v2(tg.obj.To.X,(tg.finalToY-slideH)+slideH*ep)end)
+				task.spawn(function()
+					local t0=tick()
+					while tick()-t0<dur do
+						local p=_clp((tick()-t0)/dur,0,1)
+						local ep=1-(1-p)*(1-p)*(1-p)
+						for _,tg in ipairs(tgts)do
+							if tg.type=="pos"then
+								pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,(tg.finalY-slideH)+slideH*ep)end)
+							else
+								pcall(function()tg.obj.From=_v2(tg.obj.From.X,(tg.finalFromY-slideH)+slideH*ep)end)
+								pcall(function()tg.obj.To=_v2(tg.obj.To.X,(tg.finalToY-slideH)+slideH*ep)end)
+							end
+							if tg.isOpt then pcall(function()tg.obj.Transparency=ep end)end
 						end
-						if tg.isOpt then pcall(function()tg.obj.Transparency=ep end)end
+						local curH=math.floor(oldWH+(newWH-oldWH)*ep)
+						state.wh=curH
+						_twh(curH,true)
+						task.wait(0.016)
 					end
-					task.wait(0.016)
-				end
-				for _,tg in ipairs(tgts)do
-					if tg.type=="pos"then pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.finalY)end)
-					else pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.finalFromY);tg.obj.To=_v2(tg.obj.To.X,tg.finalToY)end)end
-					if tg.isOpt then pcall(function()tg.obj.Transparency=1 end)end
-				end
+					for _,tg in ipairs(tgts)do
+						if tg.type=="pos"then pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.finalY)end)
+						else pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.finalFromY);tg.obj.To=_v2(tg.obj.To.X,tg.finalToY)end)end
+						if tg.isOpt then pcall(function()tg.obj.Transparency=1 end)end
+					end
+					state.wh=newWH
+					_twh(newWH,true)
+				end)
 			end
 			_scc(mx,my)
 			return
@@ -1545,22 +1844,64 @@ local function _dck(mx,my)
 							end
 						end
 					end
-					local dur2=0.12;local t02=tick()
-					while tick()-t02<dur2 do
-						local p2=_clp((tick()-t02)/dur2,0,1);local ep2=p2*p2
-						for _,tg in ipairs(opts2)do
-							if tg.type=="pos"then
-								pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.origY-sH*ep2)end)
-							else
-								pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.origFromY-sH*ep2)end)
-								pcall(function()tg.obj.To=_v2(tg.obj.To.X,tg.origToY-sH*ep2)end)
-							end
-							if tg.isOpt then pcall(function()tg.obj.Transparency=1-ep2 end)end
-						end
-						task.wait(0.016)
-					end
 					state.ddExpanded[el.id]=false
-					_cla();_rtc(state.activeTab)
+					local oldWH2=state.wh
+					local targetH2=oldWH2-sH
+					task.spawn(function()
+						local dur2=0.2
+						local t02=tick()
+						while tick()-t02<dur2 do
+							local p2=_clp((tick()-t02)/dur2,0,1)
+							local ep2=1-(1-p2)*(1-p2)*(1-p2)
+							for _,tg in ipairs(opts2)do
+								if tg.type=="pos"then
+									pcall(function()tg.obj.Position=_v2(tg.obj.Position.X,tg.origY-sH*ep2)end)
+								else
+									pcall(function()tg.obj.From=_v2(tg.obj.From.X,tg.origFromY-sH*ep2)end)
+									pcall(function()tg.obj.To=_v2(tg.obj.To.X,tg.origToY-sH*ep2)end)
+								end
+								if tg.isOpt then pcall(function()tg.obj.Transparency=1-ep2 end)end
+							end
+							local curH2=math.floor(oldWH2-sH*ep2)
+							state.wh=curH2
+							_twh(curH2,true)
+							task.wait(0.016)
+						end
+						state.wh=targetH2
+						_twh(targetH2,true)
+						_cla();_rtc(state.activeTab)
+					end)
+					_scc(mx,my)
+					return
+				end
+			end
+			elseif el.type=="selectdropdown" and el.optEls then
+			for _,opt in ipairs(el.optEls)do
+				if _ins(mx,my,opt.x,opt.y,opt.w,opt.h) then
+					local newSel={}
+					local wasIn=false
+					for _,s in ipairs(el.selected)do
+						if s==opt.name then wasIn=true
+						else table.insert(newSel,s) end
+					end
+					if not wasIn then table.insert(newSel,opt.name)end
+					el.selected=newSel
+					for _,tab in ipairs(state.tabs)do
+						for _,it in ipairs(tab.items or{})do
+							if it.type=="selectdropdown" and it.id==el.id then it.selected=newSel end
+						end
+					end
+					if el.callback then pcall(el.callback,newSel)end
+					local adding=not wasIn
+					local txObj=opt.tx
+					if txObj then
+						local newTxt=(adding and "x " or "   ")..opt.name
+						_sps(txObj,{Text=newTxt,Color=adding and C.od or C.g})
+					end
+					task.spawn(function()
+						task.wait(0.08)
+						_frb()
+					end)
 					_scc(mx,my)
 					return
 				end
@@ -1623,9 +1964,24 @@ local function _dck(mx,my)
 			if newIdx>oldIdx then dir=1
 			elseif newIdx<oldIdx then dir=-1 end
 			if n~="updatelogs" then state.logScrollY=0 end
+			for eid, _ in pairs(state.ddExpanded) do
+				state.ddExpanded[eid] = false
+			end
+			
 			if n=="settings" or n=="updatelogs" or n=="info"then state.activeTab={name=n,items={}}
 			else for _,t in ipairs(state.tabs)do if t.name==n then state.activeTab=t;break end end end
-			_bts();_rtb(state.activeTab,false,dir)
+			
+			local preH = state.wh
+			_bwn()
+			_bts()
+			_rtb(state.activeTab, false, dir)
+			local postH = state.wh
+			
+			if postH ~= preH then
+				state.wh = preH
+				_twh(preH, true)
+				_tweenHeight(postH, 0.15)
+			end
 			return
 		end
 	end
@@ -1831,7 +2187,7 @@ function lib:Window()
 									local t0=tick()
 									while tick()-t0<dur do
 										local p=_clp((tick()-t0)/dur,0,1)
-										local ep=1-(1-p)*(1-p)
+										local ep=1-(1-p)*(1-p)*(1-p)
 										pcall(function()td.Position=_v2(fromX+(toX-fromX)*ep,ty2)end)
 										task.wait(0.016)
 									end
@@ -1889,6 +2245,38 @@ function lib:Window()
 					for _,t2 in ipairs(state.tabs)do
 						for _,it in ipairs(t2.items or{})do
 							if it.type=="dropdown" and it.id==id then it.options=newOpts end
+						end
+					end
+					if state.activeTab and state.activeTab.name==tab.name then _frb()end
+				end
+				return ctrl
+			end
+			function s:SelectDropdown(opts)
+				local id=opts.id or opts.label
+				local sel=opts.default or{}
+				table.insert(tab.items,{type="selectdropdown",label=opts.label,options=opts.options or{},selected=sel,id=id,callback=opts.callback,col=opts.col or 1,desc=opts.desc})
+				if state.activeTab and state.activeTab.name==tab.name then _frb()end
+				local ctrl={}
+				function ctrl:Get()
+					for _,t2 in ipairs(state.tabs)do
+						for _,it in ipairs(t2.items or{})do
+							if it.type=="selectdropdown" and it.id==id then return it.selected end
+						end
+					end
+					return{}
+				end
+				function ctrl:Set(v)
+					for _,t2 in ipairs(state.tabs)do
+						for _,it in ipairs(t2.items or{})do
+							if it.type=="selectdropdown" and it.id==id then it.selected=v end
+						end
+					end
+					if state.activeTab and state.activeTab.name==tab.name then _frb()end
+				end
+				function ctrl:SetOptions(newOpts)
+					for _,t2 in ipairs(state.tabs)do
+						for _,it in ipairs(t2.items or{})do
+							if it.type=="selectdropdown" and it.id==id then it.options=newOpts end
 						end
 					end
 					if state.activeTab and state.activeTab.name==tab.name then _frb()end
@@ -1963,9 +2351,9 @@ function lib:Window()
 			pcall(function()userName=_lp.Name end)
 			pcall(function()notify("Welcome, "..userName,"Check It v2",3)end)
 			task.wait(0.3)
-			pcall(function()notify("thank you guys for almost 100 stars have this special theme for the time being","Check It v2",5)end)
+			pcall(function()notify("Thank you guys so much for 100+ stars","Check It v2",5)end)
 			task.wait(0.3)
-			pcall(function()notify("reapply the theme to see a cool effect :)","Check It v2",5)end)
+			pcall(function()notify("(¬_¬)","Check It v2",3)end)
 		end)
 		if not ok then warn("[lib] ERROR in spawn: "..tostring(err)) end
 	end)
