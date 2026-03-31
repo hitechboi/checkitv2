@@ -1,16 +1,13 @@
 local _l;do local _o,_r=pcall(function()return loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/imjussayin.lua".."?cache="..tostring(os.time())))()end);if _o and _r then _l=_r elseif _G.lib then _l=_G.lib else pcall(function()notify("Bite By Night","Failed to load UI library",5)end)return end end
-
 local _p=game.Players.LocalPlayer
 local _w=_l:Window("Bite","By Night")
 pcall(function()if _w.SetGameName then _w:SetGameName((type(getgamename)=="function"and getgamename())or(type(getgetname)=="function"and getgetname())or"Bite By Night")end end)
-pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.2","2026-03-29",{"added healthbar"})end end)
-pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.3","2026-03-30",{"Added Self Esp","Added more Esp features such as skeleton and tracers","Added Traps and battery esp minions included."})end end)
-
+pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.3","2026-03-29",{"corner brackets","R6 skeleton","tracer lines","per-feature toggles"})end end)
+pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.4","2026-03-30",{"Added Self Esp","Added more Esp features such as skeleton and tracers","Added Traps and battery esp minions included."})end end)
 local Connection={}
 Connection.__index=Connection
 function Connection.new(fn)return setmetatable({Connected=true,_disconnect=fn},Connection)end
 function Connection:Disconnect()if not self.Connected then return end;self.Connected=false;if self._disconnect then self._disconnect()end end
-
 local Signal={}
 Signal.__index=Signal
 function Signal.new()return setmetatable({_entries={}},Signal)end
@@ -20,7 +17,6 @@ function Signal:Fire(...)local alive={};for _,e in ipairs(self._entries)do if e.
 function Signal:Wait()local co=coroutine.running();self:Once(function(...)coroutine.resume(co,...)end);return coroutine.yield()end
 function Signal:DisconnectAll()for _,e in ipairs(self._entries)do e.connected=false end;self._entries={}end
 function Signal:GetConnectionCount()local n=0;for _,e in ipairs(self._entries)do if e.connected then n=n+1 end end;return n end
-
 local _rs={}
 local _rsPriorityBindings={}
 local _rsActive=true
@@ -29,15 +25,12 @@ local _rsSortedCache={}
 local _rsBindCount=0
 local _rsErrMax=10
 local _rsErrCount=0
-
 _rs.Heartbeat=Signal.new()
 _rs.RenderStepped=Signal.new()
 _rs.Stepped=Signal.new()
-
 function _rs:BindToRenderStep(name,priority,fn)if type(name)~="string"or type(fn)~="function"then return end;_rsPriorityBindings[name]={Priority=priority or 0,Function=fn}end
 function _rs:UnbindFromRenderStep(name)_rsPriorityBindings[name]=nil end
 function _rs:IsRunning()return _rsActive end
-
 task.spawn(function()
 	while _rsActive do
 		local ok=pcall(function()
@@ -87,7 +80,6 @@ ChildVm.__index=ChildVm
 ChildVm.Signal=Signal
 ChildVm.Connection=Connection
 ChildVm._VERSION="1.0.0"
-
 function ChildVm.new(cfg)
 	cfg=cfg or {}
 	local self=setmetatable({_watchers={},_running=false,_pollRate=cfg.PollRate or 0.05},ChildVm)
@@ -129,7 +121,6 @@ function ChildVm:OnChildAdded(parent,cb)
 end
 
 function ChildVm:OnceChildAdded(parent,cb)local c;c=self:OnChildAdded(parent,function(ch)c:Disconnect();cb(ch)end);return c end
-
 function ChildVm:OnChildRemoved(parent,cb)
 	local cur=_snapChildren(parent)
 	local missing={}
@@ -148,7 +139,6 @@ function ChildVm:OnChildRemoved(parent,cb)
 end
 
 function ChildVm:OnceChildRemoved(parent,cb)local c;c=self:OnChildRemoved(parent,function(ch)c:Disconnect();cb(ch)end);return c end
-
 function ChildVm:OnAttributeChanged(inst,attr,cb)
 	local cur;pcall(function()cur=inst:GetAttribute(attr)end)
 	local w={active=true,poll=function()
@@ -161,7 +151,6 @@ function ChildVm:OnAttributeChanged(inst,attr,cb)
 end
 
 function ChildVm:OnceAttributeChanged(inst,attr,cb)local c;c=self:OnAttributeChanged(inst,attr,function(n,o)c:Disconnect();cb(n,o)end);return c end
-
 function ChildVm:OnPropertyChanged(inst,prop,cb)
 	local cur;pcall(function()cur=inst[prop]end)
 	local w={active=true,poll=function()
@@ -175,7 +164,6 @@ function ChildVm:OnPropertyChanged(inst,prop,cb)
 end
 
 function ChildVm:OncePropertyChanged(inst,prop,cb)local c;c=self:OnPropertyChanged(inst,prop,function(n,o)c:Disconnect();cb(n,o)end);return c end
-
 function ChildVm:OnChanged(inst,cb,props)
 	props=props or{"Name","Parent","Visible","Text","Value","Position","Size","Health","MaxHealth","WalkSpeed","Transparency","Enabled","Anchored","CFrame"}
 	local conns={}
@@ -319,14 +307,11 @@ end
 
 if _p.Character then _suC(_p.Character)end
 pcall(function()_p.CharacterAdded:Connect(_suC)end)
-
 local function _mkD(t)local d=Drawing.new(t);d.Visible=false;return d end
-
 local _hmEnabled=false
 local _cam=workspace.CurrentCamera
 local _dmgT={}
 local _dCol={Color3.fromRGB(0,255,255),Color3.fromRGB(255,255,255),Color3.fromRGB(255,50,50)}
-
 local function _showHM(dmg,pos)
 	if not dmg or not pos then return end
 	local txt=_mkD("Text")
@@ -384,14 +369,11 @@ local _af,_kf,_gf,_tf
 local _optSelf=false
 local _optSkeleton=true
 local _optTracers=true
-
 local function _gAF()if _af and _af.Parent then return _af end;pcall(function()local p=workspace:FindFirstChild("PLAYERS");if p then _af=p:FindFirstChild("ALIVE")end end);return _af end
 local function _gKF()if _kf and _kf.Parent then return _kf end;pcall(function()local p=workspace:FindFirstChild("PLAYERS");if p then _kf=p:FindFirstChild("KILLER")end end);return _kf end
 local function _gGF()if _gf and _gf.Parent then return _gf end;pcall(function()local m=workspace:FindFirstChild("MAPS");if m then local g=m:FindFirstChild("GAME MAP");if g then _gf=g:FindFirstChild("Generators")end end end);return _gf end
 local function _gTF()if _tf and _tf.Parent then return _tf end;pcall(function()_tf=workspace:FindFirstChild("IGNORE")end);return _tf end
-
 local _allKeys={"box","tl","bl","nm","pg","dt","hpBg","hpDmg","hpFill","hpBor","sk1","sk2","sk3","sk4","sk5","tr"}
-
 local function _cE(mdl,col,bc,ig)
 	if not mdl then return nil end
 	local ad=mdl.Address
@@ -461,36 +443,30 @@ local function _cO(mdl,lbl)
 	return e
 end
 local function _rO(e)if not e then return end;pcall(function()if e.nm then e.nm:Remove()end;if e.dt then e.dt:Remove()end end)end
-
 local function _hE(e)for _,k in ipairs(_allKeys)do if e[k]then e[k].Visible=false end end end
-
 local function _sP(m)if not m then return end;if not _optSelf and m.Name==_p.Name then return end;local a=m.Address;if not a or _pd[a]then return end;local e=_cE(m,_pc,_pb,false);if e then _pd[a]=e end end
 local function _sK(m)if not m then return end;local a=m.Address;if not a or _kd[a]then return end;local e=_cE(m,_kc,_kb,false);if e then _kd[a]=e end end
 local function _sG(m)if not m then return end;local a=m.Address;if not a or _gd[a]then return end;local e=_cE(m,_gc,_gc,true);if e then _gd[a]=e end end
 local function _sT(m)if not m then return end;local a=m.Address;if not a or _td[a]then return end;local e=_cO(m,"Trap");if e then _td[a]=e end end
 local function _sM(m)if not m then return end;local a=m.Address;if not a or _md[a]then return end;local e=_cO(m,"Minion");if e then _md[a]=e end end
 local function _sB(m)if not m then return end;local a=m.Address;if not a or _bd[a]then return end;local e=_cO(m,"Battery");if e then _bd[a]=e end end
-
 local function _cP(m)if not m then return end;local a=m.Address;if a and _pd[a]then _rE(_pd[a]);_pd[a]=nil end end
 local function _cK(m)if not m then return end;local a=m.Address;if a and _kd[a]then _rE(_kd[a]);_kd[a]=nil end end
 local function _cG(m)if not m then return end;local a=m.Address;if a and _gd[a]then _rE(_gd[a]);_gd[a]=nil end end
 local function _cRT(m)if not m then return end;local a=m.Address;if a and _td[a]then _rO(_td[a]);_td[a]=nil end end
 local function _cRM(m)if not m then return end;local a=m.Address;if a and _md[a]then _rO(_md[a]);_md[a]=nil end end
 local function _cRB(m)if not m then return end;local a=m.Address;if a and _bd[a]then _rO(_bd[a]);_bd[a]=nil end end
-
 local function _xP()for _,e in pairs(_pd)do _rE(e)end;_pd={}end
 local function _xK()for _,e in pairs(_kd)do _rE(e)end;_kd={}end
 local function _xG()for _,e in pairs(_gd)do _rE(e)end;_gd={};_gn=0 end
 local function _xT()for _,e in pairs(_td)do _rO(e)end;_td={};for _,e in pairs(_md)do _rO(e)end;_md={}end
 local function _xB()for _,e in pairs(_bd)do _rO(e)end;_bd={}end
-
 local function _qP()local f=_gAF();if not f then return end;for _,c in ipairs(f:GetChildren())do if c:IsA("Model")then _sP(c)end end end
 local function _qK()local f=_gKF();if not f then return end;for _,c in ipairs(f:GetChildren())do if c:IsA("Model")then _sK(c)end end end
 local function _qG()local f=_gGF();if not f then return end;_gn=0;for _,c in ipairs(f:GetChildren())do if c.Name=="Generator"or c:IsA("Model")then _sG(c)end end end
 local function _scanIgn()local f=_gTF();if not f then return end;if not _te and not _be then return end;for _,c in ipairs(f:GetDescendants())do if c:IsA("Model")or c:IsA("BasePart")then if _te and c.Name=="Trap"then _sT(c)elseif _te and(c.Name=="Minion" or c.Name=="minion")then _sM(c)elseif _be and c.Name=="Battery"then _sB(c)end end end end
 local function _qT()_scanIgn()end
 local function _qB()_scanIgn()end
-
 local function _onMatchEnd()
 	_xG();_xK();_xT();_xB();_gn=0
 	if _ge then _qG()end
@@ -514,13 +490,10 @@ local function _watchKillerFolder()
 end
 
 local _gt=0
-
 local function _uE(dr,en)
 	if not en then return end
-	local mr
-	pcall(function()if _p.Character then mr=_p.Character:FindFirstChild("Torso")or _p.Character:FindFirstChild("HumanoidRootPart")end end)
-	_gt=_gt+0.05
-	local ps=(math.sin(_gt*3)+1)/2
+	local mr = _mr
+	local ps=(math.sin(os.clock()*3)+1)/2
 	local gv=math.floor(140+ps*115)
 	local gg=Color3.fromRGB(gv,gv,gv)
 	local dg=Color3.fromRGB(math.floor(100+ps*155),math.floor(180+ps*75),255)
@@ -645,7 +618,7 @@ end
 
 local function _uO(dr,en,cFunc)
 	if not en then return end
-	local mr;pcall(function()if _p.Character then mr=_p.Character:FindFirstChild("Torso")or _p.Character:FindFirstChild("HumanoidRootPart")end end)
+	local mr = _mr
 	local v2=Vector2.new
 	local c=(type(cFunc)=="function")and cFunc()or cFunc
 	for a,e in pairs(dr)do
@@ -691,7 +664,6 @@ local _e2=_et:Section("objects",2)
 _e2:Toggle({label="generator esp",default=false,id="esp_gen",col=2,desc="Show generators",callback=function(s)_ge=s;if s then _qG()else _xG()end end})
 _e2:Toggle({label="trap esp",default=false,id="esp_trap",col=2,desc="Show killer traps",callback=function(s)_te=s;if s then _qT()else _xT()end end})
 _e2:Toggle({label="battery esp",default=false,id="esp_bat",col=2,desc="Show batteries",callback=function(s)_be=s;if s then _qB()else _xB()end end})
-
 local af=_gAF()
 if af then
 	_cv:OnChildAdded(af,function(c)if c:IsA("Model")and _pe then _sP(c)end end)
@@ -710,23 +682,22 @@ if gf then
 end
 
 local _st=0
-task.spawn(function()
-	while true do
-		_st=_st+1
-		if _st>=60 then
-			_st=0
-			if _pe then _qP()end
-			if _ke then _qK()end
-			if _ge then _qG()end
-			_scanIgn()
-		end
-		_uE(_pd,_pe)
-		_uE(_kd,_ke)
-		_uE(_gd,_ge)
-		_uO(_td,_te,function()local ps=(math.sin(_gt*4)+1)/2;return Color3.fromRGB(math.floor(120+ps*135),math.floor(40+ps*110),math.floor(20+ps*20))end)
-		_uO(_md,_te,function()local ps=(math.sin(_gt*4)+1)/2;local v=math.floor(100+ps*155);return Color3.fromRGB(v,v,v)end)
-		_uO(_bd,_be,Color3.fromRGB(240,240,80))
-		_updateHM()
-		task.wait(0.05)
+local _mr
+_rs.RenderStepped:Connect(function()
+	_mr=nil;pcall(function()if _p.Character then _mr=_p.Character:FindFirstChild("Torso")or _p.Character:FindFirstChild("HumanoidRootPart")end end)
+	_st=_st+1
+	if _st>=180 then
+		_st=0
+		if _pe then _qP()end
+		if _ke then _qK()end
+		if _ge then _qG()end
+		_scanIgn()
 	end
+	_uE(_pd,_pe)
+	_uE(_kd,_ke)
+	_uE(_gd,_ge)
+	_uO(_td,_te,function()local ps=(math.sin(os.clock()*4)+1)/2;return Color3.fromRGB(math.floor(120+ps*135),math.floor(40+ps*110),math.floor(20+ps*20))end)
+	_uO(_md,_te,function()local ps=(math.sin(os.clock()*4)+1)/2;local v=math.floor(100+ps*155);return Color3.fromRGB(v,v,v)end)
+	_uO(_bd,_be,Color3.fromRGB(240,240,80))
+	_updateHM()
 end)
