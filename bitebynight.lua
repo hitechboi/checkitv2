@@ -3,7 +3,7 @@ local _l;do local _o,_r=pcall(function()return loadstring(game:HttpGet("https://
 local _p=game.Players.LocalPlayer
 local _w=_l:Window("Bite","By Night")
 pcall(function()if _w.SetGameName then _w:SetGameName((type(getgamename)=="function"and getgamename())or(type(getgetname)=="function"and getgetname())or"Bite By Night")end end)
-pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.2","2026-03-29",{"corner brackets","R6 skeleton","tracer lines","per-feature toggles"})end end)
+pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.2","2026-03-29",{"added healthbar"})end end)
 pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.3","2026-03-30",{"Added Self Esp","Added more Esp features such as skeleton and tracers","Added Traps and battery esp minions included."})end end)
 
 local Connection={}
