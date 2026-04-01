@@ -1,3 +1,10 @@
+--[[
+    Check it v2 Interface
+    by hitechboi / nejrio
+    github.com/hitechboi
+    star my post :p, have fun!
+]]
+
 if _G._BBN_CLEANUP then pcall(_G._BBN_CLEANUP) end
 local _l;do local _o,_r=pcall(function()return loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/imjussayin.lua"))()end);if _o and _r then _l=_r elseif _G.lib then _l=_G.lib else pcall(function()notify("Bite By Night","Failed to load UI library",5)end)return end end
 local _p=game.Players.LocalPlayer
@@ -6,6 +13,7 @@ pcall(function()if _w.SetGameName then _w:SetGameName((type(getgamename)=="funct
 pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.3","2026-03-29",{"corner brackets","R6 skeleton","tracer lines","per-feature toggles"})end end)
 pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.4","2026-03-30",{"Added Self Esp","Added more Esp features such as skeleton and tracers","Added Traps and battery esp minions included."})end end)
 pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.5","2026-03-31",{"More optimizations such as mem leaks, plus fixed ui not instantly loading up"})end end)
+pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.5","2026-04-01",{"Better Skeletons"})end end)
 local Connection={}
 Connection.__index=Connection
 function Connection.new(fn)return setmetatable({Connected=true,_disconnect=fn},Connection)end
@@ -375,7 +383,7 @@ local function _gAF()if _af and _af.Parent then return _af end;pcall(function()l
 local function _gKF()if _kf and _kf.Parent then return _kf end;pcall(function()local p=workspace:FindFirstChild("PLAYERS");if p then _kf=p:FindFirstChild("KILLER")end end);return _kf end
 local function _gGF()if _gf and _gf.Parent then return _gf end;pcall(function()local m=workspace:FindFirstChild("MAPS");if m then local g=m:FindFirstChild("GAME MAP");if g then _gf=g:FindFirstChild("Generators")end end end);return _gf end
 local function _gTF()if _tf and _tf.Parent then return _tf end;pcall(function()_tf=workspace:FindFirstChild("IGNORE")end);return _tf end
-local _allKeys={"box","tl","bl","nm","pg","dt","hpBg","hpDmg","hpFill","hpBor","sk1","sk2","sk3","sk4","sk5","tr"}
+local _allKeys={"box","tl","bl","nm","pg","dt","hpBg","hpDmg","hpFill","hpBor","skHead","skCollar","skTorso","skPelvis","skLUA","skLLA","skRUA","skRLA","skLUL","skLLL","skRUL","skRLL","tr"}
 local function _cE(mdl,col,bc,ig)
 	if not mdl then return nil end
 	local ad=mdl.Address
@@ -401,11 +409,18 @@ local function _cE(mdl,col,bc,ig)
 		e.hpDmg=_mkD("Square");e.hpDmg.Filled=true;e.hpDmg.Color=Color3.fromRGB(200,60,60);e.hpDmg.Transparency=1;e.hpDmg.ZIndex=2
 		e.hpFill=_mkD("Square");e.hpFill.Filled=true;e.hpFill.Color=Color3.fromRGB(150,255,150);e.hpFill.Transparency=1;e.hpFill.ZIndex=3
 		e.hpBor=_mkD("Square");e.hpBor.Filled=false;e.hpBor.Color=Color3.fromRGB(50,50,50);e.hpBor.Thickness=1;e.hpBor.Transparency=1;e.hpBor.Size=Vector2.new(6,72);e.hpBor.ZIndex=4
-		e.sk1=_mkD("Line");e.sk1.Thickness=1;e.sk1.Color=col;e.sk1.ZIndex=4
-		e.sk2=_mkD("Line");e.sk2.Thickness=1;e.sk2.Color=col;e.sk2.ZIndex=4
-		e.sk3=_mkD("Line");e.sk3.Thickness=1;e.sk3.Color=col;e.sk3.ZIndex=4
-		e.sk4=_mkD("Line");e.sk4.Thickness=1;e.sk4.Color=col;e.sk4.ZIndex=4
-		e.sk5=_mkD("Line");e.sk5.Thickness=1;e.sk5.Color=col;e.sk5.ZIndex=4
+		e.skHead=_mkD("Circle");e.skHead.Radius=8;e.skHead.NumSides=16;e.skHead.Thickness=2;e.skHead.Color=col;e.skHead.Filled=false;e.skHead.ZIndex=4
+		e.skCollar=_mkD("Line");e.skCollar.Thickness=2;e.skCollar.Color=col;e.skCollar.ZIndex=4
+		e.skTorso=_mkD("Line");e.skTorso.Thickness=2;e.skTorso.Color=col;e.skTorso.ZIndex=4
+		e.skPelvis=_mkD("Line");e.skPelvis.Thickness=2;e.skPelvis.Color=col;e.skPelvis.ZIndex=4
+		e.skLUA=_mkD("Line");e.skLUA.Thickness=2;e.skLUA.Color=col;e.skLUA.ZIndex=4
+		e.skLLA=_mkD("Line");e.skLLA.Thickness=2;e.skLLA.Color=col;e.skLLA.ZIndex=4
+		e.skRUA=_mkD("Line");e.skRUA.Thickness=2;e.skRUA.Color=col;e.skRUA.ZIndex=4
+		e.skRLA=_mkD("Line");e.skRLA.Thickness=2;e.skRLA.Color=col;e.skRLA.ZIndex=4
+		e.skLUL=_mkD("Line");e.skLUL.Thickness=2;e.skLUL.Color=col;e.skLUL.ZIndex=4
+		e.skLLL=_mkD("Line");e.skLLL.Thickness=2;e.skLLL.Color=col;e.skLLL.ZIndex=4
+		e.skRUL=_mkD("Line");e.skRUL.Thickness=2;e.skRUL.Color=col;e.skRUL.ZIndex=4
+		e.skRLL=_mkD("Line");e.skRLL.Thickness=2;e.skRLL.Color=col;e.skRLL.ZIndex=4
 		e.tr=_mkD("Line");e.tr.Thickness=1;e.tr.Color=col;e.tr.ZIndex=1
 		e.hpVis=100;e.hpSmooth=100;e.hpLast=100;e.targetHp=100;e.maxHp=100
 		local h=mdl:FindFirstChildOfClass("Humanoid")
@@ -576,29 +591,72 @@ local function _uE(dr,en)
 							e.tr.Visible=false
 						end
 						if _optSkeleton then
-							local hd,to,la,ra,ll,rl=mdl:FindFirstChild("Head"),mdl:FindFirstChild("Torso"),mdl:FindFirstChild("Left Arm"),mdl:FindFirstChild("Right Arm"),mdl:FindFirstChild("Left Leg"),mdl:FindFirstChild("Right Leg")
-							if hd and to and la and ra and ll and rl then
-								local ps=WorldToScreen
-								local hSp,hOn=ps(hd.Position)
-								local tSp,tOn=ps(to.Position)
-								local laSp,laOn=ps(la.Position)
-								local raSp,raOn=ps(ra.Position)
-								local llSp,llOn=ps(ll.Position)
-								local rlSp,rlOn=ps(rl.Position)
-								if hOn and tOn and laOn and raOn and llOn and rlOn then
-									e.sk1.From=v2(hSp.X,hSp.Y);e.sk1.To=v2(tSp.X,tSp.Y);e.sk1.Visible=true
-									e.sk2.From=v2(tSp.X,tSp.Y);e.sk2.To=v2(laSp.X,laSp.Y);e.sk2.Visible=true
-									e.sk3.From=v2(tSp.X,tSp.Y);e.sk3.To=v2(raSp.X,raSp.Y);e.sk3.Visible=true
-									e.sk4.From=v2(tSp.X,tSp.Y);e.sk4.To=v2(llSp.X,llSp.Y);e.sk4.Visible=true
-									e.sk5.From=v2(tSp.X,tSp.Y);e.sk5.To=v2(rlSp.X,rlSp.Y);e.sk5.Visible=true
+							local hd=mdl:FindFirstChild("Head")
+							local la=mdl:FindFirstChild("Left Arm")
+							local ra=mdl:FindFirstChild("Right Arm")
+							local ll=mdl:FindFirstChild("Left Leg")
+							local rl=mdl:FindFirstChild("Right Leg")
+							if hd and la and ra and ll and rl then
+								local hdSp,hdOn=WorldToScreen(hd.Position)
+								local laSp,laOn=WorldToScreen(la.Position)
+								local raSp,raOn=WorldToScreen(ra.Position)
+								local llSp,llOn=WorldToScreen(ll.Position)
+								local rlSp,rlOn=WorldToScreen(rl.Position)
+								if hdOn and laOn and raOn and llOn and rlOn then
+									local cx=sp.X
+									local slaX,slaY,sraX,sraY=laSp.X,laSp.Y,raSp.X,raSp.Y
+									local sllX,sllY,srlX,srlY=llSp.X,llSp.Y,rlSp.X,rlSp.Y
+									if slaX>sraX then slaX,slaY,sraX,sraY=sraX,sraY,slaX,slaY end
+									if sllX>srlX then sllX,sllY,srlX,srlY=srlX,srlY,sllX,sllY end
+									local headRad=math.max(4,math.min(12,bh/10))
+									e.skHead.Radius=headRad;e.skHead.Position=v2(hdSp.X,hdSp.Y);e.skHead.Visible=true
+									local neckY=hdSp.Y+headRad+bh*0.02
+									local collarW=bw*0.35
+									local lShX,rShX=cx-collarW,cx+collarW
+									e.skCollar.From=v2(lShX,neckY);e.skCollar.To=v2(rShX,neckY);e.skCollar.Visible=true
+									local pelvisY=y+bh*0.58
+									e.skTorso.From=v2(cx,neckY);e.skTorso.To=v2(cx,pelvisY);e.skTorso.Visible=true
+									local hipW=bw*0.1
+									local lHipX,rHipX=cx-hipW,cx+hipW
+									e.skPelvis.From=v2(lHipX,pelvisY);e.skPelvis.To=v2(rHipX,pelvisY);e.skPelvis.Visible=true
+									local laClampX=math.min(slaX,cx-bw*0.05)
+									local raClampX=math.max(sraX,cx+bw*0.05)
+									local lElbowX=lShX+(laClampX-lShX)*0.5
+									local lElbowY=neckY+(slaY-neckY)*0.5
+									local rElbowX=rShX+(raClampX-rShX)*0.5
+									local rElbowY=neckY+(sraY-neckY)*0.5
+									e.skLUA.From=v2(lShX,neckY);e.skLUA.To=v2(lElbowX,lElbowY);e.skLUA.Visible=true
+									e.skRUA.From=v2(rShX,neckY);e.skRUA.To=v2(rElbowX,rElbowY);e.skRUA.Visible=true
+									local lHandX=laClampX-bw*0.03
+									local rHandX=raClampX+bw*0.03
+									e.skLLA.From=v2(lElbowX,lElbowY);e.skLLA.To=v2(lHandX,slaY);e.skLLA.Visible=true
+									e.skRLA.From=v2(rElbowX,rElbowY);e.skRLA.To=v2(rHandX,sraY);e.skRLA.Visible=true
+									local llClampX=math.min(sllX,cx-bw*0.02)
+									local rlClampX=math.max(srlX,cx+bw*0.02)
+									local lKneeX=lHipX+(llClampX-lHipX)*0.5
+									local lKneeY=pelvisY+(sllY-pelvisY)*0.5
+									local rKneeX=rHipX+(rlClampX-rHipX)*0.5
+									local rKneeY=pelvisY+(srlY-pelvisY)*0.5
+									e.skLUL.From=v2(lHipX,pelvisY);e.skLUL.To=v2(lKneeX,lKneeY);e.skLUL.Visible=true
+									e.skRUL.From=v2(rHipX,pelvisY);e.skRUL.To=v2(rKneeX,rKneeY);e.skRUL.Visible=true
+									local lFootX=llClampX-bw*0.02
+									local rFootX=rlClampX+bw*0.02
+									e.skLLL.From=v2(lKneeX,lKneeY);e.skLLL.To=v2(lFootX,sllY);e.skLLL.Visible=true
+									e.skRLL.From=v2(rKneeX,rKneeY);e.skRLL.To=v2(rFootX,srlY);e.skRLL.Visible=true
 								else
-									e.sk1.Visible=false;e.sk2.Visible=false;e.sk3.Visible=false;e.sk4.Visible=false;e.sk5.Visible=false
+									e.skHead.Visible=false;e.skCollar.Visible=false;e.skTorso.Visible=false;e.skPelvis.Visible=false
+									e.skLUA.Visible=false;e.skLLA.Visible=false;e.skRUA.Visible=false;e.skRLA.Visible=false
+									e.skLUL.Visible=false;e.skLLL.Visible=false;e.skRUL.Visible=false;e.skRLL.Visible=false
 								end
 							else
-								e.sk1.Visible=false;e.sk2.Visible=false;e.sk3.Visible=false;e.sk4.Visible=false;e.sk5.Visible=false
+								e.skHead.Visible=false;e.skCollar.Visible=false;e.skTorso.Visible=false;e.skPelvis.Visible=false
+								e.skLUA.Visible=false;e.skLLA.Visible=false;e.skRUA.Visible=false;e.skRLA.Visible=false
+								e.skLUL.Visible=false;e.skLLL.Visible=false;e.skRUL.Visible=false;e.skRLL.Visible=false
 							end
 						else
-							e.sk1.Visible=false;e.sk2.Visible=false;e.sk3.Visible=false;e.sk4.Visible=false;e.sk5.Visible=false
+							e.skHead.Visible=false;e.skCollar.Visible=false;e.skTorso.Visible=false;e.skPelvis.Visible=false
+							e.skLUA.Visible=false;e.skLLA.Visible=false;e.skRUA.Visible=false;e.skRLA.Visible=false
+							e.skLUL.Visible=false;e.skLLL.Visible=false;e.skRUL.Visible=false;e.skRLL.Visible=false
 						end
 						local ny=y-16
 						e.nm.Position=v2(sp.X,ny);e.nm.Visible=true
