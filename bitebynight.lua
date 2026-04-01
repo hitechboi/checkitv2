@@ -446,8 +446,8 @@ local function _cO(mdl,lbl)
 end
 local function _rO(e)if not e then return end;pcall(function()if e.nm then e.nm:Remove()end;if e.dt then e.dt:Remove()end end)end
 local function _hE(e)for _,k in ipairs(_allKeys)do if e[k]then e[k].Visible=false end end end
-local function _sP(m)if not m then return end;if not _optSelf and m.Name==_p.Name then return end;local a=m.Address;if not a or _pd[a]then return end;local e=_cE(m,_pc,_pb,false);if e then _pd[a]=e end end
-local function _sK(m)if not m then return end;local a=m.Address;if not a or _kd[a]then return end;local e=_cE(m,_kc,_kb,false);if e then _kd[a]=e end end
+local function _sP(m)if not m then return end;if not _optSelf and m.Name==_p.Name then return end;if not m:FindFirstChildOfClass("Humanoid") then return end;local a=m.Address;if not a or _pd[a]then return end;local e=_cE(m,_pc,_pb,false);if e then _pd[a]=e end end
+local function _sK(m)if not m then return end;if not m:FindFirstChildOfClass("Humanoid") then return end;local a=m.Address;if not a or _kd[a]then return end;local e=_cE(m,_kc,_kb,false);if e then _kd[a]=e end end
 local function _sG(m)if not m then return end;local a=m.Address;if not a or _gd[a]then return end;local e=_cE(m,_gc,_gc,true);if e then _gd[a]=e end end
 local function _sT(m)if not m then return end;local a=m.Address;if not a or _td[a]then return end;local e=_cO(m,"Trap");if e then _td[a]=e end end
 local function _sM(m)if not m then return end;local a=m.Address;if not a or _md[a]then return end;local e=_cO(m,"Minion");if e then _md[a]=e end end
@@ -470,7 +470,7 @@ local _scanActive = false
 local function _scanIgn()
 	local f=_gTF()
 	if not f then return end
-	if not _te and not _be then return end
+	if not _te and not _be and not _ge then return end
 	if _scanActive then return end
 	_scanActive = true
 	task.spawn(function()
@@ -480,6 +480,7 @@ local function _scanIgn()
 				if _te and c.Name=="Trap" then _sT(c)
 				elseif _te and(c.Name=="Minion" or c.Name=="minion") then _sM(c)
 				elseif _be and c.Name=="Battery" then _sB(c)
+				elseif _ge and c.Name=="Generator" then _sG(c)
 				end
 			end
 			if i % 100 == 0 then task.wait() end
@@ -490,10 +491,7 @@ end
 local function _qT()_scanIgn()end
 local function _qB()_scanIgn()end
 local function _onMatchEnd()
-	_xG();_xK();_xT();_xB();_gn=0
-	if _ge then _qG()end
-	if _te then _qT()end
-	if _be then _qB()end
+	_gn=0
 end
 
 local function _watchKillerFolder()
