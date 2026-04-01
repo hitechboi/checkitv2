@@ -1,9 +1,11 @@
-local _l;do local _o,_r=pcall(function()return loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/imjussayin.lua".."?cache="..tostring(os.time())))()end);if _o and _r then _l=_r elseif _G.lib then _l=_G.lib else pcall(function()notify("Bite By Night","Failed to load UI library",5)end)return end end
+if _G._BBN_CLEANUP then pcall(_G._BBN_CLEANUP) end
+local _l;do local _o,_r=pcall(function()return loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/imjussayin.lua"))()end);if _o and _r then _l=_r elseif _G.lib then _l=_G.lib else pcall(function()notify("Bite By Night","Failed to load UI library",5)end)return end end
 local _p=game.Players.LocalPlayer
 local _w=_l:Window("Bite","By Night")
 pcall(function()if _w.SetGameName then _w:SetGameName((type(getgamename)=="function"and getgamename())or(type(getgetname)=="function"and getgetname())or"Bite By Night")end end)
 pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.3","2026-03-29",{"corner brackets","R6 skeleton","tracer lines","per-feature toggles"})end end)
 pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.4","2026-03-30",{"Added Self Esp","Added more Esp features such as skeleton and tracers","Added Traps and battery esp minions included."})end end)
+pcall(function()if _w.AddMainScriptLog then _w:AddMainScriptLog("v1.5","2026-03-31",{"More optimizations such as mem leaks, plus fixed ui not instantly loading up"})end end)
 local Connection={}
 Connection.__index=Connection
 function Connection.new(fn)return setmetatable({Connected=true,_disconnect=fn},Connection)end
@@ -464,7 +466,27 @@ local function _xB()for _,e in pairs(_bd)do _rO(e)end;_bd={}end
 local function _qP()local f=_gAF();if not f then return end;for _,c in ipairs(f:GetChildren())do if c:IsA("Model")then _sP(c)end end end
 local function _qK()local f=_gKF();if not f then return end;for _,c in ipairs(f:GetChildren())do if c:IsA("Model")then _sK(c)end end end
 local function _qG()local f=_gGF();if not f then return end;_gn=0;for _,c in ipairs(f:GetChildren())do if c.Name=="Generator"or c:IsA("Model")then _sG(c)end end end
-local function _scanIgn()local f=_gTF();if not f then return end;if not _te and not _be then return end;for _,c in ipairs(f:GetDescendants())do if c:IsA("Model")or c:IsA("BasePart")then if _te and c.Name=="Trap"then _sT(c)elseif _te and(c.Name=="Minion" or c.Name=="minion")then _sM(c)elseif _be and c.Name=="Battery"then _sB(c)end end end end
+local _scanActive = false
+local function _scanIgn()
+	local f=_gTF()
+	if not f then return end
+	if not _te and not _be then return end
+	if _scanActive then return end
+	_scanActive = true
+	task.spawn(function()
+		local desc = f:GetDescendants()
+		for i, c in ipairs(desc) do
+			if c:IsA("Model") or c:IsA("BasePart") then
+				if _te and c.Name=="Trap" then _sT(c)
+				elseif _te and(c.Name=="Minion" or c.Name=="minion") then _sM(c)
+				elseif _be and c.Name=="Battery" then _sB(c)
+				end
+			end
+			if i % 100 == 0 then task.wait() end
+		end
+		_scanActive = false
+	end)
+end
 local function _qT()_scanIgn()end
 local function _qB()_scanIgn()end
 local function _onMatchEnd()
@@ -498,9 +520,12 @@ local function _uE(dr,en)
 	local gg=Color3.fromRGB(gv,gv,gv)
 	local dg=Color3.fromRGB(math.floor(100+ps*155),math.floor(180+ps*75),255)
 	local v2=Vector2.new
-	for _,e in pairs(dr)do
+	for a,e in pairs(dr)do
 		local mdl,rt,ig=e.model,e.root,e.isGen
-		if not mdl or not mdl.Parent or (mdl==_p.Character and not _optSelf) then
+		if not mdl or not mdl.Parent then
+			_rE(e)
+			dr[a]=nil
+		elseif mdl==_p.Character and not _optSelf then
 			_hE(e)
 		else
 			if not rt or not rt.Parent then
@@ -701,3 +726,9 @@ _rs.RenderStepped:Connect(function()
 	_uO(_bd,_be,Color3.fromRGB(240,240,80))
 	_updateHM()
 end)
+
+_G._BBN_CLEANUP = function()
+	_rsActive = false
+	if _cv then pcall(function() _cv:Destroy() end) end
+	pcall(_xP); pcall(_xK); pcall(_xG); pcall(_xT); pcall(_xB)
+end
