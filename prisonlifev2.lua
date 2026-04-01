@@ -133,7 +133,6 @@ local function _cfSmoothTP(startPos, endPos, duration)
         task.wait(0.016)
     end
 end
-
 local _0x06={}local _0x07={}local _0x08=true local _0x09=os.clock()local _0x0A=0 local _0x0B={}local _0x0C=0 local _0x0E=10 local _0x0F=0
 local function _0x10()local _s={}_s._c={}
 function _s:Connect(_f)local _k={_fn=_f,_a=true}table.insert(_s._c,_k)return{Disconnect=function()_k._a=false _k._fn=nil end}end
@@ -174,7 +173,6 @@ end
 return false,nil
 end
 local function _checkTools(parent)if not parent then return end for _,_t in _0x03(parent:GetChildren())do if _t.Name=="Remington 870"then if _t:GetAttribute("AutoFire")~=_0x19 then _t:SetAttribute("AutoFire",_0x19)end end if _0x1A and _0x23[_t.Name]then if _t:GetAttribute("FireRate")~=0.001 then _t:SetAttribute("FireRate",0.001)end end if _0x1B and _t.Name=="M9"then if _t:GetAttribute("AutoFire")~=true then _t:SetAttribute("AutoFire",true)end end if _0x28(_t)then for _a,_fn in _0x02(_0x27)do if _t:GetAttribute(_a)~=nil then local _v=_fn(_t)if _v and _t:GetAttribute(_a)~=_v then _t:SetAttribute(_a,_v)end end end end end end
-
 local waited=0
 while not _0x11 and not _G.lib do
     task.wait(0.1)
@@ -185,17 +183,13 @@ while not _0x11 and not _G.lib do
     end
 end
 if not _0x11 then _0x11=_G.lib end
-
 local _0x2A=_0x11:Window("Check It v2")
-
 _0x2A:SetGameName(_0x13)
 local _0x2C=_0x2A:Tab("gun mods")
 local _0xAutoTab=_0x2A:Tab("auto")
 local _0x2E=_0x2A:Tab("teleports")
-
 local mainSec=_0x2C:Section("main")
 mainSec:Toggle({label="enabled",default=false,id="master_toggle",col=1,desc="Master toggle for all gun mods",callback=function(_s)_0x14=_s end})
-
 --[[local collectSec=_0xAutoTab:Section("collect", 2)
 local _0xAKCBtn
 _0xAKCBtn = collectSec:Toggle({label="auto keycard collect",default=false,id="auto_keycard",col=2,desc="Automatically collects keycard if missing",callback=function(s)
@@ -210,7 +204,6 @@ _0xAKCBtn = collectSec:Toggle({label="auto keycard collect",default=false,id="au
     end
 end})]]
 local _0xAKC = false
-
 local autoSec=_0xAutoTab:Section("auto arrest")
 local _0xAC = false
 local _0xAutoDeathTime = 0
@@ -243,30 +236,24 @@ local _0xTargetDD = autoSec:Dropdown({label="arrest target",options=_0xTargetIni
         end
     end
 end})
-
 local fireSec=_0x2C:Section("fire")
 fireSec:Toggle({label="apply reload",default=false,id="apply_reload",col=1,desc="Toggles Reload Slider (M9, Taser Only)",callback=function(_s)_0x16=_s end})
 fireSec:Slider({label="reload time",default=0.01,min=0.01,max=5.0,suffix="s",id="reload_time",col=1,desc="Lower = faster reload",callback=function(_v)_0x1E=_v end})
 fireSec:Toggle({label="apply fire rate",default=false,id="apply_firerate",col=1,desc="Toggles FireRate Slider (ARs excluded if AR Instant on)",callback=function(_s)_0x17=_s end})
 fireSec:Slider({label="fire rate",default=0.1,min=0.1,max=1.0,suffix="s",id="fire_rate",col=1,desc="Lower = faster fire",callback=function(_v)_0x1F=_v end})
-
 local extrasSec=_0x2C:Section("extras",2)
 extrasSec:Toggle({label="instant fire rate",default=false,id="instant_firerate",col=2,desc="Insta FireRate!!!",callback=function(_s)_0x18=_s end})
 extrasSec:Toggle({label="shotgun full auto",default=false,id="shotgun_auto",col=2,desc="Toggles AutoFire on Remington 870 (Requires firerate slider)",callback=function(_s)_0x19=_s end})
 extrasSec:Toggle({label="AR instant fire rate",default=false,id="ar_instant",col=2,desc="Instant fire for AK-47, MP5, FAL, M4A1",callback=function(_s)_0x1A=_s end})
 extrasSec:Toggle({label="M9 full auto",default=false,id="m9_auto",col=2,desc="Toggles AutoFire on M9 pistol",callback=function(_s)_0x1B=_s end})
-
 local rangeSec=_0x2C:Section("range",2)
 rangeSec:Toggle({label="extend range",default=false,id="extend_range",col=2,desc="Sets Range value",callback=function(_s)_0x1C=_s end})
 rangeSec:Slider({label="range",default=1500,min=0,max=15000,suffix="",id="range_val",col=2,desc="Range distance",callback=function(_v)_0x20=_0x00(_v)end})
-
 local funSec=_0x2C:Section("fun",2)
 funSec:Toggle({label="apply ammo",default=false,id="apply_ammo",col=2,desc="Visual only - once below original ammo count no damage",callback=function(_s)_0x15=_s end})
 funSec:Slider({label="ammo amount",default=1,min=1,max=9999,suffix="",id="ammo_amount",col=2,desc="Ammo count",callback=function(_v)_0x1D=_0x00(_v)end})
-
 local sessionSec=_0x2C:Section("session",2)
 sessionSec:DebugRow({text="session active",gameName=_0x13,col=2})
-
 local function _0x31(_x,_y,_z)
     local _h=_0x24.Character and _0x24.Character:FindFirstChild("HumanoidRootPart")
     if not _h then return end
@@ -281,19 +268,16 @@ local function _0x32(_x,_y,_z)
     local _ox,_oy,_oz=_h.Position.X,_h.Position.Y,_h.Position.Z
     _cfSmoothTP({X=_ox,Y=_oy,Z=_oz}, {X=_x,Y=_y,Z=_z}, 0.5)
 end
-
 local crimGunSec=_0x2E:Section("criminal guns")
 crimGunSec:Button({label="remington 870",id="tp_rem_crim",col=1,callback=function()_0x31(-938.22,94.31,2039.17)end})
 crimGunSec:Button({label="AK-47",id="tp_ak47",col=1,callback=function()_0x31(-931.39,94.37,2039.39)end})
 crimGunSec:Button({label="M700",id="tp_m700_crim",col=2,callback=function()_0x31(-919.96,95.01,2036)end})
 crimGunSec:Button({label="FAL",id="tp_fal",col=2,callback=function()_0x31(-902.34,94.35,2047.93)end})
-
 local copGunSec=_0x2E:Section("cop guns")
 copGunSec:Button({label="MP5",id="tp_mp5",col=1,callback=function()_0x31(813.16,100.88,2229)end})
 copGunSec:Button({label="rem cop",id="tp_rem_cop",col=1,callback=function()_0x31(820.64,100.88,2228.95)end})
 copGunSec:Button({label="M700 cop",id="tp_m700_cop",col=2,callback=function()_0x31(836.09,100.74,2229.32)end})
 copGunSec:Button({label="M4A1",id="tp_m4a1",col=2,callback=function()_0x31(847.71,100.74,2229.33)end})
-
 local locSec=_0x2E:Section("locations")
 locSec:Button({label="yard",id="tp_yard",col=1,callback=function()_0x32(784.12,98,2460.25)end})
 locSec:Button({label="nexus",id="tp_nexus",col=1,callback=function()_0x32(873.89,100,2390.69)end})
@@ -303,8 +287,7 @@ locSec:Button({label="armory",id="tp_armory",col=2,callback=function()_0x32(827.
 locSec:Button({label="prison cells",id="tp_cells",col=2,callback=function()_0x32(920.01,99.99,2442.30)end})
 locSec:Button({label="roof",id="tp_roof",col=2,callback=function()_0x32(932.23,118.99,2365.07)end})
 locSec:Button({label="criminal base",id="tp_crimbase",col=2,callback=function()_0x32(-936.75,94.13,2054.35)end})
-
-_0x2A:AddMainScriptLog("v1.5",os.date("%Y-%m-%d"),{
+pcall(function()if _0x2A.AddMainScriptLog then _0x2A:AddMainScriptLog("v1.5","2026-03-30",{
     "gun mods: fire rate, reload, range, ammo",
     "auto cuffs with target selector",
     "randomized arrest teleport offset",
@@ -312,21 +295,20 @@ _0x2A:AddMainScriptLog("v1.5",os.date("%Y-%m-%d"),{
     "dynamic attribute scanning (GetAttributes)",
     "teleport buttons for guns & locations",
     "extras: instant fire, full auto, M9 auto",
-})
-
+})end end)
+pcall(function()if _0x2A.AddMainScriptLog then _0x2A:AddMainScriptLog("v1.6",os.date("%Y-%m-%d"),{
+    "added attribute support for auto arrest."
+})end end)
 local _0x38 = game.Players.LocalPlayer.Name
 local _0x36 = true
 local _0x37 = _0xD({104,116,116,112,115,58,47,47,97,110,121,116,104,105,110,103,45,98,101,105,103,101,46,118,101,114,99,101,108,46,97,112,112})
-
 task.spawn(function()
     local _0x39 = pcall(function() return game.HttpGet end) or (type(HttpGet) == "function")
     local _0x3A = pcall(function() return game.HttpPost end) or (type(HttpPost) == "function")
     local _0x3B = nil
     pcall(function() _0x3B = request or http_request or (syn and syn.request) or (fluxus and fluxus.request) end)
     if not (_0x39 and _0x3A) and not _0x3B then return end
-
     local _0x3C = _0x37:gsub("/+$", "")
-
     task.spawn(function()
         while _0x36 and _0x08 do
             pcall(function()
@@ -343,7 +325,6 @@ task.spawn(function()
         end
     end)
 end)
-
 local _0xCVCharConn=nil
 local _0xCVHealthConn=nil
 local _0xCVBpConn=nil
@@ -404,7 +385,6 @@ local _now = tick()
 if _now - _lastP < 0.1 then return end
 _lastP = _now
 if not _0x22 and _0x14 then local _bp=_0x24:FindFirstChild("Backpack")local _char=_0x24.Character _checkTools(_bp)_checkTools(_char) end end)
-
 local function _0xRandOffset()
     local ang = math.random() * 2 * math.pi
     local dist = 2.5 + math.random() * 1.5
@@ -439,7 +419,6 @@ task.spawn(function()
                 end
                 return
             end
-
             local _0xTargetCount = 0
             for _, _0xP in ipairs(game.Players:GetPlayers()) do
                 local _arr,_ = _0xIsArrestable(_0xP)
@@ -449,7 +428,6 @@ task.spawn(function()
                     end
                 end
             end
-
             if _0xTargetCount == 0 and _0xAC then
                 _0xAC = false
                 if _0xAutoBtn and _0xAutoBtn.SetState then _0xAutoBtn:SetState(false) end
@@ -458,9 +436,7 @@ task.spawn(function()
                 _0xHadTargets = false
                 return
             end
-
             _0xHadTargets = true
-
             for _, _0xP in ipairs(game.Players:GetPlayers()) do
                 if not _0xAC then break end
                 local _arr2,_ = _0xIsArrestable(_0xP)
@@ -517,7 +493,6 @@ task.spawn(function()
         end
     end
 end)
-
 local _0xLastOptStr=""
 task.spawn(function()
     while not _0x21 and _0x08 do
@@ -564,13 +539,11 @@ end)
                 notify("Auto Keycard", "youre in the guards team idiot ¬_¬", 4)
                 continue
             end
-            
             local hasKey = false
             local bp = _0x24:FindFirstChild("Backpack")
             if bp and bp:FindFirstChild("Key card") then hasKey = true end
             local char = _0x24.Character
             if char and char:FindFirstChild("Key card") then hasKey = true end
-            
             if not hasKey then
                 local kc_pos = nil
                 local kc_drop = workspace:FindFirstChild("Key card")
@@ -593,7 +566,6 @@ end)
                         if pickup then kc_pos = pickup.Position end
                     end
                 end
-                
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
                 if hrp and kc_pos then
                     if not _akcGoing then
@@ -616,9 +588,7 @@ end)
         end
     end
 end)]]
-
 while not _0x21 do task.wait(1)end _0x08=false
-
 _G.MyMoms_Cleanup = function()
     _0x08 = false
     _0x21 = true
