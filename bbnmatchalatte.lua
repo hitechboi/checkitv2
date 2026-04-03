@@ -1,5 +1,5 @@
 --[[
-    bbn more like bnb from osamason ahahahah - for matcha latte env
+    bbn more like bnb from osamason ahahahah ): - for matcha latte env
 ]]
 
 if _G._BBN_CLEANUP then pcall(_G._BBN_CLEANUP) end
