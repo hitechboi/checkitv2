@@ -2359,6 +2359,8 @@ function lib:Window()
 			task.wait(0.3)
 			pcall(function()notify("Thank you guys so much for 100+ stars","Check It v2",5)end)
 			task.wait(0.3)
+			pcall(function()notify("Join Galax Hub guys help them get to 400 members")
+			task.wait(0.3)
 			pcall(function()notify("(¬_¬)","Check It v2",3)end)
 		end)
 		if not ok then warn("[lib] ERROR in spawn: "..tostring(err)) end
