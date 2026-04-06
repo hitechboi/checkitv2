@@ -53,7 +53,7 @@ function ESPObj:Remove()
 end
 
 local function wtsp(p)
-    local v,o=camera:WorldToViewportPoint(p)
+    local v,o=camera:WorldToScreenPoint(p)
     return Vector2.new(v.X,v.Y),o,v.Z
 end
 
