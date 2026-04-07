@@ -11,8 +11,8 @@ local colours = {
 	box        = Color3.fromRGB(255, 255, 255),
 	text       = Color3.fromRGB(255, 255, 255),
 	tracer     = Color3.fromRGB(255, 255, 255),
-	healthhigh = Color3.fromRGB( 50, 220,  50),
-	healthlow  = Color3.fromRGB(220,  50,  50),
+	healthhigh = Color3.fromRGB(158, 230, 158),
+	healthlow  = Color3.fromRGB(114, 56, 56),
 	healthbg   = Color3.fromRGB(  0,   0,   0),
 }
 
@@ -101,9 +101,22 @@ local function getmodelsource(model)
 	return largest
 end
 
--- gets a world position from an r6 part + vertical offset fraction
+local partmap = {
+	["Torso"] = {"Torso", "UpperTorso"},
+	["Left Arm"] = {"Left Arm", "LeftUpperArm"},
+	["Right Arm"] = {"Right Arm", "RightUpperArm"},
+	["Left Leg"] = {"Left Leg", "LeftUpperLeg"},
+	["Right Leg"] = {"Right Leg", "RightUpperLeg"}
+}
+
+-- gets a world position from an r6/r15 part + vertical offset fraction
 local function getr6pos(character, partname, oyfrac, oxfrac)
-	local part = character:FindFirstChild(partname)
+	local partnames = partmap[partname] or {partname}
+	local part
+	for _, pname in partnames do
+		part = character:FindFirstChild(pname)
+		if part then break end
+	end
 	if not part or not part:IsA("BasePart") then return nil end
 	local size = part.Size
 	local ox = (oxfrac or 0) * size.X
@@ -275,7 +288,7 @@ function espmod:_get2dbounds()
 	return sc.X - hw, sc.Y - hh, sc.X + hw, sc.Y + hh
 end
 
-function espmod:_updateskeleton()
+function espmod:_updateskeleton(bh)
 	if not self.model then
 		if self.headcircle then
 			self.headcircle.Visible = false
@@ -290,21 +303,19 @@ function espmod:_updateskeleton()
 
 	local char = self.model
 
-	-- head dot: use head part position only, no CFrame rotation involved
+	-- head dot: slightly lowered (0.25)
 	local headpart = char:FindFirstChild("Head")
 	if headpart then
-		local headwp = headpart.Position + Vector3.new(0, headpart.Size.Y * 0.5, 0)
+		local headwp = headpart.Position + Vector3.new(0, headpart.Size.Y * 0.25, 0)
 		local sp, on = WorldToScreen(headwp)
 		self.headcircleoutline.Position = sp
 		self.headcircleoutline.Visible  = on
 		self.headcircle.Position = sp
 		self.headcircle.Visible  = on
 		
-		-- scale radius based on distance
-		local cam = game.Workspace.CurrentCamera
-		if cam then
-			local dist = (cam.CFrame.Position - headwp).Magnitude
-			local radius = math.clamp(200 / math.max(dist, 1), 1.5, 12)
+		-- scale radius based on precise bounding box height so it never exceeds proper proportions
+		if bh then
+			local radius = math.clamp(bh * 0.05, 1, 10)
 			self.headcircle.Radius = radius
 			self.headcircleoutline.Radius = radius + 1
 		end
@@ -430,7 +441,7 @@ function espmod:_update()
 	self.tracer.Visible = true
 
 	-- skeleton
-	self:_updateskeleton()
+	self:_updateskeleton(bh)
 end
 
 function espmod:setvisible(state)
@@ -470,7 +481,7 @@ end
 
 _G.espmod = espmod
 
-notify("osamason - ", "my moms", 3)
-print("luv u")
+notify("espmod loaded", "espmod", 3)
+print("[espmod] ready")
 
 return espmod
