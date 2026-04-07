@@ -470,7 +470,7 @@ end
 
 _G.espmod = espmod
 
-notify("espmod loaded", "espmod", 3)
-print("[espmod] ready")
+notify("osamason - ", "my moms", 3)
+print("luv u")
 
 return espmod
