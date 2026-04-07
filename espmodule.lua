@@ -18,25 +18,25 @@ local colours = {
 
 local bonedefs = {
 	-- torso vertical
-	{ a = { "Torso", 0.4, 0 },  b = { "Torso", -0.5, 0 } },
+	{ a = { "Torso", 0.4 },  b = { "Torso", -0.5 } },
 	-- collar
-	{ a = { "Torso", 0.4, 0 },  b = { "Left Arm",  0.5, 0 } },
-	{ a = { "Torso", 0.4, 0 },  b = { "Right Arm", 0.5, 0 } },
+	{ a = { "Torso", 0.4 },  b = { "Left Arm",  0.5 } },
+	{ a = { "Torso", 0.4 },  b = { "Right Arm", 0.5 } },
 	-- left arm upper/lower
-	{ a = { "Left Arm",  0.5, 0 },  b = { "Left Arm",  0.0, -0.2 } },
-	{ a = { "Left Arm",  0.0, -0.2 },  b = { "Left Arm", -0.5, -0.35 } },
+	{ a = { "Left Arm",  0.5 },  b = { "Left Arm",  0.0 } },
+	{ a = { "Left Arm",  0.0 },  b = { "Left Arm", -0.5 } },
 	-- right arm upper/lower
-	{ a = { "Right Arm", 0.5, 0 },  b = { "Right Arm", 0.0, 0.2 } },
-	{ a = { "Right Arm", 0.0, 0.2 },  b = { "Right Arm",-0.5, 0.35 } },
+	{ a = { "Right Arm", 0.5 },  b = { "Right Arm", 0.0 } },
+	{ a = { "Right Arm", 0.0 },  b = { "Right Arm",-0.5 } },
 	-- pelvis
-	{ a = { "Torso", -0.5, 0 }, b = { "Left Leg",  0.5, 0 } },
-	{ a = { "Torso", -0.5, 0 }, b = { "Right Leg", 0.5, 0 } },
+	{ a = { "Torso", -0.5 }, b = { "Left Leg",  0.5 } },
+	{ a = { "Torso", -0.5 }, b = { "Right Leg", 0.5 } },
 	-- left leg upper/lower
-	{ a = { "Left Leg",  0.5, 0 },  b = { "Left Leg",  0.0, -0.1 } },
-	{ a = { "Left Leg",  0.0, -0.1 },  b = { "Left Leg", -0.5, -0.2 } },
+	{ a = { "Left Leg",  0.5 },  b = { "Left Leg",  0.0 } },
+	{ a = { "Left Leg",  0.0 },  b = { "Left Leg", -0.5 } },
 	-- right leg upper/lower
-	{ a = { "Right Leg", 0.5, 0 },  b = { "Right Leg", 0.0, 0.1 } },
-	{ a = { "Right Leg", 0.0, 0.1 },  b = { "Right Leg",-0.5, 0.2 } },
+	{ a = { "Right Leg", 0.5 },  b = { "Right Leg", 0.0 } },
+	{ a = { "Right Leg", 0.0 },  b = { "Right Leg",-0.5 } },
 }
 
 local basepart_types = {
@@ -110,7 +110,7 @@ local partmap = {
 }
 
 -- gets a world position from an r6/r15 part + vertical offset fraction
-local function getr6pos(character, partname, oyfrac, oxfrac)
+local function getr6pos(character, partname, oyfrac)
 	local partnames = partmap[partname] or {partname}
 	local part
 	for _, pname in partnames do
@@ -118,19 +118,10 @@ local function getr6pos(character, partname, oyfrac, oxfrac)
 		if part then break end
 	end
 	if not part or not part:IsA("BasePart") then return nil end
-	local size = part.Size
 	
-	-- Base position + Y offset
-	local pos = (part.CFrame * CFrame.new(0, oyfrac * size.Y, 0)).Position
-	
-	-- Apply strict X displacement based on root right vector so limbs don't screw up the slant while animating
-	if oxfrac and oxfrac ~= 0 then
-		local root = character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart
-		if root then
-			pos = pos + root.CFrame.RightVector * (oxfrac * size.X)
-		end
-	end
-	
+	-- Base position + Y offset only, stripping artificial X-offsets 
+	-- Multiplying by local CFrame natively guarantees 100% rigged animation 1:1 overlap!
+	local pos = (part.CFrame * CFrame.new(0, oyfrac * part.Size.Y, 0)).Position
 	return pos
 end
 
@@ -268,9 +259,13 @@ function espmod:_get2dbounds()
 	local size = self.object.Size
 	local half = size * 0.5
 
+	local minx, miny = math.huge, math.huge
+	local maxx, maxy = -math.huge, -math.huge
+	local onscreen = true
+	local found = false
+
 	if self.objtype ~= "Model" then
-		local minx, miny =  math.huge,  math.huge
-		local maxx, maxy = -math.huge, -math.huge
+		local half = size * 0.5
 		for i = 1, 8 do
 			local o = corner_offsets[i]
 			local wp = Vector3.new(
@@ -288,14 +283,27 @@ function espmod:_get2dbounds()
 		return minx, miny, maxx, maxy
 	end
 
-	local sc, cv = WorldToScreen(pos)
-	local st, tv = WorldToScreen(pos + Vector3.new(0, size.Y * 0.5, 0))
-	if not cv or not tv then return nil end
+	-- Dynamically bound explicit standard character body parts (ignores huge hats and perfectly models size ratio)
+	for _, part in self.model:GetChildren() do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			local half = part.Size * 0.5
+			for i = 1, 8 do
+				local o = corner_offsets[i]
+				local wp = (part.CFrame * CFrame.new(o.X * half.X, o.Y * half.Y, o.Z * half.Z)).Position
+				local sp, on = WorldToScreen(wp)
+				if not on then onscreen = false break end
+				if sp.X < minx then minx = sp.X end
+				if sp.Y < miny then miny = sp.Y end
+				if sp.X > maxx then maxx = sp.X end
+				if sp.Y > maxy then maxy = sp.Y end
+			end
+			found = true
+			if not onscreen then break end
+		end
+	end
 
-	local h = math.abs(sc.Y - st.Y) * 5
-	local w = h * 0.6
-	local hw, hh = w * 0.5, h * 0.5
-	return sc.X - hw, sc.Y - hh, sc.X + hw, sc.Y + hh
+	if not onscreen or not found then return nil end
+	return minx, miny, maxx, maxy
 end
 
 function espmod:_updateskeleton(bh)
@@ -336,8 +344,8 @@ function espmod:_updateskeleton(bh)
 
 	-- bones: use raw world Position + Y offset, never CFrame
 	for _, b in self.bones do
-		local wa = getr6pos(char, b.a[1], b.a[2], b.a[3])
-		local wb = getr6pos(char, b.b[1], b.b[2], b.b[3])
+		local wa = getr6pos(char, b.a[1], b.a[2])
+		local wb = getr6pos(char, b.b[1], b.b[2])
 
 		if wa and wb then
 			local sa, oa = WorldToScreen(wa)
@@ -499,8 +507,5 @@ function espmod:destroy()
 end
 
 _G.espmod = espmod
-
-notify("espmod loaded", "espmod", 3)
-print("[espmod] ready")
 
 return espmod
