@@ -18,7 +18,7 @@ local colours = {
 
 local bonedefs = {
 	-- torso vertical
-	{ a = { "Torso", 0.5, 0 },  b = { "Torso", -0.5, 0 } },
+	{ a = { "Torso", 0.4, 0 },  b = { "Torso", -0.5, 0 } },
 	-- collar
 	{ a = { "Torso", 0.4, 0 },  b = { "Left Arm",  0.5, 0 } },
 	{ a = { "Torso", 0.4, 0 },  b = { "Right Arm", 0.5, 0 } },
@@ -119,9 +119,19 @@ local function getr6pos(character, partname, oyfrac, oxfrac)
 	end
 	if not part or not part:IsA("BasePart") then return nil end
 	local size = part.Size
-	local ox = (oxfrac or 0) * size.X
-	local oy = oyfrac * size.Y
-	return (part.CFrame * CFrame.new(ox, oy, 0)).Position
+	
+	-- Base position + Y offset
+	local pos = (part.CFrame * CFrame.new(0, oyfrac * size.Y, 0)).Position
+	
+	-- Apply strict X displacement based on root right vector so limbs don't screw up the slant while animating
+	if oxfrac and oxfrac ~= 0 then
+		local root = character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart
+		if root then
+			pos = pos + root.CFrame.RightVector * (oxfrac * size.X)
+		end
+	end
+	
+	return pos
 end
 
 local function getscreensize()
@@ -418,15 +428,24 @@ function espmod:_update()
 	self.healthbar.Visible  = true
 
 	-- name
-	self.namelabel.Text     = self.name
+	self.namelabel.Text     = string.format("%s | (%d)", self.name, hp)
 	self.namelabel.Color    = self.color
 	self.namelabel.Position = Vector2.new(cx, miny - 16)
 	self.namelabel.Visible  = true
 
 	-- distance
-	self.distlabel.Text     = string.format("<%.1f stu>", self:_getdistance())
-	self.distlabel.Position = Vector2.new(cx, maxy + pad + 2)
-	self.distlabel.Visible  = true
+	local islocal = false
+	if localplayer.Character and self.object:IsDescendantOf(localplayer.Character) then
+		islocal = true
+	end
+	
+	if islocal then
+		self.distlabel.Visible = false
+	else
+		self.distlabel.Text     = string.format("<%.1f stu>", self:_getdistance())
+		self.distlabel.Position = Vector2.new(cx, maxy + pad + 2)
+		self.distlabel.Visible  = true
+	end
 
 	-- tracer
 	local ss           = getscreensize()
