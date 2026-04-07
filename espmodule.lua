@@ -210,6 +210,8 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	self.headcircle        = newcircle(colours.head, 6)
 	self.headcircleoutline = newcircle(Color3.fromRGB(0,0,0), 6)
 	
+	self.displayhpfrac = 1
+	
 	-- Object caching to drastically boost frame performance
 	self.hum = self.model and self.model:FindFirstChildOfClass("Humanoid") or nil
 	self.headpart = self.model and self.model:FindFirstChild("Head") or nil
