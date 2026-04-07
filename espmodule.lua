@@ -121,14 +121,6 @@ local function getmodelsource(model)
 	return largest
 end
 
-local function getrigpos(character, partname, oyfrac)
-	local part = character:FindFirstChild(partname)
-	if not part or not part:IsA("BasePart") then return nil end
-	
-	-- Map natively against the internal CFrame rotation so it 'bends' and stays inside the limb
-	return (part.CFrame * CFrame.new(0, oyfrac * part.Size.Y, 0)).Position
-end
-
 local function getscreensize()
 	local cam = game.Workspace.CurrentCamera
 	if cam then return cam.ViewportSize end
@@ -218,18 +210,36 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	self.headcircle        = newcircle(colours.head, 6)
 	self.headcircleoutline = newcircle(Color3.fromRGB(0,0,0), 6)
 	
-	self.displayhpfrac = 1
+	-- Object caching to drastically boost frame performance
+	self.hum = self.model and self.model:FindFirstChildOfClass("Humanoid") or nil
+	self.headpart = self.model and self.model:FindFirstChild("Head") or nil
+	
+	if self.hum then
+		local hs = self.hum:FindFirstChild("BodyHeightScale")
+		self.charHeight = hs and hs:IsA("NumberValue") and (5 * hs.Value) or 5
+		
+		local ws = self.hum:FindFirstChild("BodyWidthScale")
+		self.charWidth = ws and ws:IsA("NumberValue") and (3 * ws.Value) or 3
+	else
+		self.charHeight = 5
+		self.charWidth = 3
+	end
 
 	self.bones = {}
 	local isR15 = (object and object:FindFirstChild("UpperTorso") ~= nil)
 	local defs = isR15 and r15_bones or r6_bones
 	
 	for _, def in defs do
+		local pA = self.model and self.model:FindFirstChild(def.a[1]) or nil
+		local pB = self.model and self.model:FindFirstChild(def.b[1]) or nil
+
 		table.insert(self.bones, {
 			outline = newline(Color3.fromRGB(0,0,0), 3),
 			line    = newline(colours.bone, 1),
-			a       = def.a,
-			b       = def.b,
+			partA   = pA,
+			partB   = pB,
+			oyA     = def.a[2],
+			oyB     = def.b[2],
 		})
 	end
 
@@ -254,10 +264,7 @@ function espmod:_gethp()
 	if self.gethealth and self.getmaxhealth then
 		return self.gethealth(), self.getmaxhealth()
 	end
-	if self.model then
-		local hum = self.model:FindFirstChildOfClass("Humanoid")
-		if hum then return hum.Health, hum.MaxHealth end
-	end
+	if self.hum then return self.hum.Health, self.hum.MaxHealth end
 	return 100, 100
 end
 
@@ -269,21 +276,9 @@ function espmod:_get2dbounds()
 	local st, tv = WorldToScreen(pos + Vector3.new(0, 1, 0))
 	if not cv or not tv then return nil end
 
-	local charHeight = 5
-	local charWidth = 3
-	if self.model then
-		local hum = self.model:FindFirstChildOfClass("Humanoid")
-		if hum then
-			local hs = hum:FindFirstChild("BodyHeightScale")
-			if hs and hs:IsA("NumberValue") then charHeight = 5 * hs.Value end
-			local ws = hum:FindFirstChild("BodyWidthScale")
-			if ws and ws:IsA("NumberValue") then charWidth = 3 * ws.Value end
-		end
-	end
-
 	local unitH = math.abs(sc.Y - st.Y)
-	local h = unitH * charHeight
-	local w = unitH * charWidth
+	local h = unitH * self.charHeight
+	local w = unitH * self.charWidth
 	local hw, hh = w * 0.5, h * 0.5
 	return sc.X - hw, sc.Y - hh, sc.X + hw, sc.Y + hh
 end
@@ -303,9 +298,8 @@ function espmod:_updateskeleton(bh)
 
 	local char = self.model
 
-	local headpart = char:FindFirstChild("Head")
-	if headpart then
-		local headwp = headpart.Position + Vector3.new(0, headpart.Size.Y * 0.25, 0)
+	if self.headpart then
+		local headwp = self.headpart.Position + Vector3.new(0, self.headpart.Size.Y * 0.25, 0)
 		local sp, on = WorldToScreen(headwp)
 		self.headcircleoutline.Position = sp
 		self.headcircleoutline.Visible  = on
@@ -323,10 +317,9 @@ function espmod:_updateskeleton(bh)
 	end
 
 	for _, b in self.bones do
-		local wa = getrigpos(char, b.a[1], b.a[2])
-		local wb = getrigpos(char, b.b[1], b.b[2])
-
-		if wa and wb then
+		if b.partA and b.partA:IsA("BasePart") and b.partB and b.partB:IsA("BasePart") then
+			local wa = (b.partA.CFrame * CFrame.new(0, b.oyA * b.partA.Size.Y, 0)).Position
+			local wb = (b.partB.CFrame * CFrame.new(0, b.oyB * b.partB.Size.Y, 0)).Position
 			local sa, oa = WorldToScreen(wa)
 			local sb, ob = WorldToScreen(wb)
 			if oa and ob then
