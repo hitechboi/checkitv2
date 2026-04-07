@@ -194,7 +194,7 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	if objtype == "Model" then
 		displayname = customname or object.Name
 		srcobj = getmodelsource(object)
-		if not srcobj then warn("[espmod] no valid parts:", object.Name) return end
+		if not srcobj then return end
 	end
 
 	if espmod.trackers[srcobj] then return espmod.trackers[srcobj] end
