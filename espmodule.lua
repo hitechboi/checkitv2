@@ -124,7 +124,9 @@ end
 local function getrigpos(character, partname, oyfrac)
 	local part = character:FindFirstChild(partname)
 	if not part or not part:IsA("BasePart") then return nil end
-	return part.Position + Vector3.new(0, oyfrac * part.Size.Y, 0)
+	
+	-- Map natively against the internal CFrame rotation so it 'bends' and stays inside the limb
+	return (part.CFrame * CFrame.new(0, oyfrac * part.Size.Y, 0)).Position
 end
 
 local function getscreensize()
