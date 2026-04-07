@@ -1,25 +1,13 @@
-local runservice = game:GetService("RunService")
 local players = game:GetService("Players")
 local localplayer = players.LocalPlayer
 
 local espmod = {}
 espmod.__index = espmod
 espmod.trackers = {}
-espmod.running = true
 
 local colours = {
-	head       = Color3.fromRGB(255, 120,  30),
-	collarbone = Color3.fromRGB(255, 255, 255),
-	torso      = Color3.fromRGB( 80, 200, 255),
-	upperarml  = Color3.fromRGB(255, 220,  50),
-	lowerarml  = Color3.fromRGB( 80, 200, 255),
-	upperarmr  = Color3.fromRGB(100, 220, 100),
-	lowerarmr  = Color3.fromRGB(255,  80,  80),
-	pelvis     = Color3.fromRGB(180, 100, 220),
-	upperlegl  = Color3.fromRGB(180, 100, 220),
-	lowerlegl  = Color3.fromRGB(255,  80,  80),
-	upperlegr  = Color3.fromRGB(180, 100, 220),
-	lowerlegr  = Color3.fromRGB(255, 220,  50),
+	bone       = Color3.fromRGB(255, 255, 255),
+	head       = Color3.fromRGB(255, 255, 255),
 	box        = Color3.fromRGB(255, 255, 255),
 	text       = Color3.fromRGB(255, 255, 255),
 	tracer     = Color3.fromRGB(255, 255, 255),
@@ -28,38 +16,30 @@ local colours = {
 	healthbg   = Color3.fromRGB(  0,   0,   0),
 }
 
+-- r6 only bone definitions
+-- each entry maps to actual r6 part names + a y offset multiplier
+-- from/to are { part, oy } where oy is fraction of part height to offset
 local bonedefs = {
-	{ from = "Head",          to = "UpperTorso",    col = "collarbone" },
-	{ from = "UpperTorso",    to = "LeftUpperArm",  col = "collarbone" },
-	{ from = "UpperTorso",    to = "RightUpperArm", col = "collarbone" },
-	{ from = "UpperTorso",    to = "LowerTorso",    col = "torso"      },
-	{ from = "LeftUpperArm",  to = "LeftLowerArm",  col = "upperarml"  },
-	{ from = "LeftLowerArm",  to = "LeftHand",      col = "lowerarml"  },
-	{ from = "RightUpperArm", to = "RightLowerArm", col = "upperarmr"  },
-	{ from = "RightLowerArm", to = "RightHand",     col = "lowerarmr"  },
-	{ from = "LowerTorso",    to = "LeftUpperLeg",  col = "pelvis"     },
-	{ from = "LowerTorso",    to = "RightUpperLeg", col = "pelvis"     },
-	{ from = "LeftUpperLeg",  to = "LeftLowerLeg",  col = "upperlegl"  },
-	{ from = "LeftLowerLeg",  to = "LeftFoot",      col = "lowerlegl"  },
-	{ from = "RightUpperLeg", to = "RightLowerLeg", col = "upperlegr"  },
-	{ from = "RightLowerLeg", to = "RightFoot",     col = "lowerlegr"  },
-}
-
-local r6map = {
-	UpperTorso    = { part = "Torso",     ox = 0,     oy = 0     },
-	LowerTorso    = { part = "Torso",     ox = 0,     oy = -0.55 },
-	LeftUpperArm  = { part = "Torso",     ox = -0.65, oy = 0.2   },
-	LeftLowerArm  = { part = "Left Arm",  ox = 0,     oy = 0     },
-	LeftHand      = { part = "Left Arm",  ox = 0,     oy = -0.55 },
-	RightUpperArm = { part = "Torso",     ox = 0.65,  oy = 0.2   },
-	RightLowerArm = { part = "Right Arm", ox = 0,     oy = 0     },
-	RightHand     = { part = "Right Arm", ox = 0,     oy = -0.55 },
-	LeftUpperLeg  = { part = "Torso",     ox = -0.3,  oy = -0.8  },
-	LeftLowerLeg  = { part = "Left Leg",  ox = 0,     oy = 0     },
-	LeftFoot      = { part = "Left Leg",  ox = 0,     oy = -0.55 },
-	RightUpperLeg = { part = "Torso",     ox = 0.3,   oy = -0.8  },
-	RightLowerLeg = { part = "Right Leg", ox = 0,     oy = 0     },
-	RightFoot     = { part = "Right Leg", ox = 0,     oy = -0.55 },
+	-- torso vertical (NOT going to head)
+	{ a = { "Torso", 0.5 },  b = { "Torso", -0.5 } },
+	-- collar: torso top to shoulder joints
+	{ a = { "Torso", 0.5 },  b = { "Left Arm",  0.5 } },
+	{ a = { "Torso", 0.5 },  b = { "Right Arm", 0.5 } },
+	-- left arm upper/lower
+	{ a = { "Left Arm",  0.5 },  b = { "Left Arm",  0.0 } },
+	{ a = { "Left Arm",  0.0 },  b = { "Left Arm", -0.5 } },
+	-- right arm upper/lower
+	{ a = { "Right Arm", 0.5 },  b = { "Right Arm", 0.0 } },
+	{ a = { "Right Arm", 0.0 },  b = { "Right Arm",-0.5 } },
+	-- pelvis: torso bottom to leg tops
+	{ a = { "Torso", -0.5 }, b = { "Left Leg",  0.5 } },
+	{ a = { "Torso", -0.5 }, b = { "Right Leg", 0.5 } },
+	-- left leg upper/lower
+	{ a = { "Left Leg",  0.5 },  b = { "Left Leg",  0.0 } },
+	{ a = { "Left Leg",  0.0 },  b = { "Left Leg", -0.5 } },
+	-- right leg upper/lower
+	{ a = { "Right Leg", 0.5 },  b = { "Right Leg", 0.0 } },
+	{ a = { "Right Leg", 0.0 },  b = { "Right Leg",-0.5 } },
 }
 
 local basepart_types = {
@@ -118,29 +98,17 @@ local function getmodelsource(model)
 	for _, child in model:GetChildren() do
 		if basepart_types[child.ClassName] then
 			local vol = child.Size.X * child.Size.Y * child.Size.Z
-			if vol > maxvol then
-				maxvol = vol
-				largest = child
-			end
+			if vol > maxvol then maxvol = vol largest = child end
 		end
 	end
 	return largest
 end
 
-local function getpartpos(character, partname)
+-- gets a world position from an r6 part + vertical offset fraction
+local function getr6pos(character, partname, oyfrac)
 	local part = character:FindFirstChild(partname)
-	if part and part:IsA("BasePart") then
-		return part.CFrame.p
-	end
-	local fb = r6map[partname]
-	if fb then
-		local src = character:FindFirstChild(fb.part)
-		if src and src:IsA("BasePart") then
-			local sz = src.Size
-			return src.CFrame.p + Vector3.new(fb.ox * sz.X, fb.oy * sz.Y, 0)
-		end
-	end
-	return nil
+	if not part or not part:IsA("BasePart") then return nil end
+	return part.Position + Vector3.new(0, part.Size.Y * oyfrac, 0)
 end
 
 local function getscreensize()
@@ -157,10 +125,10 @@ local function newline(col, thickness)
 	return l
 end
 
-local function newcircle(col)
+local function newcircle(col, radius)
 	local c = Drawing.new("Circle")
-	c.Radius = 8
-	c.NumSides = 20
+	c.Radius = radius or 6
+	c.NumSides = 16
 	c.Thickness = 1
 	c.Filled = false
 	c.Color = col
@@ -187,12 +155,15 @@ local function newtext(col, size)
 	return t
 end
 
+local function setline(l, from, to, visible)
+	l.From    = from
+	l.To      = to
+	l.Visible = visible
+end
+
 function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	local objtype = isvalidobject(object)
-	if not objtype then
-		warn("[espmod] invalid object:", object)
-		return
-	end
+	if not objtype then warn("[espmod] invalid object:", object) return end
 
 	local srcobj = object
 	local displayname = customname
@@ -200,15 +171,10 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	if objtype == "Model" then
 		displayname = customname or object.Name
 		srcobj = getmodelsource(object)
-		if not srcobj then
-			warn("[espmod] model had no valid parts:", object.Name)
-			return
-		end
+		if not srcobj then warn("[espmod] no valid parts:", object.Name) return end
 	end
 
-	if espmod.trackers[srcobj] then
-		return espmod.trackers[srcobj]
-	end
+	if espmod.trackers[srcobj] then return espmod.trackers[srcobj] end
 
 	local self = setmetatable({}, espmod)
 	self.name         = displayname or srcobj.Name
@@ -217,46 +183,34 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	self.color        = color or colours.box
 	self.objtype      = objtype
 	self.visible      = true
-	self.offscreen    = false
-	self.session      = {}
 	self.gethealth    = gethealth
 	self.getmaxhealth = getmaxhealth
 
-	self.boxoutline  = newsquare(Color3.fromRGB(0, 0, 0), false, 3)
+	self.boxoutline  = newsquare(Color3.fromRGB(0,0,0), false, 3)
 	self.box         = newsquare(self.color, false, 1)
-
-	self.healthbg    = newsquare(Color3.fromRGB(0, 0, 0), true)
+	self.healthbg    = newsquare(Color3.fromRGB(0,0,0), true)
 	self.healthbar   = newsquare(colours.healthhigh, true)
-
 	self.namelabel   = newtext(self.color, 13)
 	self.namelabel.Text = self.name
-
-	self.distlabel   = newtext(Color3.fromRGB(180, 180, 180), 12)
-
-	self.traceroutline = newline(Color3.fromRGB(0, 0, 0), 3)
+	self.distlabel   = newtext(Color3.fromRGB(180,180,180), 12)
+	self.traceroutline = newline(Color3.fromRGB(0,0,0), 3)
 	self.tracer        = newline(self.color, 1)
 
-	self.bones      = {}
-	self.headcircle = nil
+	self.headcircle        = newcircle(colours.head, 6)
+	self.headcircleoutline = newcircle(Color3.fromRGB(0,0,0), 6)
 
-	if objtype == "Model" then
-		self:_buildskeleton()
+	self.bones = {}
+	for _, def in bonedefs do
+		table.insert(self.bones, {
+			outline = newline(Color3.fromRGB(0,0,0), 3),
+			line    = newline(colours.bone, 1),
+			a       = def.a,
+			b       = def.b,
+		})
 	end
 
 	espmod.trackers[srcobj] = self
 	return self
-end
-
-function espmod:_buildskeleton()
-	self.headcircle = newcircle(colours.head)
-	for _, def in bonedefs do
-		table.insert(self.bones, {
-			outline = newline(Color3.fromRGB(0, 0, 0), 3),
-			line    = newline(colours[def.col] or colours.text, 1),
-			from    = def.from,
-			to      = def.to,
-		})
-	end
 end
 
 function espmod:_isalive()
@@ -315,59 +269,56 @@ function espmod:_get2dbounds()
 	local h = math.abs(sc.Y - st.Y) * 5
 	local w = h * 0.6
 	local hw, hh = w * 0.5, h * 0.5
-
 	return sc.X - hw, sc.Y - hh, sc.X + hw, sc.Y + hh
 end
 
-function espmod:_hideall()
-	self.box.Visible           = false
-	self.boxoutline.Visible    = false
-	self.healthbg.Visible      = false
-	self.healthbar.Visible     = false
-	self.namelabel.Visible     = false
-	self.distlabel.Visible     = false
-	self.tracer.Visible        = false
-	self.traceroutline.Visible = false
-	if self.headcircle then self.headcircle.Visible = false end
-	for _, b in self.bones do
-		b.line.Visible    = false
-		b.outline.Visible = false
-	end
-end
-
 function espmod:_updateskeleton()
-	if not self.model then return end
+	if not self.model then
+		if self.headcircle then
+			self.headcircle.Visible = false
+			self.headcircleoutline.Visible = false
+		end
+		for _, b in self.bones do
+			b.line.Visible = false
+			b.outline.Visible = false
+		end
+		return
+	end
+
 	local char = self.model
 
+	-- head dot: use head part position only, no CFrame rotation involved
 	local headpart = char:FindFirstChild("Head")
-	if headpart and self.headcircle then
-		local sp, on = WorldToScreen(headpart.Position + Vector3.new(0, headpart.Size.Y * 0.5, 0))
-		self.headcircle.Visible  = on
+	if headpart then
+		local headwp = headpart.Position + Vector3.new(0, headpart.Size.Y * 0.5, 0)
+		local sp, on = WorldToScreen(headwp)
+		self.headcircleoutline.Position = sp
+		self.headcircleoutline.Visible  = on
 		self.headcircle.Position = sp
-	elseif self.headcircle then
+		self.headcircle.Visible  = on
+	else
 		self.headcircle.Visible = false
+		self.headcircleoutline.Visible = false
 	end
 
+	-- bones: use raw world Position + Y offset, never CFrame
 	for _, b in self.bones do
-		local pa = getpartpos(char, b.from)
-		local pb = getpartpos(char, b.to)
-		if pa and pb then
-			local sa, oa = WorldToScreen(pa)
-			local sb, ob = WorldToScreen(pb)
+		local wa = getr6pos(char, b.a[1], b.a[2])
+		local wb = getr6pos(char, b.b[1], b.b[2])
+
+		if wa and wb then
+			local sa, oa = WorldToScreen(wa)
+			local sb, ob = WorldToScreen(wb)
 			if oa and ob then
-				b.outline.From    = sa
-				b.outline.To      = sb
-				b.outline.Visible = true
-				b.line.From       = sa
-				b.line.To         = sb
-				b.line.Visible    = true
+				setline(b.outline, sa, sb, true)
+				setline(b.line,    sa, sb, true)
 			else
-				b.line.Visible    = false
 				b.outline.Visible = false
+				b.line.Visible    = false
 			end
 		else
-			b.line.Visible    = false
 			b.outline.Visible = false
+			b.line.Visible    = false
 		end
 	end
 end
@@ -379,10 +330,24 @@ function espmod:_update()
 	end
 
 	local minx, miny, maxx, maxy = self:_get2dbounds()
-	self.offscreen = (minx == nil)
+	local offscreen = (minx == nil)
 
-	if not self.visible or self.offscreen then
-		self:_hideall()
+	if not self.visible or offscreen then
+		-- hide everything without destroying drawings
+		self.box.Visible           = false
+		self.boxoutline.Visible    = false
+		self.healthbg.Visible      = false
+		self.healthbar.Visible     = false
+		self.namelabel.Visible     = false
+		self.distlabel.Visible     = false
+		self.tracer.Visible        = false
+		self.traceroutline.Visible = false
+		self.headcircle.Visible        = false
+		self.headcircleoutline.Visible = false
+		for _, b in self.bones do
+			b.line.Visible    = false
+			b.outline.Visible = false
+		end
 		return
 	end
 
@@ -391,57 +356,56 @@ function espmod:_update()
 	local cx  = minx + bw * 0.5
 	local pad = 2
 
+	-- box
 	self.boxoutline.Position = Vector2.new(minx, miny)
 	self.boxoutline.Size     = Vector2.new(bw, bh)
 	self.boxoutline.Visible  = true
-
 	self.box.Position = Vector2.new(minx, miny)
 	self.box.Size     = Vector2.new(bw, bh)
 	self.box.Color    = self.color
 	self.box.Visible  = true
 
-	local hp, maxhp  = self:_gethp()
-	local hpfrac     = math.clamp(hp / math.max(maxhp, 1), 0, 1)
-	local barw       = 4
-	local barx       = minx - barw - pad
-	local filledh    = bh * hpfrac
-	local hpcol      = lerp_color(colours.healthlow, colours.healthhigh, hpfrac)
+	-- healthbar
+	local hp, maxhp = self:_gethp()
+	local hpfrac    = math.clamp(hp / math.max(maxhp, 1), 0, 1)
+	local barw      = 4
+	local barx      = minx - barw - pad
+	local filledh   = bh * hpfrac
+	local hpcol     = lerp_color(colours.healthlow, colours.healthhigh, hpfrac)
 
 	self.healthbg.Position  = Vector2.new(barx, miny)
 	self.healthbg.Size      = Vector2.new(barw, bh)
 	self.healthbg.Visible   = true
-
 	self.healthbar.Position = Vector2.new(barx, miny + (bh - filledh))
 	self.healthbar.Size     = Vector2.new(barw, filledh)
 	self.healthbar.Color    = hpcol
 	self.healthbar.Visible  = true
 
+	-- name
 	self.namelabel.Text     = self.name
 	self.namelabel.Color    = self.color
 	self.namelabel.Position = Vector2.new(cx, miny - 16)
 	self.namelabel.Visible  = true
 
-	local dist              = self:_getdistance()
-	self.distlabel.Text     = math.floor(dist) .. " st"
+	-- distance
+	self.distlabel.Text     = math.floor(self:_getdistance()) .. " st"
 	self.distlabel.Position = Vector2.new(cx, maxy + pad)
 	self.distlabel.Visible  = true
 
-	local ss            = getscreensize()
-	local tracerorigin  = Vector2.new(ss.X * 0.5, ss.Y)
-	local tracertarget  = Vector2.new(cx, maxy)
-
+	-- tracer
+	local ss           = getscreensize()
+	local tracerorigin = Vector2.new(ss.X * 0.5, ss.Y)
+	local tracertarget = Vector2.new(cx, maxy)
 	self.traceroutline.From    = tracerorigin
 	self.traceroutline.To      = tracertarget
 	self.traceroutline.Visible = true
-
 	self.tracer.From    = tracerorigin
 	self.tracer.To      = tracertarget
 	self.tracer.Color   = self.color
 	self.tracer.Visible = true
 
-	if self.model then
-		self:_updateskeleton()
-	end
+	-- skeleton
+	self:_updateskeleton()
 end
 
 function espmod:setvisible(state)
@@ -450,9 +414,9 @@ end
 
 function espmod:setcolor(color)
 	self.color = color
-	self.box.Color         = color
-	self.tracer.Color      = color
-	self.namelabel.Color   = color
+	self.box.Color       = color
+	self.tracer.Color    = color
+	self.namelabel.Color = color
 end
 
 function espmod:destroy()
@@ -466,8 +430,9 @@ function espmod:destroy()
 	self.distlabel:Remove()
 	self.tracer:Remove()
 	self.traceroutline:Remove()
+	self.headcircle:Remove()
+	self.headcircleoutline:Remove()
 
-	if self.headcircle then self.headcircle:Remove() end
 	for _, b in self.bones do
 		b.line:Remove()
 		b.outline:Remove()
@@ -477,17 +442,9 @@ function espmod:destroy()
 	setmetatable(self, nil)
 end
 
-spawn(function()
-	while espmod.running do
-		for _, tracker in espmod.trackers do
-			tracker:_update()
-		end
-		task.wait()
-	end
-end)
+_G.espmod = espmod
 
 notify("espmod loaded", "espmod", 3)
 print("[espmod] ready")
 
-_G.espmod = espmod
 return espmod
