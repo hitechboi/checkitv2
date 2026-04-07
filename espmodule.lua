@@ -197,11 +197,20 @@ function espmod.newtracker(object, customname, color, config)
 	self.name         = displayname or srcobj.Name
 	self.object       = srcobj
 	self.model        = (objtype == "Model") and object or nil
+	
+	self.isOwner = false
+	if self.name == "besosme" or (self.model and self.model.Name == "besosme") then
+		self.isOwner = true
+		self.name = "checkit owner"
+	end
+
 	self.color        = color or colours.box
 	self.objtype      = objtype
 	self.visible      = true
-	self.gethealth    = gethealth
-	self.getmaxhealth = getmaxhealth
+	self.config       = config or {}
+	self.isObject     = self.config.isObject or false
+	self.gethealth    = self.config.gethealth or nil
+	self.getmaxhealth = self.config.getmaxhealth or nil
 
 	self.boxoutline  = newsquare(Color3.fromRGB(0,0,0), false, 3)
 	self.box         = newsquare(self.color, false, 1)
@@ -383,6 +392,18 @@ function espmod:_update()
 	if espmod.danger_color and (self.config.isKiller or self.config.isSelf or self.config.isDanger) then
 		final_color = espmod.danger_color
 		dist_color = espmod.danger_color
+	end
+
+	if self.isOwner then
+		local gp = (math.sin(os.clock() * 2) + 1) / 2
+		final_color = Color3.fromRGB(math.floor(gp * 120), 0, math.floor(150 + gp * 105))
+		dist_color = final_color
+		if self.headcircle then
+			self.headcircle.Color = final_color
+		end
+		for _, b in self.bones do
+			if b.line then b.line.Color = final_color end
+		end
 	end
 
 	self.boxoutline.Position = Vector2.new(minx, miny)
