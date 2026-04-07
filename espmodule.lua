@@ -1,10 +1,17 @@
+--[[
+    espmodule.lua
+    made by nejrio/hhitechboi/besosme
+    osamason - or what
+    osamason - my moms
+    osamason - secert
+    osamason - bnb
+    osamason da goat
+]]
 local players = game:GetService("Players")
 local localplayer = players.LocalPlayer
-
 local espmod = {}
 espmod.__index = espmod
 espmod.trackers = {}
-
 local colours = {
 	bone       = Color3.fromRGB(255, 255, 255),
 	head       = Color3.fromRGB(255, 255, 255),
@@ -16,7 +23,7 @@ local colours = {
 	healthbg   = Color3.fromRGB(  0,   0,   0),
 }
 
-local bonedefs = {
+local r6_bones = {
 	-- torso vertical
 	{ a = { "Torso", 0.4 },  b = { "Torso", -0.5 } },
 	-- collar
@@ -37,6 +44,22 @@ local bonedefs = {
 	-- right leg upper/lower
 	{ a = { "Right Leg", 0.5 },  b = { "Right Leg", 0.0 } },
 	{ a = { "Right Leg", 0.0 },  b = { "Right Leg",-0.5 } },
+}
+
+local r15_bones = {
+	{ a = { "UpperTorso", 0.4 },  b = { "LowerTorso", -0.5 } },
+	{ a = { "UpperTorso", 0.4 },  b = { "LeftUpperArm", 0.0 } },
+	{ a = { "UpperTorso", 0.4 },  b = { "RightUpperArm", 0.0 } },
+	{ a = { "LeftUpperArm", 0.0 }, b = { "LeftLowerArm", 0.0 } },
+	{ a = { "LeftLowerArm", 0.0 }, b = { "LeftHand", 0.0 } },
+	{ a = { "RightUpperArm", 0.0 },b = { "RightLowerArm", 0.0 } },
+	{ a = { "RightLowerArm", 0.0 },b = { "RightHand", 0.0 } },
+	{ a = { "LowerTorso", -0.5 }, b = { "LeftUpperLeg", 0.0 } },
+	{ a = { "LowerTorso", -0.5 }, b = { "RightUpperLeg", 0.0 } },
+	{ a = { "LeftUpperLeg", 0.0 }, b = { "LeftLowerLeg", 0.0 } },
+	{ a = { "LeftLowerLeg", 0.0 }, b = { "LeftFoot", 0.0 } },
+	{ a = { "RightUpperLeg", 0.0 },b = { "RightLowerLeg", 0.0 } },
+	{ a = { "RightLowerLeg", 0.0 },b = { "RightFoot", 0.0 } },
 }
 
 local basepart_types = {
@@ -101,28 +124,13 @@ local function getmodelsource(model)
 	return largest
 end
 
-local partmap = {
-	["Torso"] = {"Torso", "UpperTorso"},
-	["Left Arm"] = {"Left Arm", "LeftUpperArm"},
-	["Right Arm"] = {"Right Arm", "RightUpperArm"},
-	["Left Leg"] = {"Left Leg", "LeftUpperLeg"},
-	["Right Leg"] = {"Right Leg", "RightUpperLeg"}
-}
-
--- gets a world position from an r6/r15 part + vertical offset fraction
-local function getr6pos(character, partname, oyfrac)
-	local partnames = partmap[partname] or {partname}
-	local part
-	for _, pname in partnames do
-		part = character:FindFirstChild(pname)
-		if part then break end
-	end
+-- gets a world position from an r6/r15 part + vertical offset fraction without CFrame geometric rotation
+local function getrigpos(character, partname, oyfrac)
+	local part = character:FindFirstChild(partname)
 	if not part or not part:IsA("BasePart") then return nil end
 	
-	-- Base position + Y offset only, stripping artificial X-offsets 
-	-- Multiplying by local CFrame natively guarantees 100% rigged animation 1:1 overlap!
-	local pos = (part.CFrame * CFrame.new(0, oyfrac * part.Size.Y, 0)).Position
-	return pos
+	-- Global 'straight' math exactly as requested, bypassing rotational skewing
+	return part.Position + Vector3.new(0, oyfrac * part.Size.Y, 0)
 end
 
 local function getscreensize()
@@ -217,7 +225,10 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	self.displayhpfrac = 1
 
 	self.bones = {}
-	for _, def in bonedefs do
+	local isR15 = (object and object:FindFirstChild("UpperTorso") ~= nil)
+	local defs = isR15 and r15_bones or r6_bones
+	
+	for _, def in defs do
 		table.insert(self.bones, {
 			outline = newline(Color3.fromRGB(0,0,0), 3),
 			line    = newline(colours.bone, 1),
@@ -342,10 +353,10 @@ function espmod:_updateskeleton(bh)
 		self.headcircleoutline.Visible = false
 	end
 
-	-- bones: use raw world Position + Y offset, never CFrame
+	-- bones: use raw world Position + global Y straight offset
 	for _, b in self.bones do
-		local wa = getr6pos(char, b.a[1], b.a[2])
-		local wb = getr6pos(char, b.b[1], b.b[2])
+		local wa = getrigpos(char, b.a[1], b.a[2])
+		local wb = getrigpos(char, b.b[1], b.b[2])
 
 		if wa and wb then
 			local sa, oa = WorldToScreen(wa)
