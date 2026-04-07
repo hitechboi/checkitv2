@@ -13,7 +13,14 @@
 ]]
 local players = game:GetService("Players")
 local localplayer = players.LocalPlayer
-local espmod = {}
+local espmod = {
+	show_skeleton       = true,
+	show_tracers        = true,
+	tag_open            = "<",
+	tag_close           = ">",
+	use_custom_hp_color = false,
+	custom_hp_color     = Color3.fromRGB(150, 255, 150),
+}
 espmod.__index = espmod
 espmod.trackers = {}
 local colours = {
@@ -392,6 +399,9 @@ function espmod:_update()
 	local barx      = minx - barw - pad - 2
 	local filledh   = bh * hpfrac
 	local hpcol     = lerp_color(colours.healthlow, colours.healthhigh, hpfrac)
+	if espmod.use_custom_hp_color then
+		hpcol = espmod.custom_hp_color
+	end
 	
 	self.healthoutline.Position = Vector2.new(barx - 1, miny - 1)
 	self.healthoutline.Size     = Vector2.new(barw + 2, bh + 2)
@@ -418,23 +428,39 @@ function espmod:_update()
 	if islocal then
 		self.distlabel.Visible = false
 	else
-		self.distlabel.Text     = string.format("<%.1f stu>", self:_getdistance())
+		self.distlabel.Text     = string.format("%s%.1f stu%s", espmod.tag_open, self:_getdistance(), espmod.tag_close)
 		self.distlabel.Position = Vector2.new(cx, maxy + pad + 2)
 		self.distlabel.Visible  = true
 	end
 
-	local ss           = getscreensize()
-	local tracerorigin = Vector2.new(ss.X * 0.5, ss.Y)
-	local tracertarget = Vector2.new(cx, maxy)
-	self.traceroutline.From    = tracerorigin
-	self.traceroutline.To      = tracertarget
-	self.traceroutline.Visible = true
-	self.tracer.From    = tracerorigin
-	self.tracer.To      = tracertarget
-	self.tracer.Color   = self.color
-	self.tracer.Visible = true
+	if espmod.show_tracers then
+		local ss           = getscreensize()
+		local tracerorigin = Vector2.new(ss.X * 0.5, ss.Y)
+		local tracertarget = Vector2.new(cx, maxy)
+		self.traceroutline.From    = tracerorigin
+		self.traceroutline.To      = tracertarget
+		self.traceroutline.Visible = true
+		self.tracer.From    = tracerorigin
+		self.tracer.To      = tracertarget
+		self.tracer.Color   = self.color
+		self.tracer.Visible = true
+	else
+		self.traceroutline.Visible = false
+		self.tracer.Visible = false
+	end
 
-	self:_updateskeleton(bh)
+	if espmod.show_skeleton then
+		self:_updateskeleton(bh)
+	else
+		if self.headcircle then
+			self.headcircle.Visible = false
+			self.headcircleoutline.Visible = false
+		end
+		for _, b in self.bones do
+			b.line.Visible = false
+			b.outline.Visible = false
+		end
+	end
 end
 
 function espmod:setvisible(state)
