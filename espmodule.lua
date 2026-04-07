@@ -9,13 +9,9 @@
 ]]
 local players = game:GetService("Players")
 local localplayer = players.LocalPlayer
-
 local espmod = {}
-
 espmod.__index = espmod
-
 espmod.trackers = {}
-
 local colours = {
 	bone       = Color3.fromRGB(255, 255, 255),
 	head       = Color3.fromRGB(255, 255, 255),
