@@ -266,8 +266,50 @@ function espmod.newtracker(object, customname, color, config)
 end
 
 function espmod:_isalive()
+	if self.model then return self.model:IsDescendantOf(game.Workspace) end
 	if not self.object then return false end
 	return self.object:IsDescendantOf(game.Workspace)
+end
+
+function espmod:_rebuild_cache()
+	self.hum = self.model and self.model:FindFirstChildOfClass("Humanoid") or nil
+	self.headpart = self.model and self.model:FindFirstChild("Head") or nil
+	
+	if self.hum then
+		local hs = self.hum:FindFirstChild("BodyHeightScale")
+		self.charHeight = hs and hs:IsA("NumberValue") and (5 * hs.Value) or 5
+		
+		local ws = self.hum:FindFirstChild("BodyWidthScale")
+		self.charWidth = ws and ws:IsA("NumberValue") and (3 * ws.Value) or 3
+	else
+		self.charHeight = 5
+		self.charWidth = 3
+	end
+
+	if self.bones then
+		for _, b in ipairs(self.bones) do
+			if b.line then pcall(function() b.line:Remove() end) end
+			if b.outline then pcall(function() b.outline:Remove() end) end
+		end
+	end
+	self.bones = {}
+
+	local isR15 = (self.model and self.model:FindFirstChild("UpperTorso") ~= nil)
+	local defs = isR15 and r15_bones or r6_bones
+	
+	for _, def in ipairs(defs) do
+		local pA = self.model and self.model:FindFirstChild(def.a[1]) or nil
+		local pB = self.model and self.model:FindFirstChild(def.b[1]) or nil
+
+		table.insert(self.bones, {
+			outline = newline(Color3.fromRGB(0,0,0), 3),
+			line    = newline(colours.bone, 1),
+			partA   = pA,
+			partB   = pB,
+			oyA     = def.a[2],
+			oyB     = def.b[2],
+		})
+	end
 end
 
 function espmod:_getdistance()
@@ -358,6 +400,22 @@ function espmod:_update()
 	if not self:_isalive() then
 		self:destroy()
 		return
+	end
+
+	if self.model and (not self.object or not self.object:IsDescendantOf(game.Workspace)) then
+		local newobj = getmodelsource(self.model)
+		if newobj then
+			self.object = newobj
+			self:_rebuild_cache()
+		else
+			self.box.Visible = false
+			self.namelabel.Visible = false
+			self.distlabel.Visible = false
+			if self.headcircle then self.headcircle.Visible = false end
+			if self.headcircleoutline then self.headcircleoutline.Visible = false end
+			if self.bones then for _, b in ipairs(self.bones) do b.line.Visible = false b.outline.Visible = false end end
+			return
+		end
 	end
 
 	local minx, miny, maxx, maxy = self:_get2dbounds()
