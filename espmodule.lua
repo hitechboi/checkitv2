@@ -16,30 +16,27 @@ local colours = {
 	healthbg   = Color3.fromRGB(  0,   0,   0),
 }
 
--- r6 only bone definitions
--- each entry maps to actual r6 part names + a y offset multiplier
--- from/to are { part, oy } where oy is fraction of part height to offset
 local bonedefs = {
-	-- torso vertical (NOT going to head)
-	{ a = { "Torso", 0.5 },  b = { "Torso", -0.5 } },
-	-- collar: torso top to shoulder joints
-	{ a = { "Torso", 0.5 },  b = { "Left Arm",  0.5 } },
-	{ a = { "Torso", 0.5 },  b = { "Right Arm", 0.5 } },
+	-- torso vertical
+	{ a = { "Torso", 0.5, 0 },  b = { "Torso", -0.5, 0 } },
+	-- collar
+	{ a = { "Torso", 0.4, 0 },  b = { "Left Arm",  0.5, 0 } },
+	{ a = { "Torso", 0.4, 0 },  b = { "Right Arm", 0.5, 0 } },
 	-- left arm upper/lower
-	{ a = { "Left Arm",  0.5 },  b = { "Left Arm",  0.0 } },
-	{ a = { "Left Arm",  0.0 },  b = { "Left Arm", -0.5 } },
+	{ a = { "Left Arm",  0.5, 0 },  b = { "Left Arm",  0.0, -0.2 } },
+	{ a = { "Left Arm",  0.0, -0.2 },  b = { "Left Arm", -0.5, -0.35 } },
 	-- right arm upper/lower
-	{ a = { "Right Arm", 0.5 },  b = { "Right Arm", 0.0 } },
-	{ a = { "Right Arm", 0.0 },  b = { "Right Arm",-0.5 } },
-	-- pelvis: torso bottom to leg tops
-	{ a = { "Torso", -0.5 }, b = { "Left Leg",  0.5 } },
-	{ a = { "Torso", -0.5 }, b = { "Right Leg", 0.5 } },
+	{ a = { "Right Arm", 0.5, 0 },  b = { "Right Arm", 0.0, 0.2 } },
+	{ a = { "Right Arm", 0.0, 0.2 },  b = { "Right Arm",-0.5, 0.35 } },
+	-- pelvis
+	{ a = { "Torso", -0.5, 0 }, b = { "Left Leg",  0.5, 0 } },
+	{ a = { "Torso", -0.5, 0 }, b = { "Right Leg", 0.5, 0 } },
 	-- left leg upper/lower
-	{ a = { "Left Leg",  0.5 },  b = { "Left Leg",  0.0 } },
-	{ a = { "Left Leg",  0.0 },  b = { "Left Leg", -0.5 } },
+	{ a = { "Left Leg",  0.5, 0 },  b = { "Left Leg",  0.0, -0.1 } },
+	{ a = { "Left Leg",  0.0, -0.1 },  b = { "Left Leg", -0.5, -0.2 } },
 	-- right leg upper/lower
-	{ a = { "Right Leg", 0.5 },  b = { "Right Leg", 0.0 } },
-	{ a = { "Right Leg", 0.0 },  b = { "Right Leg",-0.5 } },
+	{ a = { "Right Leg", 0.5, 0 },  b = { "Right Leg", 0.0, 0.1 } },
+	{ a = { "Right Leg", 0.0, 0.1 },  b = { "Right Leg",-0.5, 0.2 } },
 }
 
 local basepart_types = {
@@ -105,10 +102,13 @@ local function getmodelsource(model)
 end
 
 -- gets a world position from an r6 part + vertical offset fraction
-local function getr6pos(character, partname, oyfrac)
+local function getr6pos(character, partname, oyfrac, oxfrac)
 	local part = character:FindFirstChild(partname)
 	if not part or not part:IsA("BasePart") then return nil end
-	return part.Position + Vector3.new(0, part.Size.Y * oyfrac, 0)
+	local size = part.Size
+	local ox = (oxfrac or 0) * size.X
+	local oy = oyfrac * size.Y
+	return (part.CFrame * CFrame.new(ox, oy, 0)).Position
 end
 
 local function getscreensize()
@@ -188,6 +188,7 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 
 	self.boxoutline  = newsquare(Color3.fromRGB(0,0,0), false, 3)
 	self.box         = newsquare(self.color, false, 1)
+	self.healthoutline = newsquare(Color3.fromRGB(0,0,0), false, 1)
 	self.healthbg    = newsquare(Color3.fromRGB(0,0,0), true)
 	self.healthbar   = newsquare(colours.healthhigh, true)
 	self.namelabel   = newtext(self.color, 13)
@@ -198,6 +199,8 @@ function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 
 	self.headcircle        = newcircle(colours.head, 6)
 	self.headcircleoutline = newcircle(Color3.fromRGB(0,0,0), 6)
+	
+	self.displayhpfrac = 1
 
 	self.bones = {}
 	for _, def in bonedefs do
@@ -296,6 +299,15 @@ function espmod:_updateskeleton()
 		self.headcircleoutline.Visible  = on
 		self.headcircle.Position = sp
 		self.headcircle.Visible  = on
+		
+		-- scale radius based on distance
+		local cam = game.Workspace.CurrentCamera
+		if cam then
+			local dist = (cam.CFrame.Position - headwp).Magnitude
+			local radius = math.clamp(200 / math.max(dist, 1), 1.5, 12)
+			self.headcircle.Radius = radius
+			self.headcircleoutline.Radius = radius + 1
+		end
 	else
 		self.headcircle.Visible = false
 		self.headcircleoutline.Visible = false
@@ -303,8 +315,8 @@ function espmod:_updateskeleton()
 
 	-- bones: use raw world Position + Y offset, never CFrame
 	for _, b in self.bones do
-		local wa = getr6pos(char, b.a[1], b.a[2])
-		local wb = getr6pos(char, b.b[1], b.b[2])
+		local wa = getr6pos(char, b.a[1], b.a[2], b.a[3])
+		local wb = getr6pos(char, b.b[1], b.b[2], b.b[3])
 
 		if wa and wb then
 			local sa, oa = WorldToScreen(wa)
@@ -336,6 +348,7 @@ function espmod:_update()
 		-- hide everything without destroying drawings
 		self.box.Visible           = false
 		self.boxoutline.Visible    = false
+		self.healthoutline.Visible = false
 		self.healthbg.Visible      = false
 		self.healthbar.Visible     = false
 		self.namelabel.Visible     = false
@@ -367,11 +380,23 @@ function espmod:_update()
 
 	-- healthbar
 	local hp, maxhp = self:_gethp()
-	local hpfrac    = math.clamp(hp / math.max(maxhp, 1), 0, 1)
+	local targethpfrac = math.clamp(hp / math.max(maxhp, 1), 0, 1)
+	
+	-- smooth tween
+	self.displayhpfrac = self.displayhpfrac + (targethpfrac - self.displayhpfrac) * 0.15
+	if math.abs(self.displayhpfrac - targethpfrac) < 0.005 then
+		self.displayhpfrac = targethpfrac
+	end
+	
+	local hpfrac    = self.displayhpfrac
 	local barw      = 4
-	local barx      = minx - barw - pad
+	local barx      = minx - barw - pad - 2
 	local filledh   = bh * hpfrac
 	local hpcol     = lerp_color(colours.healthlow, colours.healthhigh, hpfrac)
+	
+	self.healthoutline.Position = Vector2.new(barx - 1, miny - 1)
+	self.healthoutline.Size     = Vector2.new(barw + 2, bh + 2)
+	self.healthoutline.Visible  = true
 
 	self.healthbg.Position  = Vector2.new(barx, miny)
 	self.healthbg.Size      = Vector2.new(barw, bh)
@@ -388,8 +413,8 @@ function espmod:_update()
 	self.namelabel.Visible  = true
 
 	-- distance
-	self.distlabel.Text     = math.floor(self:_getdistance()) .. " st"
-	self.distlabel.Position = Vector2.new(cx, maxy + pad)
+	self.distlabel.Text     = string.format("<%.1f stu>", self:_getdistance())
+	self.distlabel.Position = Vector2.new(cx, maxy + pad + 2)
 	self.distlabel.Visible  = true
 
 	-- tracer
@@ -424,6 +449,7 @@ function espmod:destroy()
 
 	self.box:Remove()
 	self.boxoutline:Remove()
+	self.healthoutline:Remove()
 	self.healthbg:Remove()
 	self.healthbar:Remove()
 	self.namelabel:Remove()
