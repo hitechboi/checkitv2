@@ -472,6 +472,12 @@ function espmod:setcolor(color)
 	self.box.Color       = color
 	self.tracer.Color    = color
 	self.namelabel.Color = color
+	if self.headcircle then
+		self.headcircle.Color = color
+	end
+	for _, b in self.bones do
+		if b.line then b.line.Color = color end
+	end
 end
 
 function espmod:destroy()
