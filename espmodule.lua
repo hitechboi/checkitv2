@@ -20,6 +20,7 @@ local espmod = {
 	tag_close           = ">",
 	use_custom_hp_color = false,
 	custom_hp_color     = Color3.fromRGB(150, 255, 150),
+	danger_color        = nil,
 }
 espmod.__index = espmod
 espmod.trackers = {}
@@ -178,13 +179,12 @@ local function setline(l, from, to, visible)
 	l.Visible = visible
 end
 
-function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
+function espmod.newtracker(object, customname, color, config)
 	local objtype = isvalidobject(object)
 	if not objtype then return end
 
 	local srcobj = object
 	local displayname = customname
-
 	if objtype == "Model" then
 		displayname = customname or object.Name
 		srcobj = getmodelsource(object)
@@ -378,12 +378,19 @@ function espmod:_update()
 	local cx  = minx + bw * 0.5
 	local pad = 2
 
+	local final_color = self.color
+	local dist_color = Color3.fromRGB(180,180,180)
+	if espmod.danger_color and (self.config.isKiller or self.config.isSelf or self.config.isDanger) then
+		final_color = espmod.danger_color
+		dist_color = espmod.danger_color
+	end
+
 	self.boxoutline.Position = Vector2.new(minx, miny)
 	self.boxoutline.Size     = Vector2.new(bw, bh)
 	self.boxoutline.Visible  = true
 	self.box.Position = Vector2.new(minx, miny)
 	self.box.Size     = Vector2.new(bw, bh)
-	self.box.Color    = self.color
+	self.box.Color    = final_color
 	self.box.Visible  = true
 
 	local hp, maxhp = self:_gethp()
@@ -403,22 +410,33 @@ function espmod:_update()
 		hpcol = espmod.custom_hp_color
 	end
 	
-	self.healthoutline.Position = Vector2.new(barx - 1, miny - 1)
-	self.healthoutline.Size     = Vector2.new(barw + 2, bh + 2)
-	self.healthoutline.Visible  = true
+	if self.isObject then
+		self.healthoutline.Visible = false
+		self.healthbg.Visible      = false
+		self.healthbar.Visible     = false
 
-	self.healthbg.Position  = Vector2.new(barx, miny)
-	self.healthbg.Size      = Vector2.new(barw, bh)
-	self.healthbg.Visible   = true
-	self.healthbar.Position = Vector2.new(barx, miny + (bh - filledh))
-	self.healthbar.Size     = Vector2.new(barw, filledh)
-	self.healthbar.Color    = hpcol
-	self.healthbar.Visible  = true
+		self.namelabel.Text     = self.name
+		self.namelabel.Color    = final_color
+		self.namelabel.Position = Vector2.new(cx, miny - 16)
+		self.namelabel.Visible  = true
+	else
+		self.healthoutline.Position = Vector2.new(barx - 1, miny - 1)
+		self.healthoutline.Size     = Vector2.new(barw + 2, bh + 2)
+		self.healthoutline.Visible  = true
 
-	self.namelabel.Text     = string.format("%s | (%d)", self.name, hp)
-	self.namelabel.Color    = self.color
-	self.namelabel.Position = Vector2.new(cx, miny - 16)
-	self.namelabel.Visible  = true
+		self.healthbg.Position  = Vector2.new(barx, miny)
+		self.healthbg.Size      = Vector2.new(barw, bh)
+		self.healthbg.Visible   = true
+		self.healthbar.Position = Vector2.new(barx, miny + (bh - filledh))
+		self.healthbar.Size     = Vector2.new(barw, filledh)
+		self.healthbar.Color    = hpcol
+		self.healthbar.Visible  = true
+
+		self.namelabel.Text     = string.format("%s | (%d)", self.name, hp)
+		self.namelabel.Color    = final_color
+		self.namelabel.Position = Vector2.new(cx, miny - 16)
+		self.namelabel.Visible  = true
+	end
 
 	local islocal = false
 	if localplayer.Character and self.object:IsDescendantOf(localplayer.Character) then
@@ -430,10 +448,11 @@ function espmod:_update()
 	else
 		self.distlabel.Text     = string.format("%s%.1f stu%s", espmod.tag_open, self:_getdistance(), espmod.tag_close)
 		self.distlabel.Position = Vector2.new(cx, maxy + pad + 2)
+		self.distlabel.Color    = dist_color
 		self.distlabel.Visible  = true
 	end
 
-	if espmod.show_tracers then
+	if espmod.show_tracers and not self.isObject then
 		local ss           = getscreensize()
 		local tracerorigin = Vector2.new(ss.X * 0.5, ss.Y)
 		local tracertarget = Vector2.new(cx, maxy)
@@ -442,14 +461,14 @@ function espmod:_update()
 		self.traceroutline.Visible = true
 		self.tracer.From    = tracerorigin
 		self.tracer.To      = tracertarget
-		self.tracer.Color   = self.color
+		self.tracer.Color   = final_color
 		self.tracer.Visible = true
 	else
 		self.traceroutline.Visible = false
 		self.tracer.Visible = false
 	end
 
-	if espmod.show_skeleton then
+	if espmod.show_skeleton and not self.isObject then
 		self:_updateskeleton(bh)
 	else
 		if self.headcircle then
@@ -460,6 +479,10 @@ function espmod:_update()
 			b.line.Visible = false
 			b.outline.Visible = false
 		end
+	end
+
+	if self.config.custom_update then
+		pcall(self.config.custom_update, self, minx, miny, maxx, maxy)
 	end
 end
 
