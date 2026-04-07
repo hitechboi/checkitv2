@@ -6,6 +6,10 @@
     osamason - secert
     osamason - bnb
     osamason da goat
+
+
+
+
 ]]
 local players = game:GetService("Players")
 local localplayer = players.LocalPlayer
@@ -24,24 +28,17 @@ local colours = {
 }
 
 local r6_bones = {
-	-- torso vertical
 	{ a = { "Torso", 0.4 },  b = { "Torso", -0.5 } },
-	-- collar
 	{ a = { "Torso", 0.4 },  b = { "Left Arm",  0.5 } },
 	{ a = { "Torso", 0.4 },  b = { "Right Arm", 0.5 } },
-	-- left arm upper/lower
 	{ a = { "Left Arm",  0.5 },  b = { "Left Arm",  0.0 } },
 	{ a = { "Left Arm",  0.0 },  b = { "Left Arm", -0.5 } },
-	-- right arm upper/lower
 	{ a = { "Right Arm", 0.5 },  b = { "Right Arm", 0.0 } },
 	{ a = { "Right Arm", 0.0 },  b = { "Right Arm",-0.5 } },
-	-- pelvis
 	{ a = { "Torso", -0.5 }, b = { "Left Leg",  0.5 } },
 	{ a = { "Torso", -0.5 }, b = { "Right Leg", 0.5 } },
-	-- left leg upper/lower
 	{ a = { "Left Leg",  0.5 },  b = { "Left Leg",  0.0 } },
 	{ a = { "Left Leg",  0.0 },  b = { "Left Leg", -0.5 } },
-	-- right leg upper/lower
 	{ a = { "Right Leg", 0.5 },  b = { "Right Leg", 0.0 } },
 	{ a = { "Right Leg", 0.0 },  b = { "Right Leg",-0.5 } },
 }
@@ -124,12 +121,9 @@ local function getmodelsource(model)
 	return largest
 end
 
--- gets a world position from an r6/r15 part + vertical offset fraction without CFrame geometric rotation
 local function getrigpos(character, partname, oyfrac)
 	local part = character:FindFirstChild(partname)
 	if not part or not part:IsA("BasePart") then return nil end
-	
-	-- Global 'straight' math exactly as requested, bypassing rotational skewing
 	return part.Position + Vector3.new(0, oyfrac * part.Size.Y, 0)
 end
 
@@ -185,7 +179,7 @@ end
 
 function espmod.newtracker(object, customname, color, gethealth, getmaxhealth)
 	local objtype = isvalidobject(object)
-	if not objtype then warn("[espmod] invalid object:", object) return end
+	if not objtype then return end
 
 	local srcobj = object
 	local displayname = customname
@@ -268,53 +262,28 @@ end
 function espmod:_get2dbounds()
 	local pos  = self.object.Position
 	local size = self.object.Size
-	local half = size * 0.5
 
-	local minx, miny = math.huge, math.huge
-	local maxx, maxy = -math.huge, -math.huge
-	local onscreen = true
-	local found = false
+	local sc, cv = WorldToScreen(pos)
+	local st, tv = WorldToScreen(pos + Vector3.new(0, 1, 0))
+	if not cv or not tv then return nil end
 
-	if self.objtype ~= "Model" then
-		local half = size * 0.5
-		for i = 1, 8 do
-			local o = corner_offsets[i]
-			local wp = Vector3.new(
-				pos.X + o.X * half.X,
-				pos.Y + o.Y * half.Y,
-				pos.Z + o.Z * half.Z
-			)
-			local sp, on = WorldToScreen(wp)
-			if not on then return nil end
-			if sp.X < minx then minx = sp.X end
-			if sp.Y < miny then miny = sp.Y end
-			if sp.X > maxx then maxx = sp.X end
-			if sp.Y > maxy then maxy = sp.Y end
-		end
-		return minx, miny, maxx, maxy
-	end
-
-	-- Dynamically bound explicit standard character body parts (ignores huge hats and perfectly models size ratio)
-	for _, part in self.model:GetChildren() do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-			local half = part.Size * 0.5
-			for i = 1, 8 do
-				local o = corner_offsets[i]
-				local wp = (part.CFrame * CFrame.new(o.X * half.X, o.Y * half.Y, o.Z * half.Z)).Position
-				local sp, on = WorldToScreen(wp)
-				if not on then onscreen = false break end
-				if sp.X < minx then minx = sp.X end
-				if sp.Y < miny then miny = sp.Y end
-				if sp.X > maxx then maxx = sp.X end
-				if sp.Y > maxy then maxy = sp.Y end
-			end
-			found = true
-			if not onscreen then break end
+	local charHeight = 5
+	local charWidth = 3
+	if self.model then
+		local hum = self.model:FindFirstChildOfClass("Humanoid")
+		if hum then
+			local hs = hum:FindFirstChild("BodyHeightScale")
+			if hs and hs:IsA("NumberValue") then charHeight = 5 * hs.Value end
+			local ws = hum:FindFirstChild("BodyWidthScale")
+			if ws and ws:IsA("NumberValue") then charWidth = 3 * ws.Value end
 		end
 	end
 
-	if not onscreen or not found then return nil end
-	return minx, miny, maxx, maxy
+	local unitH = math.abs(sc.Y - st.Y)
+	local h = unitH * charHeight
+	local w = unitH * charWidth
+	local hw, hh = w * 0.5, h * 0.5
+	return sc.X - hw, sc.Y - hh, sc.X + hw, sc.Y + hh
 end
 
 function espmod:_updateskeleton(bh)
@@ -332,7 +301,6 @@ function espmod:_updateskeleton(bh)
 
 	local char = self.model
 
-	-- head dot: slightly lowered (0.25)
 	local headpart = char:FindFirstChild("Head")
 	if headpart then
 		local headwp = headpart.Position + Vector3.new(0, headpart.Size.Y * 0.25, 0)
@@ -342,7 +310,6 @@ function espmod:_updateskeleton(bh)
 		self.headcircle.Position = sp
 		self.headcircle.Visible  = on
 		
-		-- scale radius based on precise bounding box height so it never exceeds proper proportions
 		if bh then
 			local radius = math.clamp(bh * 0.05, 1, 10)
 			self.headcircle.Radius = radius
@@ -353,7 +320,6 @@ function espmod:_updateskeleton(bh)
 		self.headcircleoutline.Visible = false
 	end
 
-	-- bones: use raw world Position + global Y straight offset
 	for _, b in self.bones do
 		local wa = getrigpos(char, b.a[1], b.a[2])
 		local wb = getrigpos(char, b.b[1], b.b[2])
@@ -385,7 +351,6 @@ function espmod:_update()
 	local offscreen = (minx == nil)
 
 	if not self.visible or offscreen then
-		-- hide everything without destroying drawings
 		self.box.Visible           = false
 		self.boxoutline.Visible    = false
 		self.healthoutline.Visible = false
@@ -409,7 +374,6 @@ function espmod:_update()
 	local cx  = minx + bw * 0.5
 	local pad = 2
 
-	-- box
 	self.boxoutline.Position = Vector2.new(minx, miny)
 	self.boxoutline.Size     = Vector2.new(bw, bh)
 	self.boxoutline.Visible  = true
@@ -418,11 +382,9 @@ function espmod:_update()
 	self.box.Color    = self.color
 	self.box.Visible  = true
 
-	-- healthbar
 	local hp, maxhp = self:_gethp()
 	local targethpfrac = math.clamp(hp / math.max(maxhp, 1), 0, 1)
 	
-	-- smooth tween
 	self.displayhpfrac = self.displayhpfrac + (targethpfrac - self.displayhpfrac) * 0.15
 	if math.abs(self.displayhpfrac - targethpfrac) < 0.005 then
 		self.displayhpfrac = targethpfrac
@@ -446,13 +408,11 @@ function espmod:_update()
 	self.healthbar.Color    = hpcol
 	self.healthbar.Visible  = true
 
-	-- name
 	self.namelabel.Text     = string.format("%s | (%d)", self.name, hp)
 	self.namelabel.Color    = self.color
 	self.namelabel.Position = Vector2.new(cx, miny - 16)
 	self.namelabel.Visible  = true
 
-	-- distance
 	local islocal = false
 	if localplayer.Character and self.object:IsDescendantOf(localplayer.Character) then
 		islocal = true
@@ -466,7 +426,6 @@ function espmod:_update()
 		self.distlabel.Visible  = true
 	end
 
-	-- tracer
 	local ss           = getscreensize()
 	local tracerorigin = Vector2.new(ss.X * 0.5, ss.Y)
 	local tracertarget = Vector2.new(cx, maxy)
@@ -478,7 +437,6 @@ function espmod:_update()
 	self.tracer.Color   = self.color
 	self.tracer.Visible = true
 
-	-- skeleton
 	self:_updateskeleton(bh)
 end
 
