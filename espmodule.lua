@@ -239,6 +239,8 @@ function espmod.newtracker(object, customname, color, config)
 	end
 	
 	self.displayhpfrac = 1
+	
+	-- Object caching to drastically boost frame performance
 	self.hum = self.model and self.model:FindFirstChildOfClass("Humanoid") or nil
 	self.headpart = self.model and self.model:FindFirstChild("Head") or nil
 	
@@ -567,8 +569,8 @@ function espmod:_update()
 		self.tracer.Color   = final_color
 		self.tracer.Visible = true
 	else
-		self.traceroutline.Visible = false
-		self.tracer.Visible = false
+		if self.traceroutline then self.traceroutline.Visible = false end
+		if self.tracer then self.tracer.Visible = false end
 	end
 
 	if espmod.show_skeleton and not self.isObject then
@@ -578,9 +580,11 @@ function espmod:_update()
 			self.headcircle.Visible = false
 			self.headcircleoutline.Visible = false
 		end
-		for _, b in self.bones do
-			b.line.Visible = false
-			b.outline.Visible = false
+		if self.bones then
+			for _, b in self.bones do
+				b.line.Visible = false
+				b.outline.Visible = false
+			end
 		end
 	end
 
