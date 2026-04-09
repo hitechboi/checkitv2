@@ -3,6 +3,7 @@
     made by nejrio/hhitechboi/besosme
     osamason da goat
     optimized: batched dirty flags, throttled skeleton, character-aware glow anims
+    fixed owner stuff stop looking at my scripts 🙄
 ]]
 local players    = game:GetService("Players")
 local localplayer = players.LocalPlayer
@@ -119,7 +120,7 @@ local function isvalidobject(obj)
     end
 end
 local function getmodelsource(model)
-    local commonnames = {"HumanoidRootPart","Root","RootPart","Core"}
+    local commonnames = {"HumanoidRootPart","Root","RootPart","Core","Point1","Engine","Middle","Center","Body","Base","Main","Hitbox"}
     local children = model:GetChildren()
     for _,name in commonnames do
         for _,child in children do
@@ -137,6 +138,14 @@ local function getmodelsource(model)
         if basepart_types[child.ClassName] then
             local vol = child.Size.X*child.Size.Y*child.Size.Z
             if vol>maxvol then maxvol=vol; largest=child end
+        end
+    end
+    if not largest then
+        for _,child in model:GetDescendants() do
+            if basepart_types[child.ClassName] then
+                local vol = child.Size.X*child.Size.Y*child.Size.Z
+                if vol>maxvol then maxvol=vol; largest=child end
+            end
         end
     end
     return largest
@@ -204,21 +213,22 @@ function espmod.newtracker(object, customname, color, config)
     if espmod.trackers[srcobj] then return espmod.trackers[srcobj] end
 
     local cfg = config or {}
-    if cfg.isObject then
+
+    local _posKey = nil
+    if cfg.isObject and not cfg.isGen then
         local pos
-        pcall(function()
-            pos = srcobj.Position
-        end)
+        pcall(function() pos = srcobj.Position end)
         if pos then
-            local posKey = string.format("%.0f_%.0f_%.0f", pos.X, pos.Y, pos.Z)
-            if _objectPosRegistry[posKey] then
-                return _objectPosRegistry[posKey]
+            _posKey = string.format("%.0f_%.0f_%.0f", pos.X, pos.Y, pos.Z)
+            local existing = _objectPosRegistry[_posKey]
+            if existing and type(existing) == "table" then
+                return existing
             end
-            _objectPosRegistry[posKey] = true
         end
     end
 
     local self = setmetatable({}, espmod)
+    self._posKey    = _posKey
     self.name       = displayname or srcobj.Name
     self.object     = srcobj
     self.model      = (objtype=="Model") and object or nil
@@ -232,7 +242,8 @@ function espmod.newtracker(object, customname, color, config)
             self._isTacocat = true
             self.name = "tacocat"
         else
-            self.name = "besosme"
+            self._isTacocat = false
+            self.name = "check it owner"
         end
     end
 
@@ -301,6 +312,9 @@ function espmod.newtracker(object, customname, color, config)
     end
 
     espmod.trackers[srcobj] = self
+    if _posKey then
+        _objectPosRegistry[_posKey] = self
+    end
     return self
 end
 
@@ -497,8 +511,8 @@ function espmod:_update()
         if self._isTacocat then
             final_color = tacocat_color(clk)
         else
-            local gp = (msin(clk * 2) + 1) * 0.5
-            final_color = Color3.fromRGB(mfloor(gp*120), 0, mfloor(150+gp*105))
+            local gp = (msin(clk * 1.5) + 1) * 0.5
+            final_color = Color3.fromRGB(mfloor(gp*30), mfloor(gp*10), mfloor(180+gp*75))
         end
         dist_color = final_color
 
@@ -698,6 +712,10 @@ end
 
 function espmod:destroy()
     espmod.trackers[self.object] = nil
+
+    if self._posKey then
+        _objectPosRegistry[self._posKey] = nil
+    end
 
     self.box:Remove()
     self.boxoutline:Remove()
