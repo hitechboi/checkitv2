@@ -29,12 +29,35 @@ local colours = {
     healthbg   = Color3.fromRGB(  0,   0,   0),
 }
 
-
-local killer_glows = { -- bbn support
-    ["Ennard"]     = { Color3.fromRGB(0,0,0),       Color3.fromRGB(200,200,200), 1.2 }, 
+local killer_glows = {
+    ["Ennard"]     = { Color3.fromRGB(0,0,0),       Color3.fromRGB(200,200,200), 1.2 },
     ["Springtrap"] = { Color3.fromRGB(40,80,20),    Color3.fromRGB(120,10,10),   1.0 },
-    ["Mimic"]      = { Color3.fromRGB(100,200,255),  Color3.fromRGB(240,240,255), 1.5 }, 
+    ["Mimic"]      = { Color3.fromRGB(100,200,255),  Color3.fromRGB(240,240,255), 1.5 },
 }
+
+local TACOCAT_FADE = {
+    Color3.fromRGB(0,   0,   0),
+    Color3.fromRGB(64,  64,  64),
+    Color3.fromRGB(160, 160, 160),
+    Color3.fromRGB(255, 255, 255),
+    Color3.fromRGB(0,   0,   180),
+    Color3.fromRGB(255, 140, 0),
+    Color3.fromRGB(210, 180, 140),
+}
+
+local function tacocat_color(clk)
+    local n = #TACOCAT_FADE
+    local total = clk % n
+    local idx   = math.floor(total) + 1
+    local nxt   = (idx % n) + 1
+    local t     = total - math.floor(total)
+    local a, b  = TACOCAT_FADE[idx], TACOCAT_FADE[nxt]
+    return Color3.new(
+        a.R + (b.R - a.R) * t,
+        a.G + (b.G - a.G) * t,
+        a.B + (b.B - a.B) * t
+    )
+end
 
 local r6_bones = {
     { a={"Torso",0.4},    b={"Torso",-0.5}     },
@@ -70,12 +93,6 @@ local r15_bones = {
 local basepart_types = {
     Part="BasePart", MeshPart="BasePart",
     UnionOperation="BasePart", Model="Model",
-}
-local corner_offsets = {
-    Vector3.new(-1,-1,-1), Vector3.new( 1,-1,-1),
-    Vector3.new( 1,-1, 1), Vector3.new(-1,-1, 1),
-    Vector3.new(-1, 1,-1), Vector3.new( 1, 1,-1),
-    Vector3.new( 1, 1, 1), Vector3.new(-1, 1, 1),
 }
 local studs_per_unit = 9
 
@@ -170,6 +187,8 @@ local function setline(l, from, to, visible)
     l.Visible = visible
 end
 
+local _objectPosRegistry = {}
+
 function espmod.newtracker(object, customname, color, config)
     local objtype = isvalidobject(object)
     if not objtype then return end
@@ -184,29 +203,47 @@ function espmod.newtracker(object, customname, color, config)
 
     if espmod.trackers[srcobj] then return espmod.trackers[srcobj] end
 
+    local cfg = config or {}
+    if cfg.isObject then
+        local pos
+        pcall(function()
+            pos = srcobj.Position
+        end)
+        if pos then
+            local posKey = string.format("%.0f_%.0f_%.0f", pos.X, pos.Y, pos.Z)
+            if _objectPosRegistry[posKey] then
+                return _objectPosRegistry[posKey]
+            end
+            _objectPosRegistry[posKey] = true
+        end
+    end
+
     local self = setmetatable({}, espmod)
     self.name       = displayname or srcobj.Name
     self.object     = srcobj
     self.model      = (objtype=="Model") and object or nil
     self.isOwner    = false
+    self._isTacocat = false
 
-    if self.name=="besosme" or (self.model and self.model.Name=="besosme") then
+    local isOwnerName = (self.name == "besosme") or (self.model and self.model.Name == "besosme")
+    if isOwnerName then
         self.isOwner = true
-        self.name    = "checkit owner"
+        if math.random() < 0.65 then
+            self._isTacocat = true
+            self.name = "tacocat"
+        else
+            self.name = "besosme"
+        end
     end
 
     self.color        = color or colours.box
     self.objtype      = objtype
     self.visible      = true
-    self.config       = config or {}
-    self.isObject     = self.config.isObject or false
-    self.gethealth    = self.config.gethealth or nil
-    self.getmaxhealth = self.config.getmaxhealth or nil
-    self.killerGlow = nil
-    if self.config.isKiller and self.model then
-        local charAttr = pcall(function() return self.model:GetAttribute("Character") end)
-    end
-
+    self.config       = cfg
+    self.isObject     = cfg.isObject or false
+    self.gethealth    = cfg.gethealth or nil
+    self.getmaxhealth = cfg.getmaxhealth or nil
+    self.killerGlow   = nil
 
     self.boxoutline        = newsquare(Color3.fromRGB(0,0,0), false, 3)
     self.box               = newsquare(self.color, false, 1)
@@ -220,13 +257,17 @@ function espmod.newtracker(object, customname, color, config)
     self.tracer            = newline(self.color, 1)
     self.headcircle        = newcircle(colours.head, 6)
     self.headcircleoutline = newcircle(Color3.fromRGB(0,0,0), 6)
-    self.displayhpfrac = 1
-    self.killerLabel_name = nil
-    self.killerLabel_char = nil
-    self.killerLabel_hp   = nil
+    self.displayhpfrac     = 1
+    self.killerLabel_name  = nil
+    self.killerLabel_char  = nil
+    self.killerLabel_div1  = nil
+    self.killerLabel_div2  = nil
+    self.killerLabel_hp    = nil
     if self.config.isKiller then
         self.killerLabel_name = newtext(self.color, 13)
+        self.killerLabel_div1 = newtext(self.color, 13)
         self.killerLabel_char = newtext(self.color, 13)
+        self.killerLabel_div2 = newtext(self.color, 13)
         self.killerLabel_hp   = newtext(self.color, 13)
         self.namelabel.Visible = false
     end
@@ -244,7 +285,7 @@ function espmod.newtracker(object, customname, color, config)
     end
 
     self._lastColor  = nil
-    self._skelFrame  = 0 
+    self._skelFrame  = 0
     self.bones = {}
     local isR15 = (object and object:FindFirstChild("UpperTorso") ~= nil)
     local defs  = isR15 and r15_bones or r6_bones
@@ -378,7 +419,6 @@ function espmod:_updateskeleton(bh)
     end
 end
 
-
 local function _hideall(self)
     self.box.Visible           = false
     self.boxoutline.Visible    = false
@@ -392,7 +432,9 @@ local function _hideall(self)
     self.headcircle.Visible        = false
     self.headcircleoutline.Visible = false
     if self.killerLabel_name then self.killerLabel_name.Visible = false end
+    if self.killerLabel_div1 then self.killerLabel_div1.Visible = false end
     if self.killerLabel_char then self.killerLabel_char.Visible = false end
+    if self.killerLabel_div2 then self.killerLabel_div2.Visible = false end
     if self.killerLabel_hp   then self.killerLabel_hp.Visible   = false end
     for _,b in self.bones do b.line.Visible=false; b.outline.Visible=false end
 end
@@ -446,13 +488,19 @@ function espmod:_update()
     local cx  = minx + bw * 0.5
     local pad = 2
     local clk = os.clock()
-    local final_color = self.color 
-    local glow_color  = nil         
+
+    local final_color = self.color
+    local glow_color  = nil
     local dist_color  = Color3.fromRGB(180,180,180)
+
     if self.isOwner then
-        local gp = (msin(clk * 2) + 1) * 0.5
-        final_color = Color3.fromRGB(mfloor(gp*120), 0, mfloor(150+gp*105))
-        dist_color  = final_color
+        if self._isTacocat then
+            final_color = tacocat_color(clk)
+        else
+            local gp = (msin(clk * 2) + 1) * 0.5
+            final_color = Color3.fromRGB(mfloor(gp*120), 0, mfloor(150+gp*105))
+        end
+        dist_color = final_color
 
     elseif self.config.isKiller then
         glow_color = self:_getKillerGlowColor(clk)
@@ -478,18 +526,25 @@ function espmod:_update()
             self.namelabel.Color = final_color
         end
         if self.killerLabel_name then self.killerLabel_name.Color = final_color end
+        if self.killerLabel_div1 then self.killerLabel_div1.Color = final_color end
         if self.killerLabel_hp   then self.killerLabel_hp.Color   = final_color end
     end
 
     if self.killerLabel_char then
         self.killerLabel_char.Color = glow_color or final_color
     end
+    if self.killerLabel_div1 and self.killerLabel_div2 then
+        self.killerLabel_div1.Color = final_color
+        self.killerLabel_div2.Color = final_color
+    end
+
     self.boxoutline.Position = Vector2.new(minx, miny)
     self.boxoutline.Size     = Vector2.new(bw, bh)
     self.boxoutline.Visible  = true
     self.box.Position = Vector2.new(minx, miny)
     self.box.Size     = Vector2.new(bw, bh)
     self.box.Visible  = true
+
     local hp, maxhp     = self:_gethp()
     local targethpfrac  = mclamp(hp / math.max(maxhp,1), 0, 1)
     self.displayhpfrac  = self.displayhpfrac + (targethpfrac - self.displayhpfrac) * 0.15
@@ -502,6 +557,7 @@ function espmod:_update()
     local filledh = bh * hpfrac
     local hpcol   = lerp_color(colours.healthlow, colours.healthhigh, hpfrac)
     if espmod.use_custom_hp_color then hpcol = espmod.custom_hp_color end
+
     if self.isObject then
         self.healthoutline.Visible = false
         self.healthbg.Visible      = false
@@ -521,34 +577,60 @@ function espmod:_update()
         self.healthbar.Size     = Vector2.new(barw, filledh)
         self.healthbar.Color    = hpcol
         self.healthbar.Visible  = true
+
         if self.config.isKiller then
             local charStr = self._charStr or "?"
             local hpStr   = string.format("(%d)", mfloor(hp))
             local fs         = 13
             local charW      = fs * 0.6
-            local nameStr    = self.name .. " | "
-            local charSegStr = charStr   .. " | "
-            local nameW      = #nameStr    * charW
-            local charSegW   = #charSegStr * charW
-            local hpW        = #hpStr      * charW
-            local totalW     = nameW + charSegW + hpW
+            local nameStr    = self.name
+            local div1Str    = " | "
+            local charSeg    = charStr
+            local div2Str    = " | "
+            local nameW      = #nameStr  * charW
+            local div1W      = #div1Str  * charW
+            local charSegW   = #charSeg  * charW
+            local div2W      = #div2Str  * charW
+            local hpW        = #hpStr    * charW
+            local totalW     = nameW + div1W + charSegW + div2W + hpW
             local startX     = cx - totalW * 0.5
             local labelY     = miny - 16
+
             self.killerLabel_name.Center   = false
+            self.killerLabel_div1.Center   = false
             self.killerLabel_char.Center   = false
+            self.killerLabel_div2.Center   = false
             self.killerLabel_hp.Center     = false
+
             self.killerLabel_name.Text     = nameStr
             self.killerLabel_name.Position = Vector2.new(startX, labelY)
             self.killerLabel_name.Visible  = true
-            self.killerLabel_char.Text     = charSegStr
-            self.killerLabel_char.Position = Vector2.new(startX + nameW, labelY)
+
+            self.killerLabel_div1.Text     = div1Str
+            self.killerLabel_div1.Color    = final_color
+            self.killerLabel_div1.Position = Vector2.new(startX + nameW, labelY)
+            self.killerLabel_div1.Visible  = true
+
+            self.killerLabel_char.Text     = charSeg
+            self.killerLabel_char.Position = Vector2.new(startX + nameW + div1W, labelY)
             self.killerLabel_char.Visible  = true
+
+            self.killerLabel_div2.Text     = div2Str
+            self.killerLabel_div2.Color    = final_color
+            self.killerLabel_div2.Position = Vector2.new(startX + nameW + div1W + charSegW, labelY)
+            self.killerLabel_div2.Visible  = true
+
             self.killerLabel_hp.Text       = hpStr
-            self.killerLabel_hp.Position   = Vector2.new(startX + nameW + charSegW, labelY)
+            self.killerLabel_hp.Position   = Vector2.new(startX + nameW + div1W + charSegW + div2W, labelY)
             self.killerLabel_hp.Visible    = true
+
             self.namelabel.Visible = false
         else
-            self.namelabel.Text     = string.format("%s | (%d)", self.name, mfloor(hp))
+            if self.isOwner then
+                self.namelabel.Text  = string.format("%s | (%d)", self.name, mfloor(hp))
+            else
+                self.namelabel.Text  = string.format("%s | (%d)", self.name, mfloor(hp))
+            end
             self.namelabel.Color    = final_color
             self.namelabel.Position = Vector2.new(cx, miny-16)
             self.namelabel.Visible  = true
@@ -606,7 +688,7 @@ end
 
 function espmod:setcolor(color)
     self.color          = color
-    self._lastColor     = nil 
+    self._lastColor     = nil
     self.box.Color      = color
     self.tracer.Color   = color
     self.namelabel.Color= color
@@ -629,7 +711,9 @@ function espmod:destroy()
     self.headcircle:Remove()
     self.headcircleoutline:Remove()
     if self.killerLabel_name then pcall(function() self.killerLabel_name:Remove() end) end
+    if self.killerLabel_div1 then pcall(function() self.killerLabel_div1:Remove() end) end
     if self.killerLabel_char then pcall(function() self.killerLabel_char:Remove() end) end
+    if self.killerLabel_div2 then pcall(function() self.killerLabel_div2:Remove() end) end
     if self.killerLabel_hp   then pcall(function() self.killerLabel_hp:Remove()   end) end
 
     for _,b in self.bones do
