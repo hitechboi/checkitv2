@@ -99,7 +99,7 @@ local function lerp_color(a, b, t)
 end
 
 local function isvalidobject(obj)
-	if type(obj) == "userdata" and obj and obj.ClassName then
+	if (type(obj) == "userdata" or typeof(obj) == "Instance") and obj and obj.ClassName then
 		return basepart_types[obj.ClassName]
 	end
 	return nil
@@ -138,8 +138,10 @@ end
 local function WorldToScreen(pos)
 	local cam = game.Workspace.CurrentCamera
 	if cam then
-		local sp, on = cam:WorldToViewportPoint(pos)
-		return Vector2.new(sp.X, sp.Y), on
+		local ok, sp, on = pcall(cam.WorldToViewportPoint, cam, pos)
+		if ok and sp then
+			return Vector2.new(sp.X, sp.Y), on
+		end
 	end
 	return nil, nil
 end
@@ -392,7 +394,7 @@ function espmod:_updateskeleton(bh)
 		self.headcircleoutline.Visible = false
 	end
 
-	for _, b in self.bones do
+	for _, b in ipairs(self.bones) do
 		if b.partA and b.partA:IsA("BasePart") and b.partB and b.partB:IsA("BasePart") then
 			local wa = (b.partA.CFrame * CFrame.new(0, b.oyA * b.partA.Size.Y, 0)).Position
 			local wb = (b.partB.CFrame * CFrame.new(0, b.oyB * b.partB.Size.Y, 0)).Position
@@ -453,7 +455,7 @@ function espmod:_update()
 				self.headcircleoutline.Visible = false
 			end
 			if self.bones then
-				for _, b in self.bones do
+				for _, b in ipairs(self.bones) do
 					b.line.Visible    = false
 					b.outline.Visible = false
 				end
@@ -483,7 +485,7 @@ function espmod:_update()
 				self.headcircle.Color = final_color
 			end
 			if self.bones then
-				for _, b in self.bones do
+				for _, b in ipairs(self.bones) do
 					if b.line then b.line.Color = final_color end
 				end
 			end
@@ -581,7 +583,7 @@ function espmod:_update()
 			self.headcircleoutline.Visible = false
 		end
 		if self.bones then
-			for _, b in self.bones do
+			for _, b in ipairs(self.bones) do
 				b.line.Visible = false
 				b.outline.Visible = false
 			end
@@ -607,7 +609,7 @@ function espmod:setcolor(color)
 			self.headcircle.Color = color
 		end
 		if self.bones then
-			for _, b in self.bones do
+			for _, b in ipairs(self.bones) do
 				if b.line then b.line.Color = color end
 			end
 		end
@@ -631,14 +633,14 @@ function espmod:destroy()
 		if self.headcircleoutline then self.headcircleoutline:Remove() end
 
 		if self.bones then
-			for _, b in self.bones do
+			for _, b in ipairs(self.bones) do
 				b.line:Remove()
 				b.outline:Remove()
 			end
 		end
 	end
 
-	for k in self do self[k] = nil end
+	for k in pairs(self) do self[k] = nil end
 	setmetatable(self, nil)
 end
 
