@@ -99,7 +99,7 @@ local function lerp_color(a, b, t)
 end
 
 local function isvalidobject(obj)
-	if (type(obj) == "userdata" or typeof(obj) == "Instance") and obj and obj.ClassName then
+	if type(obj) == "userdata" and obj and obj.ClassName then
 		return basepart_types[obj.ClassName]
 	end
 	return nil
@@ -133,17 +133,6 @@ local function getscreensize()
 	local cam = game.Workspace.CurrentCamera
 	if cam then return cam.ViewportSize end
 	return Vector2.new(1920, 1080)
-end
-
-local function WorldToScreen(pos)
-	local cam = game.Workspace.CurrentCamera
-	if cam then
-		local ok, sp, on = pcall(cam.WorldToViewportPoint, cam, pos)
-		if ok and sp then
-			return Vector2.new(sp.X, sp.Y), on
-		end
-	end
-	return nil, nil
 end
 
 local function newline(col, thickness)
@@ -225,20 +214,17 @@ function espmod.newtracker(object, customname, color, config)
 
 	self.boxoutline  = newsquare(Color3.fromRGB(0,0,0), false, 3)
 	self.box         = newsquare(self.color, false, 1)
+	self.healthoutline = newsquare(Color3.fromRGB(0,0,0), false, 1)
+	self.healthbg    = newsquare(Color3.fromRGB(0,0,0), true)
+	self.healthbar   = newsquare(colours.healthhigh, true)
 	self.namelabel   = newtext(self.color, 13)
 	self.namelabel.Text = self.name
 	self.distlabel   = newtext(Color3.fromRGB(180,180,180), 12)
-    
-	if not self.isObject then
-		self.healthoutline = newsquare(Color3.fromRGB(0,0,0), false, 1)
-		self.healthbg    = newsquare(Color3.fromRGB(0,0,0), true)
-		self.healthbar   = newsquare(colours.healthhigh, true)
-		self.traceroutline = newline(Color3.fromRGB(0,0,0), 3)
-		self.tracer        = newline(self.color, 1)
+	self.traceroutline = newline(Color3.fromRGB(0,0,0), 3)
+	self.tracer        = newline(self.color, 1)
 
-		self.headcircle        = newcircle(colours.head, 6)
-		self.headcircleoutline = newcircle(Color3.fromRGB(0,0,0), 6)
-	end
+	self.headcircle        = newcircle(colours.head, 6)
+	self.headcircleoutline = newcircle(Color3.fromRGB(0,0,0), 6)
 	
 	self.displayhpfrac = 1
 	
@@ -258,23 +244,21 @@ function espmod.newtracker(object, customname, color, config)
 	end
 
 	self.bones = {}
-	if not self.isObject then
-		local isR15 = (object and object:FindFirstChild("UpperTorso") ~= nil)
-		local defs = isR15 and r15_bones or r6_bones
-		
-		for _, def in defs do
-			local pA = self.model and self.model:FindFirstChild(def.a[1]) or nil
-			local pB = self.model and self.model:FindFirstChild(def.b[1]) or nil
+	local isR15 = (object and object:FindFirstChild("UpperTorso") ~= nil)
+	local defs = isR15 and r15_bones or r6_bones
+	
+	for _, def in defs do
+		local pA = self.model and self.model:FindFirstChild(def.a[1]) or nil
+		local pB = self.model and self.model:FindFirstChild(def.b[1]) or nil
 
-			table.insert(self.bones, {
-				outline = newline(Color3.fromRGB(0,0,0), 3),
-				line    = newline(colours.bone, 1),
-				partA   = pA,
-				partB   = pB,
-				oyA     = def.a[2],
-				oyB     = def.b[2],
-			})
-		end
+		table.insert(self.bones, {
+			outline = newline(Color3.fromRGB(0,0,0), 3),
+			line    = newline(colours.bone, 1),
+			partA   = pA,
+			partB   = pB,
+			oyA     = def.a[2],
+			oyB     = def.b[2],
+		})
 	end
 
 	espmod.trackers[srcobj] = self
@@ -302,31 +286,29 @@ function espmod:_rebuild_cache()
 		self.charWidth = 3
 	end
 
-	if not self.isObject then
-		if self.bones then
-			for _, b in ipairs(self.bones) do
-				if b.line then pcall(function() b.line:Remove() end) end
-				if b.outline then pcall(function() b.outline:Remove() end) end
-			end
+	if self.bones then
+		for _, b in ipairs(self.bones) do
+			if b.line then pcall(function() b.line:Remove() end) end
+			if b.outline then pcall(function() b.outline:Remove() end) end
 		end
-		self.bones = {}
+	end
+	self.bones = {}
 
-		local isR15 = (self.model and self.model:FindFirstChild("UpperTorso") ~= nil)
-		local defs = isR15 and r15_bones or r6_bones
-		
-		for _, def in ipairs(defs) do
-			local pA = self.model and self.model:FindFirstChild(def.a[1]) or nil
-			local pB = self.model and self.model:FindFirstChild(def.b[1]) or nil
+	local isR15 = (self.model and self.model:FindFirstChild("UpperTorso") ~= nil)
+	local defs = isR15 and r15_bones or r6_bones
+	
+	for _, def in ipairs(defs) do
+		local pA = self.model and self.model:FindFirstChild(def.a[1]) or nil
+		local pB = self.model and self.model:FindFirstChild(def.b[1]) or nil
 
-			table.insert(self.bones, {
-				outline = newline(Color3.fromRGB(0,0,0), 3),
-				line    = newline(colours.bone, 1),
-				partA   = pA,
-				partB   = pB,
-				oyA     = def.a[2],
-				oyB     = def.b[2],
-			})
-		end
+		table.insert(self.bones, {
+			outline = newline(Color3.fromRGB(0,0,0), 3),
+			line    = newline(colours.bone, 1),
+			partA   = pA,
+			partB   = pB,
+			oyA     = def.a[2],
+			oyB     = def.b[2],
+		})
 	end
 end
 
@@ -394,7 +376,7 @@ function espmod:_updateskeleton(bh)
 		self.headcircleoutline.Visible = false
 	end
 
-	for _, b in ipairs(self.bones) do
+	for _, b in self.bones do
 		if b.partA and b.partA:IsA("BasePart") and b.partB and b.partB:IsA("BasePart") then
 			local wa = (b.partA.CFrame * CFrame.new(0, b.oyA * b.partA.Size.Y, 0)).Position
 			local wb = (b.partB.CFrame * CFrame.new(0, b.oyB * b.partB.Size.Y, 0)).Position
@@ -442,24 +424,18 @@ function espmod:_update()
 	if not self.visible or offscreen then
 		self.box.Visible           = false
 		self.boxoutline.Visible    = false
+		self.healthoutline.Visible = false
+		self.healthbg.Visible      = false
+		self.healthbar.Visible     = false
 		self.namelabel.Visible     = false
 		self.distlabel.Visible     = false
-		if not self.isObject then
-			self.healthoutline.Visible = false
-			self.healthbg.Visible      = false
-			self.healthbar.Visible     = false
-			self.tracer.Visible        = false
-			self.traceroutline.Visible = false
-			if self.headcircle then
-				self.headcircle.Visible        = false
-				self.headcircleoutline.Visible = false
-			end
-			if self.bones then
-				for _, b in ipairs(self.bones) do
-					b.line.Visible    = false
-					b.outline.Visible = false
-				end
-			end
+		self.tracer.Visible        = false
+		self.traceroutline.Visible = false
+		self.headcircle.Visible        = false
+		self.headcircleoutline.Visible = false
+		for _, b in self.bones do
+			b.line.Visible    = false
+			b.outline.Visible = false
 		end
 		return
 	end
@@ -480,15 +456,11 @@ function espmod:_update()
 		local gp = (math.sin(os.clock() * 2) + 1) / 2
 		final_color = Color3.fromRGB(math.floor(gp * 120), 0, math.floor(150 + gp * 105))
 		dist_color = final_color
-		if not self.isObject then
-			if self.headcircle then
-				self.headcircle.Color = final_color
-			end
-			if self.bones then
-				for _, b in ipairs(self.bones) do
-					if b.line then b.line.Color = final_color end
-				end
-			end
+		if self.headcircle then
+			self.headcircle.Color = final_color
+		end
+		for _, b in self.bones do
+			if b.line then b.line.Color = final_color end
 		end
 	end
 
@@ -518,9 +490,9 @@ function espmod:_update()
 	end
 	
 	if self.isObject then
-		if self.healthoutline then self.healthoutline.Visible = false end
-		if self.healthbg then self.healthbg.Visible      = false end
-		if self.healthbar then self.healthbar.Visible     = false end
+		self.healthoutline.Visible = false
+		self.healthbg.Visible      = false
+		self.healthbar.Visible     = false
 
 		self.namelabel.Text     = self.name
 		self.namelabel.Color    = final_color
@@ -571,8 +543,8 @@ function espmod:_update()
 		self.tracer.Color   = final_color
 		self.tracer.Visible = true
 	else
-		if self.traceroutline then self.traceroutline.Visible = false end
-		if self.tracer then self.tracer.Visible = false end
+		self.traceroutline.Visible = false
+		self.tracer.Visible = false
 	end
 
 	if espmod.show_skeleton and not self.isObject then
@@ -582,11 +554,9 @@ function espmod:_update()
 			self.headcircle.Visible = false
 			self.headcircleoutline.Visible = false
 		end
-		if self.bones then
-			for _, b in ipairs(self.bones) do
-				b.line.Visible = false
-				b.outline.Visible = false
-			end
+		for _, b in self.bones do
+			b.line.Visible = false
+			b.outline.Visible = false
 		end
 	end
 
@@ -602,17 +572,13 @@ end
 function espmod:setcolor(color)
 	self.color = color
 	self.box.Color       = color
+	self.tracer.Color    = color
 	self.namelabel.Color = color
-	if not self.isObject then
-		self.tracer.Color    = color
-		if self.headcircle then
-			self.headcircle.Color = color
-		end
-		if self.bones then
-			for _, b in ipairs(self.bones) do
-				if b.line then b.line.Color = color end
-			end
-		end
+	if self.headcircle then
+		self.headcircle.Color = color
+	end
+	for _, b in self.bones do
+		if b.line then b.line.Color = color end
 	end
 end
 
@@ -621,26 +587,22 @@ function espmod:destroy()
 
 	self.box:Remove()
 	self.boxoutline:Remove()
+	self.healthoutline:Remove()
+	self.healthbg:Remove()
+	self.healthbar:Remove()
 	self.namelabel:Remove()
 	self.distlabel:Remove()
-	if not self.isObject then
-		self.healthoutline:Remove()
-		self.healthbg:Remove()
-		self.healthbar:Remove()
-		self.tracer:Remove()
-		self.traceroutline:Remove()
-		if self.headcircle then self.headcircle:Remove() end
-		if self.headcircleoutline then self.headcircleoutline:Remove() end
+	self.tracer:Remove()
+	self.traceroutline:Remove()
+	self.headcircle:Remove()
+	self.headcircleoutline:Remove()
 
-		if self.bones then
-			for _, b in ipairs(self.bones) do
-				b.line:Remove()
-				b.outline:Remove()
-			end
-		end
+	for _, b in self.bones do
+		b.line:Remove()
+		b.outline:Remove()
 	end
 
-	for k in pairs(self) do self[k] = nil end
+	for k in self do self[k] = nil end
 	setmetatable(self, nil)
 end
 
