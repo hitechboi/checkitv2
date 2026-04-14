@@ -1,6 +1,7 @@
-
+--[[ 
+    bnb from osamason ):
+]]
 if _G._BBN_CLEANUP then pcall(_G._BBN_CLEANUP) end
-
 if not _G.espmod then
     local url = "https://raw.githubusercontent.com/hitechboi/checkitv2/refs/heads/main/espmodule.lua"
     local src = game:HttpGet(url)
