@@ -20,9 +20,7 @@ if not _G.espmod then
     loadstring(table.concat(patched,"\n"))()
 end
 local espmod = _G.espmod
-
 local localplayer = game.Players.LocalPlayer
-
 local state = {
     playerenabled=false, playerdata={}, playercolor=Color3.fromRGB(120,200,255), playerboxcolor=Color3.fromRGB(80,160,220),
     killerenabled=false, killerdata={}, killercolor=Color3.fromRGB(255,80,80),   killerboxcolor=Color3.fromRGB(200,50,50),
@@ -55,13 +53,11 @@ function Signal:Once(cb) local c; c=self:Connect(function(...) c:Disconnect(); c
 function Signal:Fire(...) local e=self._entries; local j=0; for i=1,#e do local en=e[i]; if en.connected then j=j+1; e[j]=en; pcall(en.callback,...) end end; for i=j+1,#e do e[i]=nil end end
 function Signal:Wait() local co=coroutine.running(); self:Once(function(...) coroutine.resume(co,...) end); return coroutine.yield() end
 function Signal:DisconnectAll() for _,e in ipairs(self._entries) do e.connected=false end; self._entries={} end
-
 local runservice  = game:GetService("RunService")
 local connections = {}
 local function connectsignal(sig,fn) local c=sig:Connect(fn); table.insert(connections,c); return c end
 local mfloor,mabs,msin,mmax,mmin = math.floor,math.abs,math.sin,math.max,math.min
 local offsettop,offsetbottom = Vector3.new(0,2.5,0), Vector3.new(0,3,0)
-
 local function valuesequal(a,b)
     if typeof(a)~=typeof(b) then return false end
     local t=typeof(a)
@@ -186,10 +182,8 @@ function ChildVm:SetPollRate(r) self._pollRate=mmax(0.01,r) end
 function ChildVm:GetPollRate() return self._pollRate end
 function ChildVm:GetWatcherCount() local n=0; for _,w in ipairs(self._watchers) do if w.active then n=n+1 end end; return n end
 function ChildVm:Destroy() self._running=false; for _,w in ipairs(self._watchers) do w.active=false end; self._watchers={} end
-
 local childvm = ChildVm.new({PollRate=0.3})
 _G.ChildVm = childvm
-
 local noblock,noragdoll = false,false
 local heartbeattick = 0
 connectsignal(runservice.Heartbeat,function()
@@ -251,7 +245,6 @@ local function getkillerfolder()  if state.killerfolder  and state.killerfolder.
 local function getgenfolder()     if state.genfolder     and state.genfolder.Parent     then return state.genfolder     end; pcall(function() local m=workspace:FindFirstChild("MAPS"); if m then local g=m:FindFirstChild("GAME MAP"); if g then state.genfolder   =g:FindFirstChild("Generators") end end end); return state.genfolder     end
 local function gettrapfolder()    if state.trapfolder    and state.trapfolder.Parent    then return state.trapfolder    end; pcall(function() state.trapfolder=workspace:FindFirstChild("IGNORE") end); return state.trapfolder    end
 local function getfuseboxfolder() if state.fuseboxfolder and state.fuseboxfolder.Parent then return state.fuseboxfolder end; pcall(function() local m=workspace:FindFirstChild("MAPS"); if m then local g=m:FindFirstChild("GAME MAP"); if g then state.fuseboxfolder=g:FindFirstChild("FuseBoxes") end end end); return state.fuseboxfolder end
-
 local function getroot(mdl,ig)
     if not mdl then return nil end
     if ig then
@@ -454,9 +447,7 @@ local function scanignorefolder()
 end
 local function querytraps()    scanignorefolder() end
 local function querybatteries() scanignorefolder() end
-
 local function onmatchend() state.gencount=0 end
-
 local function watchkillerFolder()
     local kf=getkillerfolder(); if not kf then return end
     childvm:OnChildRemoved(kf,function(m)
@@ -578,7 +569,6 @@ local function watchignoreFolder()
 end
 
 local defaultgray = Color3.fromRGB(180,180,180)
-
 local function updateentityesp(dr, en, col, bc)
     if not en then return end
     local mr=state.myroot; local mrP
@@ -803,285 +793,6 @@ local function updateobjectesp(dr, en, c)
         end
     end
 end
-
-local F1_VK = 0x70
-
-local agv = {
-    waitInit         = 0.05,
-    waitWireMove     = 0.01,
-    waitWireSteps    = 4,
-    waitWireRelease  = 0.05,
-    waitWirePost     = 0.06,
-    waitWireRetry    = 0.08,
-    waitWiresPhase   = 1.0,
-    waitSwitchClick  = 0.02,
-    waitSwitchPost   = 0.08,
-    waitSwitchPhase  = 0.4,
-    waitLeverPhase   = 1.0,
-    waitPullMove     = 0.01,
-    waitPullHold     = 0.08,
-    waitPullRelease  = 0.03,
-    wireMaxAttempts  = 4,
-    wireSnapDist     = 15,
-    switchMaxRounds  = 20,
-    pullMax          = 15,
-    pullSafety       = 3,
-    leverThreshold   = 10,
-    frameThreshold   = 20,
-}
-
-local function ag_centerof(obj)
-    local ap,sz=obj.AbsolutePosition,obj.AbsoluteSize
-    return ap.X+sz.X*0.5, ap.Y+sz.Y*0.5
-end
-
-local function ag_dragwire(sx,sy,tx,ty)
-    mousemoveabs(sx,sy);     task.wait(agv.waitWireMove)
-    mouse1press();            task.wait(agv.waitWireMove)
-    for i=1,agv.waitWireSteps do
-        local t=i/agv.waitWireSteps
-        mousemoveabs(sx+(tx-sx)*t, sy+(ty-sy)*t); task.wait(agv.waitWireMove)
-    end
-    mousemoveabs(tx,ty);     task.wait(agv.waitWireRelease)
-    mouse1release();          task.wait(agv.waitWirePost)
-end
-
-local function ag_wiresnapped(name,wiresend,wireboxes)
-    local en=wiresend:FindFirstChild(name)
-    local bx=wireboxes:FindFirstChild(name)
-    if not en or not bx then return false end
-    local ch=bx:FindFirstChild("ConnectHitbox")
-    if not ch then return false end
-    local ep=en.AbsolutePosition+en.AbsoluteSize*0.5
-    local cp=ch.AbsolutePosition+ch.AbsoluteSize*0.5
-    return (ep.X-cp.X)^2+(ep.Y-cp.Y)^2 < agv.wireSnapDist^2
-end
-
-local ag_leverStart, ag_frameStart, ag_leverRef, ag_frameRef
-local function ag_levermoved()
-    if not ag_leverStart or not ag_leverRef then return false end
-    local cur=ag_leverRef.AbsolutePosition
-    return mabs(cur.X-ag_leverStart.X)>agv.leverThreshold
-        or mabs(cur.Y-ag_leverStart.Y)>agv.leverThreshold
-end
-local function ag_puzzledone()
-    if not ag_frameStart or not ag_frameRef then return false end
-    local cur=ag_frameRef.AbsolutePosition
-    return mabs(cur.Y-ag_frameStart.Y)>agv.frameThreshold
-end
-
-local function ag_findgengui(gui)
-    local g=gui:FindFirstChild("Gen")
-    if g and g:FindFirstChild("MainFrame") then
-        local mf=g:FindFirstChild("MainFrame")
-        if mf and mf:FindFirstChild("Generator") then return g,mf end
-    end
-    for _,sg in ipairs(gui:GetChildren()) do
-        if sg:IsA("ScreenGui") then
-            local mf=sg:FindFirstChild("MainFrame")
-            if mf and mf:FindFirstChild("Generator") then return sg,mf end
-        end
-    end
-    return nil,nil
-end
-
-local autogen_active = false
-local ag_was_visible = false
-local ag_solved      = false
-
-local function ag_solve(gen, mainframe)
-    ag_frameRef   = mainframe
-    ag_frameStart = mainframe.AbsolutePosition
-
-    local generator = mainframe:WaitForChild("Generator", 5)
-    if not generator then return false end
-    local lever   = generator:WaitForChild("Lever", 5)
-    local switch_ = generator:WaitForChild("Switch", 5)
-    local wires   = generator:WaitForChild("Wires", 5)
-    if not lever or not switch_ or not wires then return false end
-    ag_leverRef = lever
-
-    task.wait(agv.waitInit)
-    if not state.autogen_enabled or not gen.Enabled then return false end
-
-    local wiresstart = wires:WaitForChild("WiresStart", 5)
-    local wiresend   = wires:WaitForChild("WiresEnd", 5)
-    local wireboxes  = wires:WaitForChild("WireBoxes", 5)
-    if not wiresstart or not wiresend or not wireboxes then return false end
-
-    local deadline = os.clock() + 5
-    repeat task.wait(0.03) until #wireboxes:GetChildren() >= 4 or os.clock() > deadline or not state.autogen_enabled
-    deadline = os.clock() + 5
-    repeat task.wait(0.03) until #wiresend:GetChildren() >= 4 or os.clock() > deadline or not state.autogen_enabled
-    if not state.autogen_enabled or not gen.Enabled then return false end
-
-    for _, node in next, wiresstart:GetChildren() do
-        if not state.autogen_enabled or not gen.Enabled or ag_puzzledone() then break end
-        local name   = node.Name
-        local en     = wiresend:FindFirstChild(name)
-        local bx     = wireboxes:FindFirstChild(name)
-        if not en or not bx then continue end
-        local hb     = bx:FindFirstChild("ConnectHitbox") or bx
-        local hitbox = en:FindFirstChild("Hitbox") or en
-        local tx, ty = ag_centerof(hb)
-        local attempts = 0
-        repeat
-            attempts += 1
-            if attempts > 1 then task.wait(agv.waitWireRetry) end
-            local sx, sy = ag_centerof(hitbox)
-            ag_dragwire(sx, sy, tx, ty)
-            task.wait(agv.waitWireRetry)
-        until ag_wiresnapped(name, wiresend, wireboxes)
-            or attempts >= agv.wireMaxAttempts
-            or not gen.Enabled or not state.autogen_enabled
-    end
-
-    task.wait(agv.waitWiresPhase)
-    if not gen.Enabled or not state.autogen_enabled then return false end
-
-    local switchlist = switch_:WaitForChild("Switches", 5)
-    if not switchlist then return false end
-    local buttons = {}
-    local sdl = os.clock() + 5
-    repeat
-        task.wait(0.03)
-        buttons = {}
-        for _, c in next, switchlist:GetChildren() do
-            if c:IsA("ImageButton") then buttons[#buttons + 1] = c end
-        end
-    until #buttons >= 5 or os.clock() > sdl or not state.autogen_enabled
-    if not state.autogen_enabled or #buttons < 5 then return false end
-
-    table.sort(buttons, function(a, b) return tonumber(a.Name) < tonumber(b.Name) end)
-    ag_leverStart = lever.AbsolutePosition
-
-    local st = {}
-    for _, sw in next, buttons do st[sw.Name] = false end
-    local function clickswitch(sw)
-        local cx, cy = ag_centerof(sw)
-        mousemoveabs(cx, cy); task.wait(agv.waitSwitchClick)
-        mouse1press();        task.wait(agv.waitSwitchClick)
-        mouse1release();      task.wait(agv.waitSwitchPost)
-        st[sw.Name] = not st[sw.Name]
-    end
-
-    for _, sw in next, buttons do
-        if not gen.Enabled or not state.autogen_enabled then break end
-        clickswitch(sw)
-    end
-    task.wait(agv.waitSwitchPhase)
-
-    if not ag_levermoved() and gen.Enabled and state.autogen_enabled then
-        local round = 0
-        repeat
-            round += 1
-            local clicked = 0
-            for _, sw in next, buttons do
-                if not st[sw.Name] and gen.Enabled and state.autogen_enabled then
-                    clickswitch(sw); clicked += 1
-                end
-            end
-            task.wait(agv.waitSwitchPhase)
-            if not ag_levermoved() and clicked == 0 and gen.Enabled and state.autogen_enabled then
-                for _, sw in next, buttons do clickswitch(sw) end
-                task.wait(agv.waitSwitchPhase)
-            end
-        until ag_levermoved() or round >= agv.switchMaxRounds or not gen.Enabled or not state.autogen_enabled
-    end
-
-    if not ag_levermoved() then return false end
-    task.wait(agv.waitLeverPhase)
-    if not gen.Enabled or not state.autogen_enabled then return false end
-
-    local rope   = lever:WaitForChild("Rope", 5)
-    if not rope then return false end
-    local button = rope:WaitForChild("Button", 5)
-    if not button then return false end
-
-    local function dopull()
-        if not gen.Enabled or not state.autogen_enabled then return end
-        local bx, by = ag_centerof(button)
-        mousemoveabs(bx, by); task.wait(agv.waitPullMove)
-        mouse1press();         task.wait(agv.waitPullMove)
-        mousemoverel(0, 35);   task.wait(agv.waitPullHold)
-        mouse1release();       task.wait(agv.waitPullRelease)
-    end
-
-    local pulls = 0
-    repeat
-        dopull(); pulls += 1
-    until ag_puzzledone() or pulls >= agv.pullMax or not gen.Enabled or not state.autogen_enabled
-
-    if not ag_puzzledone() and gen.Enabled and state.autogen_enabled then
-        for _ = 1, agv.pullSafety do dopull() end
-    end
-
-    return true
-end
-
-local function handle_autogen_loop()
-    if autogen_active then return end
-    autogen_active = true
-    task.spawn(function()
-        while state.autogen_enabled do
-            if not state.autogen_f1_armed then
-                task.wait(0.05)
-            else
-                state.autogen_f1_armed = false
-                local ok, err = pcall(function()
-                    local gui = localplayer:FindFirstChild("PlayerGui")
-                    if not gui then
-                        pcall(function() notify("Auto Gen","Generator UI not found — open a generator first",3) end)
-                        return
-                    end
-                    local gen, mainframe = ag_findgengui(gui)
-                    if not gen or not mainframe then
-                        ag_was_visible = false; ag_solved = false
-                        pcall(function() notify("Auto Gen","No generator puzzle open — stand at a gen and press E first",3) end)
-                        return
-                    end
-                    local visible = mainframe.Visible and (not gen:IsA("ScreenGui") or gen.Enabled)
-                    if not visible then
-                        ag_was_visible = false; ag_solved = false
-                        pcall(function() notify("Auto Gen","Generator puzzle not visible",2) end)
-                        return
-                    end
-                    if not ag_was_visible then ag_was_visible = true; ag_solved = false end
-                    if ag_solved then
-                        pcall(function() notify("Auto Gen","Already solved this gen",2) end)
-                        return
-                    end
-                    local solved = ag_solve(gen, mainframe)
-                    if solved then
-                        ag_solved = true
-                        pcall(function() notify("Auto Gen","Generator solved!",4) end)
-                    else
-                        pcall(function() notify("Auto Gen","Solve failed — try again",3) end)
-                    end
-                end)
-                if not ok then
-                    pcall(function() notify("Auto Gen","Error: "..tostring(err),3) end)
-                end
-            end
-        end
-        autogen_active = false
-    end)
-end
-
---[[ F1 autogen trigger disabled
- local f1_wasDown = false
- connectsignal(runservice.Heartbeat, function()
-    local down = false
-    pcall(function() down = iskeypressed(F1_VK) end)
-   if down and not f1_wasDown then
-       if state.autogen_enabled then
-            state.autogen_f1_armed = true
-            pcall(function() notify("Auto Gen", "F1 pressed — solving gen", 2) end)
-        end
-   end
-    f1_wasDown = down
-end)]]
-
 UI.AddTab("Bite By Night",function(tab)
     local esp=tab:Section("esp","Left")
     esp:Toggle("esp_player","Player",function(s) state.playerenabled=s; if s then queryplayers() else clearallplayers() end end)
@@ -1100,7 +811,6 @@ UI.AddTab("Bite By Night",function(tab)
     esp:ColorPicker("cp_gen",0.31,1,0.47,1,function(c) state.gencolor=c end)
     esp:Toggle("esp_trap","Trap",function(s) state.trapenabled=s; if s then querytraps(); watchignoreFolder() else clearalltraps() end end)
     esp:Toggle("esp_bat","Battery",function(s) state.batteryenabled=s; if s then querybatteries(); watchignoreFolder() else clearallbatteries() end end)
-
     local opts=tab:Section("stuff","Left")
     opts:Toggle("esp_self","Self esp",function(s) state.optself=s; if s then if state.playerenabled then queryplayers() end else local f=getalivefolder(); if f then cleanupplayer(f:FindFirstChild(localplayer.Name)) end end end)
     opts:Toggle("esp_skeleton","Skeleton",true,function(s) state.optskeleton=s; espmod.show_skeleton=s end)
@@ -1139,7 +849,6 @@ end
 local batterycolor = Color3.fromRGB(240,240,80)
 connectsignal(runservice.RenderStepped,function()
     state.steptick = state.steptick + 1
-
     if state.steptick%2==0 then
         pcall(function()
             if localplayer.Character then
