@@ -829,6 +829,7 @@ UI.AddTab("Bite By Night",function(tab)
     local tweaks=tab:Section("tweaks","Right")
     tweaks:SliderInt("esp_rate","esp refresh rate (frames)",30,300,180,function(v) state.esp_refresh_rate=v end)
     tweaks:Tip("Higher = less frequent refresh. Lower = more frequent but heavier on low-end PCs.")
+end)
 
 
 local af=getalivefolder()
