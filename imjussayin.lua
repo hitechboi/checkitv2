@@ -2360,7 +2360,7 @@ function lib:Window()
 			pcall(function()notify("Thank you guys so much for a collective of 200+ stars (>'-'<) ","Check It v2",5)end)
 			task.wait(0.3)
 			pcall(function()notify("Hi maybe i'll update prisonlife maybee","Check It v2",5)end)
-			taks.wait(0.3)
+			task.wait(0.3)
 			pcall(function()notify("(>'-'<)","Check It v2", 3)end)
 		end)
 		if not ok then warn("[lib] ERROR in spawn: "..tostring(err)) end
