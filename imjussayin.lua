@@ -102,7 +102,7 @@ local function _ath(name)
 	for k,v in pairs(t) do C[k]=v end
 	state.currentTheme=name
 end
-_ath("monochrome")
+_ath("check it")
 
 local function _clp(v,a,b)return math.max(a,math.min(b,v))end
 local function _ins(x,y,rx,ry,rw,rh)return x>=rx and x<=rx+rw and y>=ry and y<=ry+rh end
