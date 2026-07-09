@@ -5,7 +5,7 @@ local _ms=_lp:GetMouse()
 local _cm=workspace.CurrentCamera
 local _sx,_sy=_cm.ViewportSize.X,_cm.ViewportSize.Y
 
-local C={
+local C={ --
 	a=Color3.fromRGB(70,120,255),
 	sb=Color3.fromRGB(12,15,27),
 	ct=Color3.fromRGB(11,13,23),
@@ -27,9 +27,10 @@ local C={
 local _thm={
 	["check it"]={a=Color3.fromRGB(70,120,255),sb=Color3.fromRGB(12,15,27),ct=Color3.fromRGB(11,13,23),tb=Color3.fromRGB(7,9,17),bd=Color3.fromRGB(30,40,72),rb=Color3.fromRGB(14,18,33),ts=Color3.fromRGB(20,35,85),w=Color3.fromRGB(215,220,240),g=Color3.fromRGB(100,112,145),dg=Color3.fromRGB(28,33,52),on=Color3.fromRGB(45,85,195),of=Color3.fromRGB(20,24,42),od=Color3.fromRGB(175,198,255),fd=Color3.fromRGB(55,65,95),dv=Color3.fromRGB(22,27,48),mb=Color3.fromRGB(11,13,22)},
 	moon={a=Color3.fromRGB(255,170,190),sb=Color3.fromRGB(35,35,40),ct=Color3.fromRGB(32,32,37),tb=Color3.fromRGB(28,28,33),bd=Color3.fromRGB(55,55,65),rb=Color3.fromRGB(38,38,44),ts=Color3.fromRGB(55,45,55),w=Color3.fromRGB(230,230,235),g=Color3.fromRGB(130,130,140),dg=Color3.fromRGB(45,45,52),on=Color3.fromRGB(180,120,140),of=Color3.fromRGB(38,38,44),od=Color3.fromRGB(255,200,215),fd=Color3.fromRGB(80,80,90),dv=Color3.fromRGB(48,48,55),mb=Color3.fromRGB(30,30,35)},
+	monochrome={a=Color3.fromRGB(255,255,255),sb=Color3.fromRGB(0,0,0),ct=Color3.fromRGB(0,0,0),tb=Color3.fromRGB(0,0,0),bd=Color3.fromRGB(0,0,0),rb=Color3.fromRGB(0,0,0),ts=Color3.fromRGB(0,0,0),w=Color3.fromRGB(255,255,255),g=Color3.fromRGB(255,255,255),dg=Color3.fromRGB(255,255,255),on=Color3.fromRGB(255,255,255),of=Color3.fromRGB(0,0,0),od=Color3.fromRGB(255,255,255),fd=Color3.fromRGB(255,255,255),dv=Color3.fromRGB(0,0,0),mb=Color3.fromRGB(0,0,0)},
 	confetti={a=Color3.fromRGB(255,210,60),sb=Color3.fromRGB(12,15,27),ct=Color3.fromRGB(11,13,23),tb=Color3.fromRGB(7,9,17),bd=Color3.fromRGB(30,40,72),rb=Color3.fromRGB(14,18,33),ts=Color3.fromRGB(40,35,15),w=Color3.fromRGB(215,220,240),g=Color3.fromRGB(100,112,145),dg=Color3.fromRGB(28,33,52),on=Color3.fromRGB(180,155,30),of=Color3.fromRGB(20,24,42),od=Color3.fromRGB(255,230,140),fd=Color3.fromRGB(55,65,95),dv=Color3.fromRGB(22,27,48),mb=Color3.fromRGB(11,13,22)},
 }
-local _thn={"check it","moon","confetti"}
+local _thn={"check it","moon","confetti","monochrome"}
 local FNT=Drawing.Fonts.Monospace
 pcall(function()FNT=Drawing.Fonts.System end)
 local FNTB=FNT
@@ -45,7 +46,6 @@ local SRH=56
 local PAD=10
 local CW=330
 local WW=660
-
 local objs,_tbo,_aco,_els,win={},{},{},{},{}
 local _ldo={}
 local _tpo={}
@@ -102,7 +102,7 @@ local function _ath(name)
 	for k,v in pairs(t) do C[k]=v end
 	state.currentTheme=name
 end
-_ath("check it")
+_ath("monochrome")
 
 local function _clp(v,a,b)return math.max(a,math.min(b,v))end
 local function _ins(x,y,rx,ry,rw,rh)return x>=rx and x<=rx+rw and y>=ry and y<=ry+rh end
@@ -2357,11 +2357,9 @@ function lib:Window()
 			pcall(function()userName=_lp.Name end)
 			pcall(function()notify("Welcome, "..userName,"Check It v2",3)end)
 			task.wait(0.3)
-			pcall(function()notify("Thank you guys so much for a collective of 200+ stars (>'-'<) ","Check It v2",5)end)
+			pcall(function()notify("Thank you guys so much for 100+ stars","Check It v2",5)end)
 			task.wait(0.3)
-			pcall(function()notify("Hi maybe i'll update prisonlife maybee","Check It v2",5)end)
-			task.wait(0.3)
-			pcall(function()notify("(>'-'<)","Check It v2", 3)end)
+			pcall(function()notify("(¬_¬)","Check It v2",3)end)
 		end)
 		if not ok then warn("[lib] ERROR in spawn: "..tostring(err)) end
 	end)
