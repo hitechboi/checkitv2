@@ -49,10 +49,6 @@ local function tacocat_color(clk)
     )
 end
 
-local basepart_types = {
-    Part="BasePart", MeshPart="BasePart",
-    UnionOperation="BasePart", Model="Model",
-}
 local studs_per_unit = 9
 
 local mabs, msin, mfloor, mclamp = math.abs, math.sin, math.floor, math.clamp
@@ -68,35 +64,46 @@ local function lerp_color(a, b, t)
     )
 end
 
+local function isbasepart(obj)
+    local success, result = pcall(function()
+        return obj and obj:IsA("BasePart")
+    end)
+    return success and result
+end
+local function ismodel(obj)
+    local success, result = pcall(function()
+        return obj and obj:IsA("Model")
+    end)
+    return success and result
+end
 local function isvalidobject(obj)
-    if type(obj)=="userdata" and obj and obj.ClassName then
-        return basepart_types[obj.ClassName]
-    end
+    if isbasepart(obj) then return "BasePart" end
+    if ismodel(obj) then return "Model" end
 end
 local function getmodelsource(model)
     local commonnames = {"HumanoidRootPart","Root","RootPart","Core","Point1","Engine","Middle","Center","Body","Base","Main","Hitbox"}
     local children = model:GetChildren()
     for _,name in commonnames do
         for _,child in children do
-            if string.lower(child.Name)==string.lower(name) and basepart_types[child.ClassName]=="BasePart" then
+            if string.lower(child.Name)==string.lower(name) and isbasepart(child) then
                 return child
             end
         end
     end
-    if model.ClassName=="Model" then
+    if ismodel(model) then
         local pp = model.PrimaryPart
-        if pp then return pp end
+        if isbasepart(pp) then return pp end
     end
     local largest, maxvol = nil, 0
     for _,child in model:GetChildren() do
-        if basepart_types[child.ClassName] then
+        if isbasepart(child) then
             local vol = child.Size.X*child.Size.Y*child.Size.Z
             if vol>maxvol then maxvol=vol; largest=child end
         end
     end
     if not largest then
         for _,child in model:GetDescendants() do
-            if basepart_types[child.ClassName] then
+            if isbasepart(child) then
                 local vol = child.Size.X*child.Size.Y*child.Size.Z
                 if vol>maxvol then maxvol=vol; largest=child end
             end
@@ -130,7 +137,8 @@ local function newtext(col, size)
     t.Color   = col
     t.Outline = true
     t.Center  = true
-    t.Size    = size or 13
+    pcall(function() t.FontSize = size or 13 end)
+    pcall(function() t.Size = size or 13 end)
     t.Visible = false
     return t
 end
@@ -159,7 +167,7 @@ function espmod.newtracker(object, customname, color, config)
     local cfg = config or {}
 
     local _posKey = nil
-    if cfg.isObject and not cfg.isGen then
+    if cfg.isObject and cfg.deduplicate_position then
         local pos
         pcall(function() pos = srcobj.Position end)
         if pos then
