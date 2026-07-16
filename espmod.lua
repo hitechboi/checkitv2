@@ -64,17 +64,33 @@ local function lerp_color(a, b, t)
     )
 end
 
-local function isbasepart(obj)
+local partclasses = {
+    BasePart = true,
+    Part = true,
+    MeshPart = true,
+    UnionOperation = true,
+    Seat = true,
+    VehicleSeat = true,
+    TrussPart = true,
+    WedgePart = true,
+    CornerWedgePart = true,
+    SpawnLocation = true,
+}
+local function getclassname(obj)
     local success, result = pcall(function()
-        return obj and obj:IsA("BasePart")
+        return obj and obj.ClassName
     end)
     return success and result
 end
-local function ismodel(obj)
-    local success, result = pcall(function()
-        return obj and obj:IsA("Model")
+local function isbasepart(obj)
+    if partclasses[getclassname(obj)] then return true end
+    local success, position, size = pcall(function()
+        return obj.Position, obj.Size
     end)
-    return success and result
+    return success and position ~= nil and size ~= nil
+end
+local function ismodel(obj)
+    return getclassname(obj) == "Model"
 end
 local function isvalidobject(obj)
     if isbasepart(obj) then return "BasePart" end
